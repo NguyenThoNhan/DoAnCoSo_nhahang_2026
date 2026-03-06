@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nguyên liệu — Smart Restaurant</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/public/css/common.css">
+    <link rel="stylesheet" href="/public/css/admin/layout.css">
+    <link rel="stylesheet" href="/public/css/admin/components.css">
+    <link rel="stylesheet" href="/public/css/admin/pages.css">
+
+    <style>
+        /* ─── Animations ─── */
+        @keyframes fadeUp  { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes rowIn   { from{opacity:0;transform:translateX(-6px)} to{opacity:1;transform:translateX(0)} }
+        @keyframes shimmer { 0%{background-position:-600px 0} 100%{background-position:600px 0} }
+        @keyframes scaleIn { from{opacity:0;transform:scale(.94)}       to{opacity:1;transform:scale(1)} }
+        @keyframes blink   { 0%,100%{opacity:1} 50%{opacity:.45} }
+
+        /* ─────────────────────────────────────────
+           PAGE LAYOUT: sidebar (220px) + content
+        ───────────────────────────────────────── */
+        .p-grid {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            gap: var(--space-5);
+            align-items: start;
+            animation: fadeUp .35s ease both;
+        }
+
+        /* ═══════════ SIDEBAR ═══════════ */
+        .p-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-4);
+            position: sticky;
+            top: var(--space-4);
+        }
+
+        /* Add button */
+        .p-add-btn {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: 100%; padding: .65rem var(--space-4);
+            background: var(--admin-primary); color: #fff;
+            border: none; border-radius: var(--radius-xl);
+            font-family: var(--font-primary); font-size: var(--text-sm); font-weight: 700;
+            cursor: pointer; transition: all .2s ease;
+        }
+        .p-add-btn:hover {
+            background: var(--admin-primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(249,115,22,.3);
+        }
+
+        /* Panel card (shared) */
+        .sb-card {
+            background: var(--color-white);
+            border-radius: var(--radius-2xl);
+            border: 1px solid var(--color-gray-100);
+            box-shadow: 0 1px 4px rgba(0,0,0,.05);
+            overflow: hidden;
+        }
+        .sb-card-hd {
+            padding: var(--space-3) var(--space-4);
+            font-size: .61rem; font-weight: 800;
+            color: var(--color-gray-400); text-transform: uppercase; letter-spacing: .09em;
+            border-bottom: 1px solid var(--color-gray-100);
+            display: flex; align-items: center; gap: 6px;
+        }
+        .sb-card-hd i { color: var(--admin-primary); font-size: .74rem; }
+
+        /* Filter rows */
+        .sb-frow {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: var(--space-3) var(--space-4);
+            cursor: pointer; transition: background .13s;
+            border-bottom: 1px solid var(--color-gray-50);
+        }
+        .sb-frow:last-child { border-bottom: none; }
+        .sb-frow:hover  { background: var(--color-gray-50); }
+        .sb-frow.f-on   { background: var(--admin-primary-subtle); }
+        .sb-frow-lbl {
+            display: flex; align-items: center; gap: 8px;
+            font-size: var(--text-xs); font-weight: 600; color: var(--color-gray-600);
+        }
+        .f-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .fd-all  { background: var(--admin-primary); }
+        .fd-ok   { background: #10B981; }
+        .fd-warn { background: #F59E0B; }
+        .fd-low  { background: #EF4444; }
+        .sb-frow-n {
+            font-size: var(--text-sm); font-weight: 800; color: var(--color-gray-800);
+        }
+
+        /* Search in sidebar */
+        .sb-search-wrap {
+            padding: var(--space-4);
+            display: flex; flex-direction: column; gap: var(--space-2);
+        }
+        .sb-search-title { font-size: .61rem; font-weight: 800; color: var(--color-gray-400); text-transform: uppercase; letter-spacing: .09em; }
+        .sb-sbox {
+            display: flex; align-items: center; gap: 8px;
+            padding: .42rem var(--space-3);
+            background: var(--color-gray-50);
+            border: 1.5px solid var(--color-gray-200); border-radius: var(--radius-lg);
+            transition: all .2s ease;
+        }
+        .sb-sbox:focus-within {
+            border-color: var(--admin-primary); background: #fff;
+            box-shadow: 0 0 0 3px rgba(249,115,22,.1);
+        }
+        .sb-sbox i    { font-size: .78rem; color: var(--color-gray-400); flex-shrink: 0; }
+        .sb-sbox-inp  {
+            flex: 1; border: none; background: transparent; outline: none;
+            font-family: var(--font-primary); font-size: var(--text-xs); color: var(--color-gray-800);
+        }
+        .sb-sbox-inp::placeholder { color: var(--color-gray-400); }
+        .sb-cnt { font-size: .62rem; color: var(--color-gray-400); text-align: center; }
+
+        /* Legend */
+        .sb-legend-wrap {
+            padding: var(--space-4);
+            display: flex; flex-direction: column; gap: var(--space-2);
+        }
+        .sb-legend-hd { font-size: .61rem; font-weight: 800; color: var(--color-gray-400); text-transform: uppercase; letter-spacing: .09em; margin-bottom: 4px; }
+        .sb-leg-row {
+            display: flex; align-items: flex-start; gap: 8px;
+            font-size: .68rem; color: var(--color-gray-500); line-height: 1.4;
+        }
+        .sb-leg-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
+
+        /* ═══════════ MAIN CONTENT ═══════════ */
+        .p-content { display: flex; flex-direction: column; gap: var(--space-4); }
+
+        .p-content-hd {
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .p-content-title { font-size: var(--text-base); font-weight: 800; color: var(--color-gray-900); letter-spacing: -.02em; }
+        .p-content-sub   { font-size: var(--text-xs); color: var(--color-gray-400); margin-top: 2px; }
+
+        /* Alert banner */
+        .p-alert {
+            display: none;
+            align-items: center; gap: var(--space-3);
+            padding: var(--space-3) var(--space-5);
+            background: #FFF1F2; border: 1px solid #FECDD3;
+            border-radius: var(--radius-xl);
+            font-size: var(--text-xs); font-weight: 600; color: #9F1239;
+            animation: blink 2.5s ease infinite;
+        }
+        .p-alert.show { display: flex; }
+        .p-alert i { font-size: 1rem; }
+
+        /* ═══════════ TABLE ═══════════ */
+        .ing-tcard {
+            background: var(--color-white);
+            border-radius: var(--radius-2xl);
+            border: 1px solid var(--color-gray-100);
+            box-shadow: 0 1px 4px rgba(0,0,0,.05);
+            overflow: hidden;
+        }
+        .ing-table { width: 100%; border-collapse: collapse; }
+        .ing-table thead th {
+            padding: var(--space-3) var(--space-5);
+            background: var(--color-gray-50);
+            text-align: left; font-size: .63rem; font-weight: 700;
+            color: var(--color-gray-400); text-transform: uppercase;
+            letter-spacing: .07em; border-bottom: 1px solid var(--color-gray-100);
+            white-space: nowrap;
+        }
+        .ing-table thead th.th-r { text-align: right; }
+        .ing-table tbody tr {
+            border-bottom: 1px solid var(--color-gray-50);
+            transition: background .13s;
+        }
+        .ing-table tbody tr:last-child  { border-bottom: none; }
+        .ing-table tbody tr:hover       { background: var(--color-gray-50); }
+        .ing-table tbody tr.tr-in       { animation: rowIn .25s ease both; }
+
+        /* ── Stock-status row tints ── */
+        .ing-table tbody tr.row-low     { background: #FFF5F5; }
+        .ing-table tbody tr.row-low:hover  { background: #FEE2E2; }
+        .ing-table tbody tr.row-warn    { background: #FEFDF5; }
+        .ing-table tbody tr.row-warn:hover { background: #FEF9C3; }
+
+        .ing-table td {
+            padding: var(--space-3) var(--space-5);
+            font-size: var(--text-sm); vertical-align: middle;
+        }
+        .ing-table td.td-r { text-align: right; }
+
+        /* Name */
+        .ing-name { font-weight: 700; color: var(--color-gray-900); }
+
+        /* Unit pill */
+        .ing-unit {
+            display: inline-block; font-size: .63rem; font-weight: 700;
+            color: var(--color-gray-500); background: var(--color-gray-100);
+            padding: 2px 9px; border-radius: var(--radius-full);
+        }
+
+        /* Stock qty + mini bar */
+        .ing-qty-cell { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+        .ing-qty { font-size: var(--text-base); font-weight: 800; letter-spacing: -.03em; line-height: 1; }
+        .q-ok   { color: var(--color-gray-800); }
+        .q-warn { color: #B45309; }
+        .q-low  { color: #DC2626; }
+        .ing-bar { width: 72px; height: 4px; background: var(--color-gray-100); border-radius: 99px; overflow: hidden; }
+        .ing-bar-f { height: 100%; border-radius: 99px; transition: width .55s ease; }
+        .bar-ok   { background: linear-gradient(90deg,#34D399,#10B981); }
+        .bar-warn { background: linear-gradient(90deg,#FBBF24,#F59E0B); }
+        .bar-low  { background: linear-gradient(90deg,#F87171,#EF4444); }
+
+        /* Threshold cell */
+        .ing-min     { font-size: var(--text-sm); color: var(--color-gray-500); font-weight: 600; }
+        .ing-min-lbl { font-size: .61rem; color: var(--color-gray-400); }
+
+        /* Status badge */
+        .ing-sbadge {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 4px 10px; border-radius: var(--radius-full);
+            font-size: .63rem; font-weight: 700; border: 1px solid transparent;
+            white-space: nowrap;
+        }
+        .sb-ok   { background: #ECFDF5; color: #065F46; border-color: #A7F3D0; }
+        .sb-warn { background: #FFFBEB; color: #92400E; border-color: #FDE68A; }
+        .sb-low  { background: #FFF1F2; color: #9F1239; border-color: #FECDD3; animation: blink 2s ease infinite; }
+
+        /* Action buttons */
+        .ing-act { text-align: right; white-space: nowrap; }
+        .ing-abtn {
+            width: 30px; height: 30px;
+            display: inline-flex; align-items: center; justify-content: center;
+            border-radius: var(--radius-md);
+            border: 1.5px solid var(--color-gray-200); background: var(--color-white);
+            color: var(--color-gray-400); cursor: pointer; font-size: .78rem;
+            transition: all .17s ease; opacity: 0;
+        }
+        tr:hover .ing-abtn,
+        .row-low  .ing-abtn,
+        .row-warn .ing-abtn { opacity: 1; }
+        .abtn-edit:hover { border-color: var(--admin-primary); background: var(--admin-primary-subtle); color: var(--admin-primary); transform: scale(1.06); }
+        .abtn-del:hover  { border-color: var(--color-error); background: var(--color-error-light); color: var(--color-error); transform: scale(1.06); }
+
+        /* Skeleton */
+        .sk { border-radius: var(--radius-md); background: linear-gradient(90deg,#f0f0f0 25%,#e4e4e4 50%,#f0f0f0 75%); background-size: 600px 100%; animation: shimmer 1.4s ease infinite; }
+
+        /* Empty state */
+        .ing-empty { padding: var(--space-16) var(--space-6); display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--space-4); }
+        .ing-empty-ico { width: 72px; height: 72px; border-radius: var(--radius-2xl); background: var(--color-gray-50); border: 1.5px dashed var(--color-gray-200); display: flex; align-items: center; justify-content: center; font-size: 1.7rem; color: var(--color-gray-200); }
+        .ing-empty-t { font-size: var(--text-xl); font-weight: 800; color: var(--color-gray-300); }
+        .ing-empty-d { font-size: var(--text-sm); color: var(--color-gray-400); max-width: 260px; line-height: 1.6; }
+
+        /* ═══════════ MODAL ═══════════ */
+        .m-body { padding: var(--space-6); display: flex; flex-direction: column; gap: var(--space-4); }
+        .m-g2   { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+        .m-fw   { grid-column: 1/-1; }
+
+        .m-lbl  { display: block; font-size: var(--text-xs); font-weight: 700; color: var(--color-gray-600); margin-bottom: var(--space-2); }
+        .m-req  { color: var(--color-error); margin-left: 2px; }
+        .m-inp  {
+            width: 100%; padding: .54rem var(--space-4);
+            border: 1.5px solid var(--color-gray-200); border-radius: var(--radius-lg);
+            font-family: var(--font-primary); font-size: var(--text-sm); color: var(--color-gray-800);
+            background: #fff; outline: none;
+            transition: all .2s ease; box-sizing: border-box;
+        }
+        .m-inp::placeholder { color: var(--color-gray-400); }
+        .m-inp:focus         { border-color: var(--admin-primary); box-shadow: 0 0 0 3px rgba(249,115,22,.1); }
+        .m-inp.inp-err       { border-color: var(--color-error); }
+        .m-inp.inp-err:focus { box-shadow: 0 0 0 3px rgba(239,68,68,.1); }
+        .m-err  { font-size: .66rem; color: var(--color-error); margin-top: 4px; display: none; }
+        .m-err.show { display: block; }
+        .m-hint { font-size: .62rem; color: var(--color-gray-400); margin-top: 3px; }
+        .m-info {
+            background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: var(--radius-lg);
+            padding: var(--space-3) var(--space-4);
+            font-size: .7rem; color: #1E40AF; line-height: 1.55;
+            display: flex; align-items: flex-start; gap: var(--space-2);
+        }
+        .m-info i { flex-shrink: 0; margin-top: 1px; }
+        .m-foot {
+            display: flex; align-items: center; justify-content: flex-end;
+            gap: var(--space-3); padding: var(--space-4) var(--space-6);
+            border-top: 1px solid var(--color-gray-100); background: var(--color-gray-50);
+        }
+
+        /* Delete modal */
+        .del-body { padding: var(--space-8) var(--space-6); display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--space-5); }
+        .del-ico  { width: 64px; height: 64px; border-radius: 50%; background: var(--color-error-light); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: var(--color-error); }
+        .del-ttl  { font-size: var(--text-xl); font-weight: 800; color: var(--color-gray-900); letter-spacing: -.03em; }
+        .del-tag  { background: var(--color-gray-100); border-radius: var(--radius-lg); padding: var(--space-3) var(--space-5); font-weight: 700; color: var(--color-gray-800); font-size: var(--text-base); width: 100%; }
+        .del-warn {
+            width: 100%; background: #FFF1F2; border: 1px solid #FECDD3;
+            border-radius: var(--radius-lg); padding: var(--space-3) var(--space-4);
+            font-size: .7rem; color: #9F1239;
+            display: flex; align-items: flex-start; gap: var(--space-2); line-height: 1.55;
+        }
+        .del-warn i { flex-shrink: 0; margin-top: 1px; }
+        .del-btns { display: flex; gap: var(--space-3); width: 100%; }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .p-grid { grid-template-columns: 1fr; }
+            .p-sidebar { position: static; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="admin-app" id="adminApp">
+    <div id="admin-sidebar-container"></div>
+
+    <main class="admin-main" id="adminMain">
+
+        <!-- ── Topbar ── -->
+        <header class="admin-topbar">
+            <div class="topbar-left">
+                <div class="topbar-title">Nguyên liệu</div>
+                <nav class="topbar-breadcrumb">
+                    <a href="/views/admin/index.html">Dashboard</a>
+                    <span class="separator">/</span>
+                    <span class="current">Kho</span>
+                    <span class="separator">/</span>
+                    <span class="current">Nguyên liệu</span>
+                </nav>
+            </div>
+            <div class="topbar-search">
+                <i class="fas fa-search topbar-search-icon"></i>
+                <input type="text" id="topbarSearch" placeholder="Tìm nguyên liệu...">
+            </div>
+            <div class="topbar-actions">
+                <button class="topbar-action-btn" id="btnRefresh" title="Làm mới">
+                    <i class="fas fa-rotate-right"></i>
+                </button>
+                <button class="btn btn-primary-admin btn-sm" id="btnAddTop">
+                    <i class="fas fa-plus"></i> Thêm nguyên liệu
+                </button>
+            </div>
+        </header>
+
+        <!-- ── Page content ── -->
+        <div class="admin-content" style="display:flex;flex-direction:column;gap:var(--space-5)">
+
+            <!-- Page header -->
+            <div class="page-header">
+                <div class="page-header-left">
+                    <h1 class="page-heading">
+                        Quản lý kho nguyên liệu
+                        <span id="headCount"
+                              style="font-size:var(--text-xl);font-weight:500;color:var(--color-gray-400)"></span>
+                    </h1>
+                    <p class="page-desc">Theo dõi tồn kho · cảnh báo hết hàng · tiền đề tự động ẩn món ăn</p>
+                </div>
+            </div>
+
+            <!-- Alert banner (shown when any item is below threshold) -->
+            <div class="p-alert" id="alertBanner">
+                <i class="fas fa-triangle-exclamation"></i>
+                <span id="alertMsg">Có nguyên liệu dưới ngưỡng cảnh báo</span>
+            </div>
+
+            <!-- Two-column grid -->
+            <div class="p-grid">
+
+                <!-- ─── Sidebar ─── -->
+                <aside class="p-sidebar">
+
+                    <button class="p-add-btn" id="btnAddSide">
+                        <i class="fas fa-plus-circle"></i>
+                        Thêm nguyên liệu mới
+                    </button>
+
+                    <!-- Kho filter -->
+                    <div class="sb-card">
+                        <div class="sb-card-hd">
+                            <i class="fas fa-layer-group"></i> Tình trạng kho
+                        </div>
+                        <div class="sb-frow f-on" id="fAll"  data-sf="all">
+                            <div class="sb-frow-lbl"><div class="f-dot fd-all"></div>Tất cả</div>
+                            <div class="sb-frow-n" id="fAllN">--</div>
+                        </div>
+                        <div class="sb-frow" id="fOk"   data-sf="ok">
+                            <div class="sb-frow-lbl"><div class="f-dot fd-ok"></div>Còn đủ hàng</div>
+                            <div class="sb-frow-n" id="fOkN">--</div>
+                        </div>
+                        <div class="sb-frow" id="fWarn" data-sf="warn">
+                            <div class="sb-frow-lbl"><div class="f-dot fd-warn"></div>Sắp hết</div>
+                            <div class="sb-frow-n" id="fWarnN">--</div>
+                        </div>
+                        <div class="sb-frow" id="fLow"  data-sf="low">
+                            <div class="sb-frow-lbl"><div class="f-dot fd-low"></div>Dưới ngưỡng ⚠</div>
+                            <div class="sb-frow-n" id="fLowN">--</div>
+                        </div>
+                    </div>
+
+                    <!-- Search -->
+                    <div class="sb-card">
+                        <div class="sb-search-wrap">
+                            <div class="sb-search-title">Tìm kiếm</div>
+                            <div class="sb-sbox">
+                                <i class="fas fa-search"></i>
+                                <input type="text" class="sb-sbox-inp" id="searchInput"
+                                       placeholder="Tên nguyên liệu...">
+                            </div>
+                            <div class="sb-cnt"><span id="resultCount">0</span> kết quả</div>
+                        </div>
+                    </div>
+
+                    <!-- Legend -->
+                    <div class="sb-card">
+                        <div class="sb-legend-wrap">
+                            <div class="sb-legend-hd">Chú thích màu sắc</div>
+                            <div class="sb-leg-row">
+                                <div class="sb-leg-dot" style="background:#10B981"></div>
+                                Tồn kho > 2× ngưỡng — ổn định
+                            </div>
+                            <div class="sb-leg-row">
+                                <div class="sb-leg-dot" style="background:#F59E0B"></div>
+                                Tồn kho 1–2× ngưỡng — sắp hết
+                            </div>
+                            <div class="sb-leg-row">
+                                <div class="sb-leg-dot" style="background:#EF4444"></div>
+                                Tồn kho ≤ ngưỡng — cảnh báo đỏ
+                            </div>
+                        </div>
+                    </div>
+
+                </aside>
+
+                <!-- ─── Main table ─── -->
+                <div class="p-content">
+
+                    <div class="p-content-hd">
+                        <div>
+                            <div class="p-content-title">Danh sách nguyên liệu</div>
+                            <div class="p-content-sub">Sắp xếp A → Z theo tên</div>
+                        </div>
+                        <button class="topbar-action-btn" id="btnRefresh2"
+                                title="Làm mới" style="opacity:.65">
+                            <i class="fas fa-rotate-right"></i>
+                        </button>
+                    </div>
+
+                    <div class="ing-tcard">
+                        <table class="ing-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:36px;text-align:center;padding-left:var(--space-4)"></th>
+                                    <th>Tên nguyên liệu</th>
+                                    <th style="width:80px">Đơn vị</th>
+                                    <th class="th-r" style="width:150px">Tồn kho</th>
+                                    <th class="th-r" style="width:145px">Ngưỡng cảnh báo</th>
+                                    <th style="width:135px">Trạng thái</th>
+                                    <th style="width:80px;text-align:right;padding-right:var(--space-5)">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ingBody"></tbody>
+                        </table>
+                    </div>
+
+                </div><!-- /p-content -->
+            </div><!-- /p-grid -->
+
+        </div><!-- /admin-content -->
+    </main>
+</div>
+
+<!-- ════════════════════════════════════════
+     MODAL — Thêm / Sửa nguyên liệu
+════════════════════════════════════════ -->
+<div class="modal-overlay" id="ingModal">
+    <div class="modal" style="max-width:500px;animation:scaleIn .22s ease">
+
+        <div class="modal-header">
+            <div style="display:flex;align-items:center;gap:var(--space-3)">
+                <div style="width:40px;height:40px;border-radius:var(--radius-lg);
+                            background:var(--admin-primary-light);color:var(--admin-primary);
+                            display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                    <i id="modalIcon" class="fas fa-boxes-stacked"></i>
+                </div>
+                <div class="modal-title" id="modalTitle">Thêm nguyên liệu</div>
+            </div>
+            <button class="modal-close" id="ingModalClose"><i class="fas fa-xmark"></i></button>
+        </div>
+
+        <div class="m-body">
+            <div class="m-g2">
+
+                <div class="m-fw">
+                    <label class="m-lbl" for="mName">
+                        Tên nguyên liệu <span class="m-req">*</span>
+                    </label>
+                    <input type="text" class="m-inp" id="mName"
+                           placeholder="VD: Thịt bò, Cà chua, Hành tây...">
+                    <div class="m-err" id="errName">Vui lòng nhập tên nguyên liệu.</div>
+                </div>
+
+                <div>
+                    <label class="m-lbl" for="mUnit">Đơn vị <span class="m-req">*</span></label>
+                    <input type="text" class="m-inp" id="mUnit"
+                           placeholder="VD: kg, g, lít, cái...">
+                    <div class="m-err" id="errUnit">Vui lòng nhập đơn vị.</div>
+                </div>
+
+                <div>
+                    <!-- spacer for alignment -->
+                </div>
+
+                <div>
+                    <label class="m-lbl" for="mStock">Tồn kho hiện tại</label>
+                    <input type="number" class="m-inp" id="mStock"
+                           placeholder="0" min="0" step="0.1">
+                    <div class="m-hint">
+                        <i class="fas fa-database" style="font-size:.6rem;color:var(--color-gray-400)"></i>
+                        stock_quantity
+                    </div>
+                </div>
+
+                <div>
+                    <label class="m-lbl" for="mMinStock">Ngưỡng cảnh báo tối thiểu</label>
+                    <input type="number" class="m-inp" id="mMinStock"
+                           placeholder="0" min="0" step="0.1">
+                    <div class="m-hint">
+                        <i class="fas fa-triangle-exclamation"
+                           style="font-size:.6rem;color:#F59E0B"></i>
+                        min_stock_level
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="m-info">
+                <i class="fas fa-circle-info"></i>
+                <span>
+                    Khi <strong>stock_quantity ≤ min_stock_level</strong>, dòng hiện màu đỏ
+                    và hệ thống có thể tự động ẩn món ăn sử dụng nguyên liệu này.
+                </span>
+            </div>
+        </div>
+
+        <div class="m-foot">
+            <button class="btn btn-secondary" id="ingModalCancel">Huỷ bỏ</button>
+            <button class="btn btn-primary-admin" id="btnSubmit">
+                <i class="fas fa-floppy-disk"></i>
+                <span id="submitLabel">Thêm nguyên liệu</span>
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     MODAL — Xác nhận xoá
+════════════════════════════════════════ -->
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal" style="max-width:420px;animation:scaleIn .22s ease">
+        <div class="modal-header">
+            <div class="modal-title" style="font-size:var(--text-base)">Xác nhận xoá nguyên liệu</div>
+            <button class="modal-close" id="delModalClose"><i class="fas fa-xmark"></i></button>
+        </div>
+        <div class="del-body">
+            <div class="del-ico"><i class="fas fa-trash-can"></i></div>
+            <div>
+                <div class="del-ttl">Xoá nguyên liệu này?</div>
+                <div style="font-size:var(--text-sm);color:var(--color-gray-400);margin-top:5px">
+                    Bạn đang chuẩn bị xoá:
+                </div>
+            </div>
+            <div class="del-tag" id="delIngName"></div>
+            <div class="del-warn">
+                <i class="fas fa-triangle-exclamation" style="color:#F43F5E"></i>
+                <span>
+                    Nếu nguyên liệu đang được dùng trong <strong>công thức món ăn</strong>,
+                    xoá sẽ thất bại. Hành động <strong>không thể hoàn tác</strong>.
+                </span>
+            </div>
+            <div class="del-btns">
+                <button class="btn btn-secondary" id="delCancel" style="flex:1">
+                    <i class="fas fa-arrow-left"></i> Giữ lại
+                </button>
+                <button class="btn btn-danger" id="delConfirm" style="flex:1">
+                    <i class="fas fa-trash"></i> Xoá
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast container -->
+<div id="toastContainer"
+     style="position:fixed;top:var(--space-6);right:var(--space-6);z-index:9999;
+            display:flex;flex-direction:column;gap:var(--space-3);pointer-events:none"></div>
+
+<script src="/public/js/common.js"></script>
+<script src="/public/js/admin/layout.js"></script>
+<script src="/public/js/admin/ingredients.js"></script>
+</body>
+</html>

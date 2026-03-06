@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hồ sơ thành viên — GoMeal</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <link rel="stylesheet" href="/public/css/common.css">
+    <link rel="stylesheet" href="/public/css/user/layout.css">
+    <link rel="stylesheet" href="/public/css/user/components.css">
+    <link rel="stylesheet" href="/public/css/user/pages.css">
+
+    <style>
+    /* ================================================================
+       PROFILE PAGE — prefix .pf-
+       Requires authToken (layout.js guards this page)
+       ================================================================ */
+
+    .pf-layout {
+        display: grid;
+        grid-template-columns: 340px 1fr;
+        gap: 22px;
+        align-items: start;
+    }
+
+    /* ── LEFT COLUMN ─────────────────────────────────────────────── */
+    .pf-left { display: flex; flex-direction: column; gap: 16px; }
+
+    /* ── VIP MEMBERSHIP CARD ─────────────────────────────────────── */
+    .pf-vip-card {
+        border-radius: 24px;
+        position: relative;
+        overflow: hidden;
+        padding: 28px 26px 24px;
+        min-height: 210px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        cursor: default;
+        transition: transform .25s ease, box-shadow .25s ease;
+    }
+    .pf-vip-card:hover {
+        transform: translateY(-3px) rotate(.3deg);
+    }
+
+    /* Tier-specific gradients */
+    .pf-vip-card.tier-none {
+        background: linear-gradient(135deg, #1F2937 0%, #374151 55%, #4B5563 100%);
+        box-shadow: 0 20px 60px rgba(31,41,55,.40);
+    }
+    .pf-vip-card.tier-silver {
+        background: linear-gradient(135deg, #374151 0%, #6B7280 50%, #9CA3AF 100%);
+        box-shadow: 0 20px 60px rgba(107,114,128,.40);
+    }
+    .pf-vip-card.tier-gold {
+        background: linear-gradient(135deg, #78350F 0%, #D97706 50%, #FCD34D 100%);
+        box-shadow: 0 20px 60px rgba(217,119,6,.50);
+    }
+    .pf-vip-card.tier-platinum {
+        background: linear-gradient(135deg, #1E1B4B 0%, #4C1D95 40%, #7C3AED 70%, #A78BFA 100%);
+        box-shadow: 0 20px 60px rgba(76,29,149,.50);
+    }
+
+    /* Decorative elements */
+    .pf-vip-deco {
+        position: absolute;
+        border-radius: 50%;
+        pointer-events: none;
+    }
+    .pf-vip-deco-1 {
+        width: 200px; height: 200px;
+        top: -60px; right: -50px;
+        background: rgba(255,255,255,.07);
+    }
+    .pf-vip-deco-2 {
+        width: 120px; height: 120px;
+        bottom: -30px; right: 40px;
+        background: rgba(255,255,255,.05);
+    }
+    .pf-vip-deco-3 {
+        width: 70px; height: 70px;
+        bottom: 20px; left: -20px;
+        background: rgba(255,255,255,.06);
+    }
+
+    /* Chip pattern overlay */
+    .pf-vip-pattern {
+        position: absolute;
+        inset: 0;
+        background-image:
+            radial-gradient(circle at 20% 50%, rgba(255,255,255,.04) 0%, transparent 50%),
+            repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 20px,
+                rgba(255,255,255,.015) 20px,
+                rgba(255,255,255,.015) 40px
+            );
+        pointer-events: none;
+    }
+
+    /* Card content */
+    .pf-vip-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        position: relative; z-index: 1;
+    }
+    .pf-vip-brand {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+    }
+    .pf-vip-brand-logo {
+        width: 34px; height: 34px;
+        border-radius: 10px;
+        background: rgba(255,255,255,.15);
+        backdrop-filter: blur(6px);
+        border: 1px solid rgba(255,255,255,.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .78rem;
+        color: #fff;
+    }
+    .pf-vip-brand-name {
+        font-size: .72rem;
+        font-weight: 900;
+        color: rgba(255,255,255,.75);
+        letter-spacing: .12em;
+        text-transform: uppercase;
+    }
+
+    .pf-vip-tier-badge {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(255,255,255,.15);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255,255,255,.22);
+        border-radius: 99px;
+        padding: 5px 13px 5px 8px;
+    }
+    .pf-vip-tier-icon {
+        width: 22px; height: 22px;
+        border-radius: 50%;
+        background: rgba(255,255,255,.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .65rem;
+        color: #fff;
+    }
+    .pf-vip-tier-label {
+        font-size: .68rem;
+        font-weight: 800;
+        color: #fff;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+    }
+
+    /* Member name */
+    .pf-vip-mid {
+        position: relative; z-index: 1;
+        margin: 16px 0 0;
+    }
+    .pf-vip-greeting {
+        font-size: .64rem;
+        font-weight: 600;
+        color: rgba(255,255,255,.55);
+        text-transform: uppercase;
+        letter-spacing: .1em;
+        margin-bottom: 3px;
+    }
+    .pf-vip-name {
+        font-size: 1.35rem;
+        font-weight: 900;
+        color: #fff;
+        letter-spacing: -.02em;
+        line-height: 1.15;
+        text-shadow: 0 2px 12px rgba(0,0,0,.25);
+        min-height: 1.6rem;
+    }
+
+    /* Points display */
+    .pf-vip-points-row {
+        position: relative; z-index: 1;
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+        margin: 14px 0 12px;
+    }
+    .pf-vip-points-num {
+        font-size: 2.4rem;
+        font-weight: 900;
+        color: #fff;
+        letter-spacing: -.05em;
+        line-height: 1;
+        text-shadow: 0 2px 14px rgba(0,0,0,.2);
+        transition: all .5s cubic-bezier(.34,1.56,.64,1);
+    }
+    .pf-vip-points-unit {
+        font-size: .76rem;
+        font-weight: 700;
+        color: rgba(255,255,255,.65);
+        letter-spacing: .04em;
+        text-transform: uppercase;
+    }
+
+    /* Progress bar */
+    .pf-vip-progress-wrap {
+        position: relative; z-index: 1;
+    }
+    .pf-vip-progress-labels {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 6px;
+    }
+    .pf-vip-progress-hint {
+        font-size: .62rem;
+        font-weight: 600;
+        color: rgba(255,255,255,.6);
+        line-height: 1.4;
+    }
+    .pf-vip-progress-pct {
+        font-size: .62rem;
+        font-weight: 800;
+        color: rgba(255,255,255,.85);
+    }
+    .pf-vip-progress-track {
+        height: 7px;
+        border-radius: 99px;
+        background: rgba(255,255,255,.18);
+        overflow: hidden;
+    }
+    .pf-vip-progress-fill {
+        height: 100%;
+        border-radius: 99px;
+        background: rgba(255,255,255,.9);
+        width: 0%;
+        transition: width 1.2s cubic-bezier(.34,1.56,.64,1);
+        box-shadow: 0 0 10px rgba(255,255,255,.4);
+    }
+    .tier-platinum .pf-vip-progress-fill {
+        background: linear-gradient(90deg, #C4B5FD, #fff);
+    }
+    .tier-gold .pf-vip-progress-fill {
+        background: linear-gradient(90deg, #FDE68A, #fff);
+    }
+
+    /* Card bottom: member id + chip icon */
+    .pf-vip-bottom {
+        position: relative; z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 16px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(255,255,255,.12);
+    }
+    .pf-vip-member-id {
+        font-size: .62rem;
+        font-weight: 700;
+        color: rgba(255,255,255,.5);
+        letter-spacing: .15em;
+        font-family: 'Outfit', monospace;
+    }
+    .pf-vip-chip-icon {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+    }
+    .pf-vip-chip-rect {
+        width: 28px; height: 20px;
+        border-radius: 4px;
+        background: rgba(255,255,255,.15);
+        border: 1px solid rgba(255,255,255,.2);
+        position: relative;
+        overflow: hidden;
+    }
+    .pf-vip-chip-rect::before {
+        content: '';
+        position: absolute;
+        inset: 3px;
+        border-radius: 2px;
+        background: rgba(255,255,255,.1);
+    }
+
+    /* ── QUICK STATS CARD ─────────────────────────────────────────── */
+    .pf-stats-card {
+        background: #fff;
+        border-radius: 20px;
+        border: 1px solid #EEE9E4;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,.04);
+    }
+    .pf-stats-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+    .pf-stats-header-icon {
+        width: 34px; height: 34px;
+        border-radius: 10px;
+        background: #FFF3EE;
+        color: #FF6B35;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .82rem;
+        flex-shrink: 0;
+    }
+    .pf-stats-header-title {
+        font-size: .88rem;
+        font-weight: 800;
+        color: #111827;
+    }
+    .pf-stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+    .pf-stat-item {
+        background: #F9F7F5;
+        border-radius: 12px;
+        padding: 12px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        transition: background .17s;
+    }
+    .pf-stat-item:hover { background: #FFF3EE; }
+    .pf-stat-val {
+        font-size: 1.3rem;
+        font-weight: 900;
+        color: #111827;
+        letter-spacing: -.03em;
+        line-height: 1;
+    }
+    .pf-stat-val.orange { color: #FF6B35; }
+    .pf-stat-label {
+        font-size: .62rem;
+        font-weight: 700;
+        color: #9CA3AF;
+        text-transform: uppercase;
+        letter-spacing: .07em;
+    }
+
+    /* ── TIER ROADMAP ────────────────────────────────────────────── */
+    .pf-roadmap-card {
+        background: #fff;
+        border-radius: 20px;
+        border: 1px solid #EEE9E4;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,.04);
+    }
+    .pf-roadmap-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 18px;
+    }
+    .pf-roadmap-header-icon {
+        width: 34px; height: 34px;
+        border-radius: 10px;
+        background: #FFF3EE;
+        color: #FF6B35;
+        display: flex; align-items: center; justify-content: center;
+        font-size: .82rem; flex-shrink: 0;
+    }
+    .pf-roadmap-header-title { font-size: .88rem; font-weight: 800; color: #111827; }
+
+    .pf-roadmap-steps {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+    }
+    .pf-roadmap-step {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        position: relative;
+    }
+    .pf-roadmap-step:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        left: 15px;
+        top: 32px;
+        bottom: 0;
+        width: 2px;
+        background: #F3F4F6;
+        z-index: 0;
+    }
+    .pf-roadmap-dot-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex-shrink: 0;
+        position: relative;
+        z-index: 1;
+        padding: 2px 0 16px;
+    }
+    .pf-roadmap-dot {
+        width: 32px; height: 32px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: .78rem;
+        font-weight: 800;
+        border: 2.5px solid;
+        flex-shrink: 0;
+    }
+    .pf-roadmap-dot.done {
+        background: #FF6B35;
+        border-color: #FF6B35;
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(255,107,53,.35);
+    }
+    .pf-roadmap-dot.active {
+        background: #FFF3EE;
+        border-color: #FF6B35;
+        color: #FF6B35;
+        animation: pfDotPulse 2s ease infinite;
+    }
+    @keyframes pfDotPulse {
+        0%,100% { box-shadow: 0 0 0 0 rgba(255,107,53,.4); }
+        50%      { box-shadow: 0 0 0 6px rgba(255,107,53,.0); }
+    }
+    .pf-roadmap-dot.locked {
+        background: #F9F7F5;
+        border-color: #E5E7EB;
+        color: #D1D5DB;
+    }
+    .pf-roadmap-info {
+        flex: 1;
+        padding: 5px 0 16px;
+    }
+    .pf-roadmap-tier-name {
+        font-size: .86rem;
+        font-weight: 800;
+        color: #111827;
+        margin-bottom: 2px;
+    }
+    .pf-roadmap-tier-name.locked { color: #9CA3AF; }
+    .pf-roadmap-tier-desc {
+        font-size: .7rem;
+        color: #9CA3AF;
+        line-height: 1.5;
+    }
+    .pf-roadmap-tier-pts {
+        font-size: .64rem;
+        font-weight: 700;
+        color: #FF6B35;
+        background: #FFF3EE;
+        padding: 2px 8px;
+        border-radius: 6px;
+        display: inline-block;
+        margin-top: 4px;
+    }
+    .pf-roadmap-tier-pts.done {
+        background: #ECFDF5;
+        color: #059669;
+    }
+
+    /* ── RIGHT COLUMN ────────────────────────────────────────────── */
+    .pf-right { display: flex; flex-direction: column; gap: 16px; }
+
+    /* ── PERSONAL INFO CARD ──────────────────────────────────────── */
+    .pf-info-card {
+        background: #fff;
+        border-radius: 20px;
+        border: 1px solid #EEE9E4;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,.04);
+    }
+    .pf-info-hd {
+        padding: 20px 24px 16px;
+        border-bottom: 1px solid #F3F4F6;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .pf-info-hd-left { display: flex; align-items: center; gap: 12px; }
+    .pf-info-hd-icon {
+        width: 38px; height: 38px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #FF6B35, #F7931E);
+        display: flex; align-items: center; justify-content: center;
+        color: #fff; font-size: .88rem;
+        box-shadow: 0 4px 12px rgba(255,107,53,.30);
+    }
+    .pf-info-hd-title { font-size: .96rem; font-weight: 800; color: #111827; }
+    .pf-info-hd-sub   { font-size: .68rem; color: #9CA3AF; font-weight: 500; margin-top: 1px; }
+
+    .pf-info-body { padding: 20px 24px; }
+
+    /* Avatar + name row */
+    .pf-avatar-row {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        margin-bottom: 24px;
+        padding-bottom: 20px;
+        border-bottom: 1px dashed #EEE9E4;
+    }
+    .pf-avatar-circle {
+        width: 72px; height: 72px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #FF6B35, #F7931E);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.8rem; font-weight: 900;
+        color: #fff;
+        flex-shrink: 0;
+        box-shadow: 0 8px 24px rgba(255,107,53,.35);
+        position: relative;
+        cursor: default;
+        transition: transform .2s;
+    }
+    .pf-avatar-circle:hover { transform: scale(1.05); }
+    .pf-avatar-initial {
+        font-size: 1.8rem; font-weight: 900; color: #fff;
+        text-transform: uppercase;
+        line-height: 1;
+        transition: all .4s ease;
+    }
+
+    .pf-avatar-info { flex: 1; min-width: 0; }
+    .pf-avatar-name {
+        font-size: 1.2rem; font-weight: 900;
+        color: #111827; letter-spacing: -.025em;
+        margin-bottom: 4px;
+        min-height: 1.4rem;
+    }
+    .pf-avatar-email {
+        font-size: .78rem; color: #9CA3AF;
+        font-weight: 500;
+        display: flex; align-items: center; gap: 6px;
+    }
+    .pf-avatar-email i { font-size: .7rem; color: #C4BAB3; }
+
+    /* Info fields grid */
+    .pf-fields-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+    }
+    .pf-field {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+    .pf-field.full { grid-column: 1 / -1; }
+    .pf-field-label {
+        font-size: .62rem;
+        font-weight: 800;
+        color: #C4BAB3;
+        text-transform: uppercase;
+        letter-spacing: .1em;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .pf-field-label i { font-size: .58rem; color: #FF6B35; }
+    .pf-field-val {
+        font-size: .86rem;
+        font-weight: 700;
+        color: #111827;
+        background: #F9F7F5;
+        border: 1.5px solid #EEE9E4;
+        border-radius: 12px;
+        padding: 11px 14px;
+        min-height: 42px;
+        display: flex;
+        align-items: center;
+        transition: border-color .17s;
+    }
+    .pf-field-val:hover { border-color: #FFD4C2; }
+    .pf-field-val.empty { color: #D1D5DB; font-style: italic; font-weight: 400; }
+
+    /* ── POINTS BREAKDOWN CARD ───────────────────────────────────── */
+    .pf-points-card {
+        background: #fff;
+        border-radius: 20px;
+        border: 1px solid #EEE9E4;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,.04);
+    }
+    .pf-points-hd {
+        padding: 18px 22px 14px;
+        border-bottom: 1px solid #F3F4F6;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .pf-points-hd-icon {
+        width: 36px; height: 36px;
+        border-radius: 11px;
+        background: linear-gradient(135deg, #F59E0B, #FCD34D);
+        display: flex; align-items: center; justify-content: center;
+        color: #fff; font-size: .84rem;
+        box-shadow: 0 4px 12px rgba(245,158,11,.30);
+    }
+    .pf-points-hd-title { font-size: .92rem; font-weight: 800; color: #111827; }
+
+    .pf-points-body { padding: 18px 22px; }
+
+    .pf-points-big {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        margin-bottom: 18px;
+    }
+    .pf-points-big-num {
+        font-size: 3rem;
+        font-weight: 900;
+        color: #FF6B35;
+        letter-spacing: -.06em;
+        line-height: 1;
+        transition: all .6s cubic-bezier(.34,1.56,.64,1);
+    }
+    .pf-points-big-label {
+        font-size: .82rem;
+        font-weight: 700;
+        color: #9CA3AF;
+    }
+
+    /* Progress to next tier */
+    .pf-progress-section { margin-bottom: 18px; }
+    .pf-progress-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+    .pf-progress-label {
+        font-size: .72rem;
+        font-weight: 700;
+        color: #6B7280;
+    }
+    .pf-progress-pct-label {
+        font-size: .72rem;
+        font-weight: 800;
+        color: #FF6B35;
+    }
+    .pf-progress-track {
+        height: 10px;
+        border-radius: 99px;
+        background: #F3F4F6;
+        overflow: hidden;
+        position: relative;
+    }
+    .pf-progress-fill {
+        height: 100%;
+        border-radius: 99px;
+        background: linear-gradient(90deg, #FF6B35, #F7931E);
+        width: 0%;
+        transition: width 1.3s cubic-bezier(.34,1.56,.64,1) .2s;
+        box-shadow: 0 0 12px rgba(255,107,53,.40);
+        position: relative;
+    }
+    .pf-progress-fill::after {
+        content: '';
+        position: absolute;
+        right: 0; top: 0; bottom: 0;
+        width: 4px;
+        background: rgba(255,255,255,.5);
+        border-radius: 99px;
+        animation: pfGlow 1.5s ease infinite;
+    }
+    @keyframes pfGlow {
+        0%,100% { opacity: 1; }
+        50%      { opacity: .3; }
+    }
+    .pf-progress-hint {
+        font-size: .72rem;
+        color: #9CA3AF;
+        margin-top: 7px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .pf-progress-hint i {
+        font-size: .65rem;
+        color: #FF6B35;
+        flex-shrink: 0;
+    }
+    .pf-progress-hint.complete {
+        color: #059669;
+    }
+    .pf-progress-hint.complete i { color: #059669; }
+
+    /* Points items */
+    .pf-points-items {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .pf-points-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 11px 14px;
+        border-radius: 12px;
+        background: #F9F7F5;
+        border: 1px solid #EEE9E4;
+        transition: background .17s;
+    }
+    .pf-points-item:hover { background: #FFF3EE; border-color: #FFD4C2; }
+    .pf-pi-icon {
+        width: 34px; height: 34px;
+        border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: .8rem; flex-shrink: 0;
+    }
+    .pf-pi-icon.earned   { background: #ECFDF5; color: #059669; }
+    .pf-pi-icon.info     { background: #EFF6FF; color: #2563EB; }
+    .pf-pi-icon.next     { background: #FFF3EE; color: #FF6B35; }
+    .pf-pi-body { flex: 1; }
+    .pf-pi-title { font-size: .8rem; font-weight: 700; color: #111827; margin-bottom: 1px; }
+    .pf-pi-sub   { font-size: .68rem; color: #9CA3AF; }
+    .pf-pi-val   { font-size: .92rem; font-weight: 900; color: #FF6B35; letter-spacing: -.02em; }
+
+    /* ── PERKS CARD ──────────────────────────────────────────────── */
+    .pf-perks-card {
+        background: #fff;
+        border-radius: 20px;
+        border: 1px solid #EEE9E4;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,.04);
+    }
+    .pf-perks-hd {
+        padding: 18px 22px 14px;
+        border-bottom: 1px solid #F3F4F6;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .pf-perks-hd-icon {
+        width: 36px; height: 36px;
+        border-radius: 11px;
+        background: linear-gradient(135deg, #8B5CF6, #6366F1);
+        display: flex; align-items: center; justify-content: center;
+        color: #fff; font-size: .84rem;
+        box-shadow: 0 4px 12px rgba(139,92,246,.30);
+    }
+    .pf-perks-hd-title { font-size: .92rem; font-weight: 800; color: #111827; }
+
+    .pf-perks-grid {
+        padding: 16px 18px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+    .pf-perk-item {
+        padding: 14px;
+        border-radius: 14px;
+        border: 1.5px solid #EEE9E4;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        transition: all .18s;
+    }
+    .pf-perk-item.active { border-color: #FF6B35; background: #FFF3EE; }
+    .pf-perk-item.locked { opacity: .45; }
+    .pf-perk-icon {
+        font-size: 1.3rem;
+    }
+    .pf-perk-name {
+        font-size: .76rem;
+        font-weight: 800;
+        color: #111827;
+    }
+    .pf-perk-desc {
+        font-size: .64rem;
+        color: #9CA3AF;
+        line-height: 1.5;
+    }
+    .pf-perk-status {
+        font-size: .6rem;
+        font-weight: 800;
+        padding: 2px 8px;
+        border-radius: 99px;
+        display: inline-block;
+        width: fit-content;
+    }
+    .pf-perk-status.active { background: #ECFDF5; color: #059669; }
+    .pf-perk-status.locked { background: #F3F4F6; color: #9CA3AF; }
+
+    /* ── CTA CARD ────────────────────────────────────────────────── */
+    .pf-cta-card {
+        background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+        border-radius: 20px;
+        padding: 22px 24px;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        box-shadow: 0 8px 28px rgba(255,107,53,.38);
+        position: relative;
+        overflow: hidden;
+    }
+    .pf-cta-card::before {
+        content: '';
+        position: absolute;
+        width: 140px; height: 140px;
+        border-radius: 50%;
+        background: rgba(255,255,255,.1);
+        right: -30px; top: -40px;
+        pointer-events: none;
+    }
+    .pf-cta-icon {
+        font-size: 2.2rem;
+        position: relative; z-index: 1;
+        flex-shrink: 0;
+        animation: pfBounce 2s ease infinite;
+    }
+    @keyframes pfBounce {
+        0%,100% { transform: translateY(0); }
+        50%      { transform: translateY(-5px); }
+    }
+    .pf-cta-text { flex: 1; position: relative; z-index: 1; }
+    .pf-cta-title { font-size: .96rem; font-weight: 900; color: #fff; margin-bottom: 3px; }
+    .pf-cta-sub   { font-size: .72rem; color: rgba(255,255,255,.75); }
+    .pf-cta-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        border-radius: 12px;
+        background: rgba(255,255,255,.2);
+        backdrop-filter: blur(8px);
+        border: 1.5px solid rgba(255,255,255,.35);
+        color: #fff;
+        font-family: 'Outfit', sans-serif;
+        font-size: .8rem;
+        font-weight: 800;
+        text-decoration: none;
+        white-space: nowrap;
+        position: relative; z-index: 1;
+        transition: all .2s;
+        flex-shrink: 0;
+    }
+    .pf-cta-btn:hover {
+        background: rgba(255,255,255,.32);
+        transform: translateY(-2px);
+    }
+
+    /* ── SKELETON ─────────────────────────────────────────────────── */
+    .pf-sk {
+        background: linear-gradient(90deg, #F6F4F2 25%, #EEE9E4 50%, #F6F4F2 75%);
+        background-size: 600px 100%;
+        animation: pfSk 1.4s ease infinite;
+        border-radius: 8px; display: block;
+    }
+    @keyframes pfSk { 0%{background-position:-600px 0} 100%{background-position:600px 0} }
+    .pf-sk-h1 { height: 20px; margin-bottom: 8px; }
+    .pf-sk-h2 { height: 14px; width: 60%; margin-bottom: 14px; }
+    .pf-sk-field { height: 42px; border-radius: 12px; }
+
+    /* ── TOAST ─────────────────────────────────────────────────────── */
+    #pfToastContainer {
+        position: fixed; top: 20px; right: 20px; z-index: 999;
+        display: flex; flex-direction: column; gap: 8px;
+        pointer-events: none;
+    }
+    .pf-toast {
+        display: flex; align-items: center; gap: 10px;
+        padding: 11px 16px; border-radius: 14px;
+        background: #fff; border-left: 4px solid #FF6B35;
+        box-shadow: 0 8px 28px rgba(0,0,0,.14);
+        font-family: 'Outfit', sans-serif; font-size: .8rem; color: #1A1A1A;
+        max-width: 320px; pointer-events: all;
+        animation: pfToastIn .25s ease; line-height: 1.4;
+    }
+    @keyframes pfToastIn { from{opacity:0;transform:translateX(14px)} to{opacity:1;transform:translateX(0)} }
+    .pf-toast.success { border-color: #10B981; }
+    .pf-toast.error   { border-color: #EF4444; }
+    .pf-toast i { flex-shrink: 0; }
+    .pf-toast.success i { color: #10B981; }
+    .pf-toast.error   i { color: #EF4444; }
+    .pf-toast.info    i { color: #FF6B35; }
+
+    /* ── RESPONSIVE ──────────────────────────────────────────────── */
+    @media (max-width: 1100px) {
+        .pf-layout { grid-template-columns: 300px 1fr; }
+    }
+    @media (max-width: 900px) {
+        .pf-layout { grid-template-columns: 1fr; }
+        .pf-left   { order: 1; }
+        .pf-right  { order: 2; }
+        .pf-vip-card { min-height: 190px; }
+    }
+    @media (max-width: 600px) {
+        .pf-fields-grid { grid-template-columns: 1fr; }
+        .pf-perks-grid  { grid-template-columns: 1fr; }
+        .pf-stats-grid  { grid-template-columns: 1fr 1fr; }
+        .pf-cta-card    { flex-direction: column; text-align: center; }
+    }
+    </style>
+</head>
+<body>
+
+<div class="user-app">
+
+    <!-- SIDEBAR -->
+    <div id="user-sidebar-container"></div>
+
+    <main class="user-main">
+
+        <!-- ── TOPBAR ──────────────────────────────────────────── -->
+        <header class="user-topbar">
+            <div class="topbar-left">
+                <div id="topbarMobileToggle"></div>
+                <p class="topbar-greeting" id="topbarGreetingText">Hồ sơ của bạn ✨</p>
+                <h2 class="topbar-title" data-page-title>Thành viên GoMeal</h2>
+            </div>
+
+            <div class="topbar-search" style="visibility:hidden;pointer-events:none">
+                <i class="fas fa-magnifying-glass"></i>
+                <input type="text" class="topbar-search-input" placeholder="...">
+            </div>
+
+            <div class="topbar-actions">
+                <button class="topbar-action-btn" id="refreshBtn" title="Làm mới">
+                    <i class="fas fa-rotate-right" id="refreshIcon"></i>
+                </button>
+                <a href="/views/user/settings.html" class="topbar-action-btn" title="Cài đặt">
+                    <i class="fas fa-gear"></i>
+                </a>
+                <span class="topbar-username" id="topbarUserName" style="display:none"></span>
+                <div class="topbar-avatar" id="topbarAvatar" title="Hồ sơ">
+                    <i class="fas fa-user"></i>
+                </div>
+            </div>
+        </header>
+
+        <!-- ── PAGE CONTENT ────────────────────────────────────── -->
+        <div class="user-content">
+            <div class="pf-layout">
+
+                <!-- ══ LEFT COLUMN ══════════════════════════════ -->
+                <div class="pf-left">
+
+                    <!-- VIP Card (dynamic) -->
+                    <div class="pf-vip-card tier-none" id="pfVipCard">
+                        <!-- Decorative -->
+                        <div class="pf-vip-deco pf-vip-deco-1"></div>
+                        <div class="pf-vip-deco pf-vip-deco-2"></div>
+                        <div class="pf-vip-deco pf-vip-deco-3"></div>
+                        <div class="pf-vip-pattern"></div>
+
+                        <!-- Top row -->
+                        <div class="pf-vip-top">
+                            <div class="pf-vip-brand">
+                                <div class="pf-vip-brand-logo">
+                                    <i class="fas fa-utensils"></i>
+                                </div>
+                                <span class="pf-vip-brand-name">GoMeal</span>
+                            </div>
+                            <div class="pf-vip-tier-badge" id="pfVipTierBadge">
+                                <div class="pf-vip-tier-icon">
+                                    <i class="fas fa-circle" id="pfVipTierIcon"></i>
+                                </div>
+                                <span class="pf-vip-tier-label" id="pfVipTierLabel">—</span>
+                            </div>
+                        </div>
+
+                        <!-- Member name -->
+                        <div class="pf-vip-mid">
+                            <p class="pf-vip-greeting">Thành viên</p>
+                            <p class="pf-vip-name" id="pfVipName">
+                                <span class="pf-sk" style="height:26px;width:180px;display:inline-block;border-radius:8px"></span>
+                            </p>
+                        </div>
+
+                        <!-- Points -->
+                        <div class="pf-vip-points-row">
+                            <span class="pf-vip-points-num" id="pfVipPoints">0</span>
+                            <span class="pf-vip-points-unit">điểm tích lũy</span>
+                        </div>
+
+                        <!-- Progress bar -->
+                        <div class="pf-vip-progress-wrap">
+                            <div class="pf-vip-progress-labels">
+                                <span class="pf-vip-progress-hint" id="pfVipProgressHint">Đang tải...</span>
+                                <span class="pf-vip-progress-pct" id="pfVipProgressPct">0%</span>
+                            </div>
+                            <div class="pf-vip-progress-track">
+                                <div class="pf-vip-progress-fill" id="pfVipProgressFill"></div>
+                            </div>
+                        </div>
+
+                        <!-- Bottom -->
+                        <div class="pf-vip-bottom">
+                            <span class="pf-vip-member-id" id="pfVipMemberId">ID ••••••</span>
+                            <div class="pf-vip-chip-icon">
+                                <div class="pf-vip-chip-rect"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Stats -->
+                    <div class="pf-stats-card">
+                        <div class="pf-stats-header">
+                            <div class="pf-stats-header-icon"><i class="fas fa-chart-bar"></i></div>
+                            <span class="pf-stats-header-title">Tổng quan</span>
+                        </div>
+                        <div class="pf-stats-grid" id="pfStatsGrid">
+                            <div class="pf-stat-item">
+                                <div class="pf-sk" style="height:28px;border-radius:8px"></div>
+                                <div class="pf-sk" style="height:11px;width:70%;border-radius:6px;margin-top:4px"></div>
+                            </div>
+                            <div class="pf-stat-item">
+                                <div class="pf-sk" style="height:28px;border-radius:8px"></div>
+                                <div class="pf-sk" style="height:11px;width:70%;border-radius:6px;margin-top:4px"></div>
+                            </div>
+                            <div class="pf-stat-item">
+                                <div class="pf-sk" style="height:28px;border-radius:8px"></div>
+                                <div class="pf-sk" style="height:11px;width:70%;border-radius:6px;margin-top:4px"></div>
+                            </div>
+                            <div class="pf-stat-item">
+                                <div class="pf-sk" style="height:28px;border-radius:8px"></div>
+                                <div class="pf-sk" style="height:11px;width:70%;border-radius:6px;margin-top:4px"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tier Roadmap -->
+                    <div class="pf-roadmap-card">
+                        <div class="pf-roadmap-header">
+                            <div class="pf-roadmap-header-icon"><i class="fas fa-trophy"></i></div>
+                            <span class="pf-roadmap-header-title">Lộ trình thành viên</span>
+                        </div>
+                        <div class="pf-roadmap-steps" id="pfRoadmapSteps">
+                            <div style="padding:20px 0;text-align:center">
+                                <div class="pf-sk" style="height:14px;width:60%;margin:0 auto 8px"></div>
+                                <div class="pf-sk" style="height:11px;width:40%;margin:0 auto"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div><!-- /pf-left -->
+
+                <!-- ══ RIGHT COLUMN ═════════════════════════════ -->
+                <div class="pf-right">
+
+                    <!-- CTA Card -->
+                    <div class="pf-cta-card">
+                        <div class="pf-cta-icon">🍽️</div>
+                        <div class="pf-cta-text">
+                            <p class="pf-cta-title">Đặt món để tích thêm điểm!</p>
+                            <p class="pf-cta-sub">Mỗi đơn hàng = điểm thưởng tích lũy lên hạng VIP</p>
+                        </div>
+                        <a href="/views/user/menu.html" class="pf-cta-btn">
+                            <i class="fas fa-utensils"></i>
+                            Đặt ngay
+                        </a>
+                    </div>
+
+                    <!-- Personal Info -->
+                    <div class="pf-info-card">
+                        <div class="pf-info-hd">
+                            <div class="pf-info-hd-left">
+                                <div class="pf-info-hd-icon"><i class="fas fa-user"></i></div>
+                                <div>
+                                    <p class="pf-info-hd-title">Thông tin cá nhân</p>
+                                    <p class="pf-info-hd-sub">Thông tin tài khoản của bạn</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pf-info-body">
+                            <!-- Avatar row -->
+                            <div class="pf-avatar-row">
+                                <div class="pf-avatar-circle" id="pfAvatarCircle">
+                                    <span class="pf-avatar-initial" id="pfAvatarInitial">?</span>
+                                </div>
+                                <div class="pf-avatar-info">
+                                    <p class="pf-avatar-name" id="pfAvatarName">
+                                        <span class="pf-sk" style="height:20px;width:140px;display:inline-block;border-radius:7px"></span>
+                                    </p>
+                                    <p class="pf-avatar-email" id="pfAvatarEmail">
+                                        <i class="fas fa-envelope"></i>
+                                        <span class="pf-sk" style="height:14px;width:160px;display:inline-block;border-radius:6px"></span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Fields -->
+                            <div class="pf-fields-grid">
+                                <div class="pf-field">
+                                    <span class="pf-field-label"><i class="fas fa-user"></i> Họ và tên</span>
+                                    <div class="pf-field-val pf-sk pf-sk-field" id="pfFieldName"></div>
+                                </div>
+                                <div class="pf-field">
+                                    <span class="pf-field-label"><i class="fas fa-phone"></i> Số điện thoại</span>
+                                    <div class="pf-field-val pf-sk pf-sk-field" id="pfFieldPhone"></div>
+                                </div>
+                                <div class="pf-field full">
+                                    <span class="pf-field-label"><i class="fas fa-envelope"></i> Email</span>
+                                    <div class="pf-field-val pf-sk pf-sk-field" id="pfFieldEmail"></div>
+                                </div>
+                                <div class="pf-field full">
+                                    <span class="pf-field-label"><i class="fas fa-location-dot"></i> Địa chỉ</span>
+                                    <div class="pf-field-val pf-sk pf-sk-field" id="pfFieldAddress"></div>
+                                </div>
+                                <div class="pf-field">
+                                    <span class="pf-field-label"><i class="fas fa-star"></i> Hạng thành viên</span>
+                                    <div class="pf-field-val pf-sk pf-sk-field" id="pfFieldTier"></div>
+                                </div>
+                                <div class="pf-field">
+                                    <span class="pf-field-label"><i class="fas fa-clock"></i> Đặt món gần nhất</span>
+                                    <div class="pf-field-val pf-sk pf-sk-field" id="pfFieldLastOrder"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Points Breakdown -->
+                    <div class="pf-points-card">
+                        <div class="pf-points-hd">
+                            <div class="pf-points-hd-icon"><i class="fas fa-coins"></i></div>
+                            <span class="pf-points-hd-title">Chi tiết điểm thưởng</span>
+                        </div>
+                        <div class="pf-points-body">
+                            <!-- Big number -->
+                            <div class="pf-points-big">
+                                <span class="pf-points-big-num" id="pfPointsBig">—</span>
+                                <span class="pf-points-big-label">điểm tích lũy</span>
+                            </div>
+
+                            <!-- Progress to next tier -->
+                            <div class="pf-progress-section">
+                                <div class="pf-progress-top">
+                                    <span class="pf-progress-label" id="pfProgressLabel">Đang tải...</span>
+                                    <span class="pf-progress-pct-label" id="pfProgressPct">0%</span>
+                                </div>
+                                <div class="pf-progress-track">
+                                    <div class="pf-progress-fill" id="pfProgressFill"></div>
+                                </div>
+                                <p class="pf-progress-hint" id="pfProgressHint">
+                                    <i class="fas fa-arrow-right" id="pfProgressHintIcon"></i>
+                                    <span id="pfProgressHintText">Đang tính toán...</span>
+                                </p>
+                            </div>
+
+                            <!-- Points items -->
+                            <div class="pf-points-items" id="pfPointsItems">
+                                <div class="pf-sk" style="height:56px;border-radius:12px"></div>
+                                <div class="pf-sk" style="height:56px;border-radius:12px"></div>
+                                <div class="pf-sk" style="height:56px;border-radius:12px"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Perks -->
+                    <div class="pf-perks-card">
+                        <div class="pf-perks-hd">
+                            <div class="pf-perks-hd-icon"><i class="fas fa-gift"></i></div>
+                            <span class="pf-perks-hd-title">Quyền lợi thành viên</span>
+                        </div>
+                        <div class="pf-perks-grid" id="pfPerksGrid">
+                            <div class="pf-sk" style="height:100px;border-radius:14px"></div>
+                            <div class="pf-sk" style="height:100px;border-radius:14px"></div>
+                            <div class="pf-sk" style="height:100px;border-radius:14px"></div>
+                            <div class="pf-sk" style="height:100px;border-radius:14px"></div>
+                        </div>
+                    </div>
+
+                </div><!-- /pf-right -->
+
+            </div><!-- /pf-layout -->
+        </div><!-- /user-content -->
+
+    </main>
+
+    <div id="chatbotBubble"></div>
+
+</div><!-- /user-app -->
+
+<!-- Toast -->
+<div id="pfToastContainer"></div>
+
+<script src="/public/js/common.js"></script>
+<script src="/public/js/user/layout.js"></script>
+<script src="/public/js/user/profile.js"></script>
+
+</body>
+</html>

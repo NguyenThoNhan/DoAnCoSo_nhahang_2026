@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Khuyến mãi — Smart Restaurant</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/public/css/common.css">
+    <link rel="stylesheet" href="/public/css/admin/layout.css">
+    <link rel="stylesheet" href="/public/css/admin/components.css">
+    <link rel="stylesheet" href="/public/css/admin/pages.css">
+
+    <style>
+        /* ─── Animations ─── */
+        @keyframes fadeUp  { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes rowIn   { from{opacity:0;transform:translateX(-6px)} to{opacity:1;transform:translateX(0)} }
+        @keyframes shimmer { 0%{background-position:-600px 0} 100%{background-position:600px 0} }
+        @keyframes scaleIn { from{opacity:0;transform:scale(.94)} to{opacity:1;transform:scale(1)} }
+        @keyframes pulse   { 0%,100%{opacity:1} 50%{opacity:.55} }
+
+        /* ════════════════════════════════════════
+           TWO-COLUMN LAYOUT: sidebar + table
+        ════════════════════════════════════════ */
+        .pm-grid {
+            display: grid;
+            grid-template-columns: 230px 1fr;
+            gap: var(--space-5);
+            align-items: start;
+            animation: fadeUp .35s ease both;
+        }
+
+        /* ── Sidebar ── */
+        .pm-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-4);
+            position: sticky;
+            top: var(--space-4);
+        }
+
+        .pm-add-btn {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: 100%; padding: .65rem var(--space-4);
+            background: var(--admin-primary); color: #fff;
+            border: none; border-radius: var(--radius-xl);
+            font-family: var(--font-primary); font-size: var(--text-sm); font-weight: 700;
+            cursor: pointer; transition: all .2s ease;
+        }
+        .pm-add-btn:hover {
+            background: var(--admin-primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(249,115,22,.3);
+        }
+
+        /* Panel card */
+        .sb-card {
+            background: var(--color-white);
+            border-radius: var(--radius-2xl);
+            border: 1px solid var(--color-gray-100);
+            box-shadow: 0 1px 4px rgba(0,0,0,.05);
+            overflow: hidden;
+        }
+        .sb-card-hd {
+            padding: var(--space-3) var(--space-4);
+            font-size: .61rem; font-weight: 800;
+            color: var(--color-gray-400); text-transform: uppercase; letter-spacing: .09em;
+            border-bottom: 1px solid var(--color-gray-100);
+            display: flex; align-items: center; gap: 6px;
+        }
+        .sb-card-hd i { color: var(--admin-primary); font-size: .76rem; }
+
+        /* Filter rows */
+        .sb-frow {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: var(--space-3) var(--space-4);
+            cursor: pointer; transition: background .13s;
+            border-bottom: 1px solid var(--color-gray-50);
+        }
+        .sb-frow:last-child { border-bottom: none; }
+        .sb-frow:hover { background: var(--color-gray-50); }
+        .sb-frow.f-on { background: var(--admin-primary-subtle); }
+        .sb-frow-lbl {
+            display: flex; align-items: center; gap: 8px;
+            font-size: var(--text-xs); font-weight: 600; color: var(--color-gray-600);
+        }
+        .f-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .fd-all     { background: var(--admin-primary); }
+        .fd-active  { background: #10B981; }
+        .fd-expired { background: var(--color-gray-400); }
+        .fd-coming  { background: #3B82F6; }
+        .sb-frow-n  { font-size: var(--text-sm); font-weight: 800; color: var(--color-gray-800); }
+
+        /* Type filter rows */
+        .fd-percent { background: #8B5CF6; }
+        .fd-fixed   { background: #F59E0B; }
+
+        /* Search */
+        .sb-search-wrap {
+            padding: var(--space-4);
+            display: flex; flex-direction: column; gap: var(--space-2);
+        }
+        .sb-search-title { font-size: .61rem; font-weight: 800; color: var(--color-gray-400); text-transform: uppercase; letter-spacing: .09em; }
+        .sb-sbox {
+            display: flex; align-items: center; gap: 8px;
+            padding: .42rem var(--space-3);
+            background: var(--color-gray-50);
+            border: 1.5px solid var(--color-gray-200); border-radius: var(--radius-lg);
+            transition: all .2s ease;
+        }
+        .sb-sbox:focus-within {
+            border-color: var(--admin-primary); background: #fff;
+            box-shadow: 0 0 0 3px rgba(249,115,22,.1);
+        }
+        .sb-sbox i    { font-size: .78rem; color: var(--color-gray-400); flex-shrink: 0; }
+        .sb-sbox-inp  {
+            flex: 1; border: none; background: transparent; outline: none;
+            font-family: var(--font-primary); font-size: var(--text-xs); color: var(--color-gray-800);
+        }
+        .sb-sbox-inp::placeholder { color: var(--color-gray-400); }
+        .sb-cnt { font-size: .62rem; color: var(--color-gray-400); text-align: center; }
+
+        /* Info note card */
+        .sb-note-wrap { padding: var(--space-4); }
+        .sb-note {
+            background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: var(--radius-lg);
+            padding: var(--space-3) var(--space-4);
+            font-size: .68rem; color: #1E40AF; line-height: 1.55;
+            display: flex; align-items: flex-start; gap: 8px;
+        }
+        .sb-note i { flex-shrink: 0; margin-top: 1px; }
+
+        /* ════════════════════════════════════════
+           MAIN CONTENT
+        ════════════════════════════════════════ */
+        .pm-content { display: flex; flex-direction: column; gap: var(--space-4); }
+        .pm-content-hd { display: flex; align-items: center; justify-content: space-between; }
+        .pm-content-title { font-size: var(--text-base); font-weight: 800; color: var(--color-gray-900); letter-spacing: -.02em; }
+        .pm-content-sub   { font-size: var(--text-xs); color: var(--color-gray-400); margin-top: 2px; }
+
+        /* ════════════════════════════════════════
+           PROMOTION CARDS (grid view, not plain table)
+        ════════════════════════════════════════ */
+        .pm-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+            gap: var(--space-4);
+        }
+
+        .pm-card {
+            background: var(--color-white);
+            border-radius: var(--radius-2xl);
+            border: 1.5px solid var(--color-gray-100);
+            box-shadow: 0 2px 6px rgba(0,0,0,.05);
+            overflow: hidden;
+            transition: all .2s ease;
+            animation: rowIn .28s ease both;
+        }
+        .pm-card:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(0,0,0,.1); }
+        .pm-card.card-active  { border-color: #A7F3D0; }
+        .pm-card.card-expired { border-color: var(--color-gray-200); opacity: .7; }
+        .pm-card.card-coming  { border-color: #BFDBFE; }
+
+        /* Card top stripe */
+        .pm-card-stripe {
+            height: 4px; width: 100%;
+        }
+        .stripe-active  { background: linear-gradient(90deg,#34D399,#10B981); }
+        .stripe-expired { background: linear-gradient(90deg,#CBD5E1,#94A3B8); }
+        .stripe-coming  { background: linear-gradient(90deg,#93C5FD,#3B82F6); }
+
+        .pm-card-body { padding: var(--space-5); }
+
+        /* Code display */
+        .pm-code-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-4); }
+        .pm-code {
+            font-family: 'Courier New', monospace; font-size: var(--text-xl); font-weight: 900;
+            letter-spacing: .08em; color: var(--color-gray-900);
+        }
+        .pm-status-badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 4px 11px; border-radius: var(--radius-full);
+            font-size: .64rem; font-weight: 700; border: 1px solid transparent;
+        }
+        .psb-active  { background: #ECFDF5; color: #065F46; border-color: #A7F3D0; }
+        .psb-expired { background: var(--color-gray-100); color: var(--color-gray-500); border-color: var(--color-gray-200); }
+        .psb-coming  { background: #EFF6FF; color: #1D4ED8; border-color: #BFDBFE; }
+
+        /* Value display — big hero number */
+        .pm-value-area { margin-bottom: var(--space-4); }
+        .pm-value-num {
+            font-size: 2.6rem; font-weight: 900; line-height: 1; letter-spacing: -.05em;
+        }
+        .pm-value-pct  { color: #7C3AED; }
+        .pm-value-vnd  { color: #D97706; }
+        .pm-value-unit { font-size: var(--text-sm); font-weight: 600; color: var(--color-gray-400); margin-left: 4px; }
+
+        /* Type badge */
+        .pm-type {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: .63rem; font-weight: 700; padding: 2px 9px;
+            border-radius: var(--radius-full); margin-top: var(--space-1);
+        }
+        .pt-percent { background: #F5F3FF; color: #6D28D9; border: 1px solid #DDD6FE; }
+        .pt-fixed   { background: #FFFBEB; color: #92400E; border: 1px solid #FDE68A; }
+
+        /* Meta info row */
+        .pm-meta {
+            display: flex; flex-direction: column; gap: var(--space-2);
+            padding-top: var(--space-4);
+            border-top: 1px solid var(--color-gray-100);
+        }
+        .pm-meta-row {
+            display: flex; align-items: center; gap: 8px;
+            font-size: .7rem; color: var(--color-gray-500);
+        }
+        .pm-meta-row i { width: 14px; text-align: center; color: var(--color-gray-300); font-size: .72rem; flex-shrink: 0; }
+        .pm-meta-val { font-weight: 600; color: var(--color-gray-700); }
+
+        /* Expired overlay text */
+        .pm-expired-label {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%) rotate(-15deg);
+            font-size: var(--text-3xl); font-weight: 900; color: rgba(0,0,0,.06);
+            letter-spacing: .1em; white-space: nowrap; pointer-events: none;
+            text-transform: uppercase;
+        }
+
+        /* Skeleton card */
+        .pm-sk-card {
+            background: var(--color-white);
+            border-radius: var(--radius-2xl);
+            border: 1.5px solid var(--color-gray-100);
+            padding: var(--space-5);
+            display: flex; flex-direction: column; gap: var(--space-3);
+        }
+        .sk { border-radius: var(--radius-md); background: linear-gradient(90deg,#f0f0f0 25%,#e4e4e4 50%,#f0f0f0 75%); background-size: 600px 100%; animation: shimmer 1.4s ease infinite; }
+
+        /* Empty state */
+        .pm-empty { padding: var(--space-16) var(--space-6); display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--space-4); }
+        .pm-empty-ico { width: 76px; height: 76px; border-radius: var(--radius-2xl); background: var(--color-gray-50); border: 1.5px dashed var(--color-gray-200); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; color: var(--color-gray-200); }
+        .pm-empty-t { font-size: var(--text-xl); font-weight: 800; color: var(--color-gray-300); }
+        .pm-empty-d { font-size: var(--text-sm); color: var(--color-gray-400); max-width: 280px; line-height: 1.6; }
+
+        /* ════════════════════════════════════════
+           MODAL
+        ════════════════════════════════════════ */
+        .m-body { padding: var(--space-6); display: flex; flex-direction: column; gap: var(--space-5); }
+        .m-g2   { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+        .m-fw   { grid-column: 1/-1; }
+
+        .m-lbl { display: block; font-size: var(--text-xs); font-weight: 700; color: var(--color-gray-600); margin-bottom: var(--space-2); }
+        .m-req { color: var(--color-error); margin-left: 2px; }
+        .m-inp {
+            width: 100%; padding: .54rem var(--space-4);
+            border: 1.5px solid var(--color-gray-200); border-radius: var(--radius-lg);
+            font-family: var(--font-primary); font-size: var(--text-sm); color: var(--color-gray-800);
+            background: #fff; outline: none;
+            transition: all .2s ease; box-sizing: border-box;
+        }
+        .m-inp::placeholder { color: var(--color-gray-400); }
+        .m-inp:focus         { border-color: var(--admin-primary); box-shadow: 0 0 0 3px rgba(249,115,22,.1); }
+        .m-inp.inp-err       { border-color: var(--color-error); }
+        .m-inp.inp-err:focus { box-shadow: 0 0 0 3px rgba(239,68,68,.1); }
+        .m-err  { font-size: .66rem; color: var(--color-error); margin-top: 4px; display: none; }
+        .m-err.show { display: block; }
+        .m-hint { font-size: .62rem; color: var(--color-gray-400); margin-top: 3px; }
+
+        /* Type picker */
+        .pm-type-picker { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+        .pm-type-card {
+            padding: var(--space-4); border-radius: var(--radius-xl);
+            border: 2px solid var(--color-gray-200); background: #fff;
+            cursor: pointer; display: flex; flex-direction: column; align-items: center;
+            gap: var(--space-2); text-align: center; transition: all .2s ease;
+        }
+        .pm-type-card:hover { border-color: var(--admin-primary); box-shadow: 0 4px 14px rgba(249,115,22,.1); }
+        .pm-tc-ico {
+            width: 44px; height: 44px; border-radius: var(--radius-lg);
+            display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+            transition: transform .22s ease;
+        }
+        .pm-type-card:hover .pm-tc-ico { transform: scale(1.1) rotate(-5deg); }
+        .pm-tc-name { font-size: var(--text-xs); font-weight: 700; color: var(--color-gray-600); }
+        .pm-tc-sub  { font-size: .6rem; color: var(--color-gray-400); line-height: 1.35; }
+
+        .pm-type-card[data-type="percent"].tc-on { border-color: #7C3AED; background: #F5F3FF; }
+        .pm-type-card[data-type="percent"].tc-on .pm-tc-ico { background: #EDE9FE; color: #6D28D9; }
+        .pm-type-card[data-type="percent"].tc-on .pm-tc-name { color: #4C1D95; }
+        .pm-type-card[data-type="fixed"].tc-on   { border-color: #D97706; background: #FFFBEB; }
+        .pm-type-card[data-type="fixed"].tc-on   .pm-tc-ico { background: #FEF3C7; color: #92400E; }
+        .pm-type-card[data-type="fixed"].tc-on   .pm-tc-name { color: #78350F; }
+
+        .m-info {
+            background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: var(--radius-lg);
+            padding: var(--space-3) var(--space-4);
+            font-size: .7rem; color: #1E40AF; line-height: 1.55;
+            display: flex; align-items: flex-start; gap: var(--space-2);
+        }
+        .m-info i { flex-shrink: 0; margin-top: 1px; }
+
+        .m-foot {
+            display: flex; align-items: center; justify-content: flex-end;
+            gap: var(--space-3); padding: var(--space-4) var(--space-6);
+            border-top: 1px solid var(--color-gray-100); background: var(--color-gray-50);
+        }
+
+        /* Responsive */
+        @media(max-width: 960px) {
+            .pm-grid { grid-template-columns: 1fr; }
+            .pm-sidebar { position: static; }
+        }
+        @media(max-width: 640px) {
+            .pm-cards { grid-template-columns: 1fr; }
+            .m-g2 { grid-template-columns: 1fr; }
+            .pm-type-picker { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="admin-app" id="adminApp">
+    <div id="admin-sidebar-container"></div>
+
+    <main class="admin-main" id="adminMain">
+
+        <!-- ── Topbar ── -->
+        <header class="admin-topbar">
+            <div class="topbar-left">
+                <div class="topbar-title">Khuyến mãi</div>
+                <nav class="topbar-breadcrumb">
+                    <a href="/views/admin/index.html">Dashboard</a>
+                    <span class="separator">/</span>
+                    <span class="current">Marketing</span>
+                    <span class="separator">/</span>
+                    <span class="current">Khuyến mãi</span>
+                </nav>
+            </div>
+            <div class="topbar-search">
+                <i class="fas fa-search topbar-search-icon"></i>
+                <input type="text" id="topbarSearch" placeholder="Tìm mã giảm giá...">
+            </div>
+            <div class="topbar-actions">
+                <button class="topbar-action-btn" id="btnRefresh" title="Làm mới">
+                    <i class="fas fa-rotate-right"></i>
+                </button>
+                <button class="btn btn-primary-admin btn-sm" id="btnAddTop">
+                    <i class="fas fa-plus"></i> Tạo mã mới
+                </button>
+            </div>
+        </header>
+
+        <!-- ── Content ── -->
+        <div class="admin-content" style="display:flex;flex-direction:column;gap:var(--space-5)">
+
+            <div class="page-header">
+                <div class="page-header-left">
+                    <h1 class="page-heading">
+                        Khuyến mãi & Mã giảm giá
+                        <span id="headCount"
+                              style="font-size:var(--text-xl);font-weight:500;color:var(--color-gray-400)"></span>
+                    </h1>
+                    <p class="page-desc">Quản lý mã coupon, theo dõi trạng thái và thời hạn hiệu lực</p>
+                </div>
+                <div class="page-header-actions">
+                    <span style="display:inline-flex;align-items:center;gap:6px;font-size:var(--text-xs);
+                                 color:#1D4ED8;background:#DBEAFE;padding:5px 12px;
+                                 border-radius:var(--radius-full)">
+                        <i class="fas fa-circle-info"></i>
+                        Ngày gửi API định dạng YYYY-MM-DD
+                    </span>
+                </div>
+            </div>
+
+            <!-- Two-column grid -->
+            <div class="pm-grid">
+
+                <!-- ─── Sidebar ─── -->
+                <aside class="pm-sidebar">
+
+                    <button class="pm-add-btn" id="btnAddSide">
+                        <i class="fas fa-ticket"></i>
+                        Tạo mã giảm giá mới
+                    </button>
+
+                    <!-- Status filter -->
+                    <div class="sb-card">
+                        <div class="sb-card-hd">
+                            <i class="fas fa-signal"></i> Trạng thái
+                        </div>
+                        <div class="sb-frow f-on" data-sf="all">
+                            <div class="sb-frow-lbl"><div class="f-dot fd-all"></div>Tất cả</div>
+                            <div class="sb-frow-n" id="fsAllN">--</div>
+                        </div>
+                        <div class="sb-frow" data-sf="active">
+                            <div class="sb-frow-lbl"><div class="f-dot fd-active"></div>Đang hoạt động</div>
+                            <div class="sb-frow-n" id="fsActiveN">--</div>
+                        </div>
+                        <div class="sb-frow" data-sf="coming">
+                            <div class="sb-frow-lbl"><div class="f-dot fd-coming"></div>Sắp diễn ra</div>
+                            <div class="sb-frow-n" id="fsComingN">--</div>
+                        </div>
+                        <div class="sb-frow" data-sf="expired">
+                            <div class="sb-frow-lbl"><div class="f-dot fd-expired"></div>Đã hết hạn</div>
+                            <div class="sb-frow-n" id="fsExpiredN">--</div>
+                        </div>
+                    </div>
+
+                    <!-- Type filter -->
+                    <div class="sb-card">
+                        <div class="sb-card-hd">
+                            <i class="fas fa-tags"></i> Loại giảm giá
+                        </div>
+                        <div class="sb-frow" data-tf="all">
+                            <div class="sb-frow-lbl"><div class="f-dot fd-all"></div>Tất cả loại</div>
+                            <div class="sb-frow-n" id="ftAllN">--</div>
+                        </div>
+                        <div class="sb-frow" data-tf="percent">
+                            <div class="sb-frow-lbl"><div class="f-dot fd-percent"></div>Phần trăm (%)</div>
+                            <div class="sb-frow-n" id="ftPctN">--</div>
+                        </div>
+                        <div class="sb-frow" data-tf="fixed">
+                            <div class="sb-frow-lbl"><div class="f-dot fd-fixed"></div>Số tiền cố định</div>
+                            <div class="sb-frow-n" id="ftFixedN">--</div>
+                        </div>
+                    </div>
+
+                    <!-- Search -->
+                    <div class="sb-card">
+                        <div class="sb-search-wrap">
+                            <div class="sb-search-title">Tìm kiếm</div>
+                            <div class="sb-sbox">
+                                <i class="fas fa-search"></i>
+                                <input type="text" class="sb-sbox-inp" id="searchInput"
+                                       placeholder="Mã giảm giá...">
+                            </div>
+                            <div class="sb-cnt"><span id="resultCount">0</span> kết quả</div>
+                        </div>
+                    </div>
+
+                    <!-- API note -->
+                    <div class="sb-card">
+                        <div class="sb-note-wrap">
+                            <div class="sb-note">
+                                <i class="fas fa-circle-info"></i>
+                                <span>
+                                    API chỉ có <strong>GET + POST</strong>. Không thể sửa/xoá mã đã tạo.
+                                    Kiểm tra kỹ trước khi tạo mã mới.
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                </aside>
+
+                <!-- ─── Main content ─── -->
+                <div class="pm-content">
+
+                    <div class="pm-content-hd">
+                        <div>
+                            <div class="pm-content-title">Danh sách mã giảm giá</div>
+                            <div class="pm-content-sub">Mới nhất trước • Bấm vào card để sao chép mã</div>
+                        </div>
+                        <button class="topbar-action-btn" id="btnRefresh2"
+                                title="Làm mới" style="opacity:.65">
+                            <i class="fas fa-rotate-right"></i>
+                        </button>
+                    </div>
+
+                    <!-- Cards container -->
+                    <div id="promoCards"></div>
+
+                </div>
+            </div><!-- /pm-grid -->
+
+        </div><!-- /admin-content -->
+    </main>
+</div>
+
+<!-- ════════════════════════════════════════
+     MODAL — Tạo mã giảm giá
+════════════════════════════════════════ -->
+<div class="modal-overlay" id="promoModal">
+    <div class="modal modal-lg"
+         style="max-width:560px;animation:scaleIn .22s ease">
+
+        <div class="modal-header">
+            <div style="display:flex;align-items:center;gap:var(--space-3)">
+                <div style="width:40px;height:40px;border-radius:var(--radius-lg);
+                            background:var(--admin-primary-light);color:var(--admin-primary);
+                            display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                    <i class="fas fa-ticket"></i>
+                </div>
+                <div class="modal-title">Tạo mã giảm giá mới</div>
+            </div>
+            <button class="modal-close" id="promoModalClose"><i class="fas fa-xmark"></i></button>
+        </div>
+
+        <div class="m-body">
+
+            <!-- Code + min order -->
+            <div class="m-g2">
+                <div>
+                    <label class="m-lbl" for="mCode">
+                        Mã giảm giá <span class="m-req">*</span>
+                    </label>
+                    <input type="text" class="m-inp" id="mCode"
+                           placeholder="VD: SUMMER20, GIAM50K..."
+                           style="text-transform:uppercase;font-family:'Courier New',monospace;font-weight:700;letter-spacing:.06em">
+                    <div class="m-err" id="errCode">Vui lòng nhập mã giảm giá.</div>
+                </div>
+                <div>
+                    <label class="m-lbl" for="mMinOrder">Đơn hàng tối thiểu (₫)</label>
+                    <input type="number" class="m-inp" id="mMinOrder"
+                           placeholder="0 = không giới hạn" min="0" step="1000">
+                    <div class="m-hint">Để trống hoặc 0 = áp dụng mọi đơn</div>
+                </div>
+            </div>
+
+            <!-- Type picker -->
+            <div>
+                <label class="m-lbl">Loại giảm giá <span class="m-req">*</span></label>
+                <div class="pm-type-picker" id="typePicker">
+                    <button type="button" class="pm-type-card" data-type="percent">
+                        <div class="pm-tc-ico" style="background:#EDE9FE;color:#7C3AED">
+                            <i class="fas fa-percent"></i>
+                        </div>
+                        <div class="pm-tc-name">Phần trăm (%)</div>
+                        <div class="pm-tc-sub">Giảm % trên tổng đơn<br>VD: giảm 20%</div>
+                    </button>
+                    <button type="button" class="pm-type-card" data-type="fixed">
+                        <div class="pm-tc-ico" style="background:#FEF3C7;color:#D97706">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                        <div class="pm-tc-name">Số tiền cố định (₫)</div>
+                        <div class="pm-tc-sub">Giảm số tiền cụ thể<br>VD: giảm 50,000₫</div>
+                    </button>
+                </div>
+                <input type="hidden" id="mType">
+                <div class="m-err" id="errType" style="margin-top:8px">Vui lòng chọn loại giảm giá.</div>
+            </div>
+
+            <!-- Value -->
+            <div>
+                <label class="m-lbl" for="mValue">
+                    Giá trị giảm <span class="m-req">*</span>
+                </label>
+                <div style="position:relative">
+                    <input type="number" class="m-inp" id="mValue"
+                           placeholder="Nhập giá trị..." min="0.01" step="0.01"
+                           style="padding-right:4rem">
+                    <span id="valueUnit"
+                          style="position:absolute;right:var(--space-3);top:50%;transform:translateY(-50%);
+                                 font-size:.72rem;font-weight:700;color:var(--color-gray-400)">
+                        % / ₫
+                    </span>
+                </div>
+                <div class="m-err" id="errValue">Vui lòng nhập giá trị giảm.</div>
+            </div>
+
+            <!-- Date range -->
+            <div class="m-g2">
+                <div>
+                    <label class="m-lbl" for="mStartDate">
+                        Ngày bắt đầu <span class="m-req">*</span>
+                    </label>
+                    <input type="date" class="m-inp" id="mStartDate">
+                    <div class="m-err" id="errStartDate">Vui lòng chọn ngày bắt đầu.</div>
+                </div>
+                <div>
+                    <label class="m-lbl" for="mEndDate">
+                        Ngày kết thúc <span class="m-req">*</span>
+                    </label>
+                    <input type="date" class="m-inp" id="mEndDate">
+                    <div class="m-err" id="errEndDate">Vui lòng chọn ngày kết thúc.</div>
+                </div>
+            </div>
+
+            <div class="m-info">
+                <i class="fas fa-triangle-exclamation" style="color:#F59E0B"></i>
+                <span>
+                    Ngày gửi lên MySQL theo định dạng <strong>YYYY-MM-DD</strong>.
+                    Mã sau khi tạo <strong>không thể sửa hoặc xoá</strong> (API chỉ có POST).
+                    Kiểm tra kỹ trước khi xác nhận.
+                </span>
+            </div>
+
+        </div><!-- /m-body -->
+
+        <div class="m-foot">
+            <button class="btn btn-secondary" id="promoModalCancel">Huỷ bỏ</button>
+            <button class="btn btn-primary-admin" id="btnPromoSubmit">
+                <i class="fas fa-ticket"></i> Tạo mã giảm giá
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<!-- Toast container -->
+<div id="toastContainer"
+     style="position:fixed;top:var(--space-6);right:var(--space-6);z-index:9999;
+            display:flex;flex-direction:column;gap:var(--space-3);pointer-events:none"></div>
+
+<script src="/public/js/common.js"></script>
+<script src="/public/js/admin/layout.js"></script>
+<script src="/public/js/admin/promotions.js"></script>
+</body>
+</html>

@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Khách hàng — Smart Restaurant</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/public/css/common.css">
+    <link rel="stylesheet" href="/public/css/admin/layout.css">
+    <link rel="stylesheet" href="/public/css/admin/components.css">
+    <link rel="stylesheet" href="/public/css/admin/pages.css">
+
+    <style>
+        /* ── Animations ── */
+        @keyframes fadeUp  { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes rowIn   { from{opacity:0;transform:translateX(-6px)} to{opacity:1;transform:translateX(0)} }
+        @keyframes shimmer { 0%{background-position:-600px 0} 100%{background-position:600px 0} }
+        @keyframes spin    { to{transform:rotate(360deg)} }
+        @keyframes scaleIn { from{opacity:0;transform:scale(.96)} to{opacity:1;transform:scale(1)} }
+
+        /* ── Stat strip ── */
+        .cu-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--space-4);
+            animation: fadeUp .35s ease both;
+        }
+        .cu-stat {
+            background: var(--color-white);
+            border-radius: var(--radius-2xl);
+            padding: var(--space-5);
+            border: 1.5px solid var(--color-gray-100);
+            box-shadow: 0 1px 4px rgba(0,0,0,.05);
+            display: flex; align-items: center; gap: var(--space-4);
+            transition: all .2s ease;
+        }
+        .cu-stat:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,.08); }
+        .cu-stat-ico {
+            width: 48px; height: 48px; border-radius: var(--radius-xl);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; flex-shrink: 0;
+        }
+        .csi-total    { background: linear-gradient(135deg,#EDE9FE,#F5F3FF); color: #7C3AED; }
+        .csi-bronze   { background: linear-gradient(135deg,#FEF3C7,#FFFBEB); color: #D97706; }
+        .csi-silver   { background: linear-gradient(135deg,#F1F5F9,#E2E8F0); color: #64748B; }
+        .csi-gold     { background: linear-gradient(135deg,#FEF9C3,#FEFCE8); color: #CA8A04; }
+        .cu-stat-num  { font-size: var(--text-3xl); font-weight: 900; letter-spacing: -.05em; line-height: 1; color: var(--color-gray-900); }
+        .cu-stat-lbl  { font-size: .62rem; color: var(--color-gray-400); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin-top: 3px; }
+
+        /* ── Toolbar ── */
+        .cu-toolbar {
+            display: flex; align-items: center; gap: var(--space-3);
+            background: var(--color-white); border-radius: var(--radius-xl);
+            border: 1px solid var(--color-gray-100); box-shadow: 0 1px 3px rgba(0,0,0,.04);
+            padding: var(--space-3) var(--space-5); flex-wrap: wrap;
+            animation: fadeUp .35s .06s ease both;
+        }
+        .cu-searchbox {
+            flex: 1; min-width: 200px;
+            display: flex; align-items: center; gap: var(--space-2);
+            padding: .5rem var(--space-4); background: var(--color-gray-50);
+            border: 1.5px solid var(--color-gray-200); border-radius: var(--radius-lg);
+            transition: all .2s ease;
+        }
+        .cu-searchbox:focus-within {
+            border-color: var(--admin-primary); background: var(--color-white);
+            box-shadow: 0 0 0 3px rgba(249,115,22,.1);
+        }
+        .cu-searchbox i    { font-size: .82rem; color: var(--color-gray-400); flex-shrink: 0; }
+        .cu-search-inp {
+            flex: 1; border: none; background: transparent; outline: none;
+            font-family: var(--font-primary); font-size: var(--text-sm); color: var(--color-gray-800);
+        }
+        .cu-search-inp::placeholder { color: var(--color-gray-400); }
+
+        /* Level filter pills */
+        .cu-pills {
+            display: flex; align-items: center; gap: 3px;
+            background: var(--color-gray-100); border-radius: var(--radius-md); padding: 3px;
+        }
+        .cu-pill {
+            padding: .3rem .9rem; border-radius: var(--radius-sm); border: none;
+            background: transparent; font-family: var(--font-primary);
+            font-size: var(--text-xs); font-weight: 700; color: var(--color-gray-500);
+            cursor: pointer; white-space: nowrap; transition: all .16s ease;
+        }
+        .cu-pill.p-on { background: var(--color-white); color: var(--admin-primary); box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+
+        .cu-cnt { font-size: var(--text-xs); color: var(--color-gray-400); margin-left: auto; flex-shrink: 0; }
+        .cu-cnt strong { color: var(--color-gray-700); }
+
+        /* ── Table card ── */
+        .cu-tcard {
+            background: var(--color-white); border-radius: var(--radius-2xl);
+            border: 1px solid var(--color-gray-100); box-shadow: 0 1px 4px rgba(0,0,0,.05);
+            overflow: hidden; animation: fadeUp .35s .1s ease both;
+        }
+        .cu-table { width: 100%; border-collapse: collapse; }
+        .cu-table thead th {
+            padding: var(--space-3) var(--space-5); background: var(--color-gray-50);
+            text-align: left; font-size: .64rem; font-weight: 700; color: var(--color-gray-400);
+            text-transform: uppercase; letter-spacing: .07em;
+            border-bottom: 1px solid var(--color-gray-100); white-space: nowrap;
+        }
+        .cu-table thead th.th-right { text-align: right; }
+        .cu-table tbody tr {
+            border-bottom: 1px solid var(--color-gray-50); transition: background .14s ease;
+        }
+        .cu-table tbody tr:last-child { border-bottom: none; }
+        .cu-table tbody tr:hover { background: var(--admin-primary-subtle); }
+        .cu-table tbody tr.tr-in { animation: rowIn .28s ease both; }
+        .cu-table td { padding: var(--space-4) var(--space-5); font-size: var(--text-sm); vertical-align: middle; }
+        .cu-table td.td-right { text-align: right; }
+
+        /* Avatar */
+        .cu-ava {
+            width: 40px; height: 40px; border-radius: var(--radius-xl);
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: .88rem; font-weight: 800; flex-shrink: 0; user-select: none;
+            transition: transform var(--transition-bounce);
+        }
+        tr:hover .cu-ava { transform: scale(1.12) rotate(-5deg); }
+
+        .cu-name  { font-weight: 700; color: var(--color-gray-900); display: block; }
+        .cu-email {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: .67rem; color: var(--color-gray-500);
+            background: var(--color-gray-50); padding: 3px 9px;
+            border-radius: var(--radius-full); border: 1px solid var(--color-gray-100);
+            max-width: 210px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+
+        /* Membership badges */
+        .cu-badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 5px 12px; border-radius: var(--radius-full);
+            font-size: .66rem; font-weight: 700; white-space: nowrap; border: 1px solid transparent;
+        }
+        /* Đồng */
+        .lv-bronze {
+            background: linear-gradient(135deg,#FEF3C7,#FDE68A);
+            color: #92400E; border-color: #FCD34D;
+        }
+        /* Bạc */
+        .lv-silver {
+            background: linear-gradient(135deg,#F1F5F9,#E2E8F0);
+            color: #475569; border-color: #CBD5E1;
+        }
+        /* Vàng */
+        .lv-gold {
+            background: linear-gradient(135deg,#FEF9C3,#FDE047);
+            color: #78350F; border-color: #FACC15;
+            box-shadow: 0 1px 6px rgba(250,204,21,.35);
+        }
+        /* Kim cương */
+        .lv-diamond {
+            background: linear-gradient(135deg,#EFF6FF,#DBEAFE);
+            color: #1D4ED8; border-color: #93C5FD;
+            box-shadow: 0 1px 6px rgba(147,197,253,.4);
+        }
+        /* Default / chưa có hạng */
+        .lv-none {
+            background: var(--color-gray-100); color: var(--color-gray-400);
+            border-color: var(--color-gray-200);
+        }
+
+        /* Points display */
+        .cu-points {
+            font-weight: 800; color: var(--color-gray-800);
+            letter-spacing: -.02em; font-size: var(--text-base);
+        }
+        .cu-points-lbl { font-size: .62rem; color: var(--color-gray-400); font-weight: 500; }
+
+        /* Rank number */
+        .cu-rank {
+            width: 28px; height: 28px; border-radius: var(--radius-md);
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: .72rem; font-weight: 800; color: var(--color-gray-400);
+            background: var(--color-gray-100);
+        }
+        .cu-rank.top1 { background: linear-gradient(135deg,#FEF9C3,#FDE047); color: #78350F; }
+        .cu-rank.top2 { background: linear-gradient(135deg,#F1F5F9,#CBD5E1); color: #475569; }
+        .cu-rank.top3 { background: linear-gradient(135deg,#FEF3C7,#FDE68A); color: #92400E; }
+
+        /* Status badge */
+        .cu-status {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: .64rem; font-weight: 700; padding: 3px 9px;
+            border-radius: var(--radius-full); border: 1px solid transparent;
+        }
+        .st-active   { background: #ECFDF5; color: #065F46; border-color: #A7F3D0; }
+        .st-inactive { background: var(--color-gray-100); color: var(--color-gray-400); border-color: var(--color-gray-200); }
+        .st-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+        .st-active .st-dot   { background: #10B981; }
+        .st-inactive .st-dot { background: var(--color-gray-400); }
+
+        /* Skeleton */
+        .sk { border-radius: var(--radius-md); background: linear-gradient(90deg,#f0f0f0 25%,#e4e4e4 50%,#f0f0f0 75%); background-size: 600px 100%; animation: shimmer 1.4s ease infinite; }
+
+        /* Loading overlay */
+        .cu-spinner {
+            display: flex; flex-direction: column; align-items: center;
+            padding: var(--space-16) var(--space-6); gap: var(--space-4);
+        }
+        .cu-spin-ring {
+            width: 40px; height: 40px; border-radius: 50%;
+            border: 3px solid var(--color-gray-100);
+            border-top-color: var(--admin-primary);
+            animation: spin .8s linear infinite;
+        }
+        .cu-spin-txt { font-size: var(--text-sm); color: var(--color-gray-400); font-weight: 500; }
+
+        /* Empty state */
+        .cu-empty { padding: var(--space-16) var(--space-6); display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--space-4); }
+        .cu-empty-ico { width: 76px; height: 76px; border-radius: var(--radius-2xl); background: var(--color-gray-50); border: 1.5px dashed var(--color-gray-200); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; color: var(--color-gray-200); }
+        .cu-empty-t { font-size: var(--text-xl); font-weight: 800; color: var(--color-gray-300); }
+        .cu-empty-d { font-size: var(--text-sm); color: var(--color-gray-400); max-width: 280px; line-height: 1.6; }
+
+        /* Points bar (mini progress) */
+        .cu-pbar-wrap { width: 80px; height: 4px; background: var(--color-gray-100); border-radius: 99px; overflow: hidden; margin-top: 4px; }
+        .cu-pbar { height: 100%; border-radius: 99px; transition: width .6s ease; }
+
+        /* Responsive */
+        @media(max-width:900px) {
+            .cu-stats { grid-template-columns: repeat(2,1fr); }
+            .cu-table thead th:nth-child(6),
+            .cu-table tbody td:nth-child(6) { display: none; }
+        }
+        @media(max-width:640px) {
+            .cu-table thead th:nth-child(5),
+            .cu-table tbody td:nth-child(5) { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="admin-app" id="adminApp">
+    <div id="admin-sidebar-container"></div>
+
+    <main class="admin-main" id="adminMain">
+
+        <!-- Topbar -->
+        <header class="admin-topbar">
+            <div class="topbar-left">
+                <div class="topbar-title">Khách hàng</div>
+                <nav class="topbar-breadcrumb">
+                    <a href="/views/admin/index.html">Dashboard</a>
+                    <span class="separator">/</span>
+                    <span class="current">Thành viên</span>
+                    <span class="separator">/</span>
+                    <span class="current">Khách hàng</span>
+                </nav>
+            </div>
+            <div class="topbar-search">
+                <i class="fas fa-search topbar-search-icon"></i>
+                <input type="text" id="topbarSearch" placeholder="Tìm tên hoặc email khách hàng...">
+            </div>
+            <div class="topbar-actions">
+                <button class="topbar-action-btn" id="btnRefresh" title="Làm mới">
+                    <i class="fas fa-rotate-right"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="admin-content" style="display:flex;flex-direction:column;gap:var(--space-5)">
+
+            <!-- Page header -->
+            <div class="page-header">
+                <div class="page-header-left">
+                    <h1 class="page-heading">
+                        Hệ thống thành viên
+                        <span id="headCount" style="font-size:var(--text-xl);font-weight:500;color:var(--color-gray-400)"></span>
+                    </h1>
+                    <p class="page-desc">Danh sách khách hàng, hạng thành viên và điểm tích lũy — chỉ xem</p>
+                </div>
+                <div class="page-header-actions">
+                    <span style="display:inline-flex;align-items:center;gap:6px;font-size:var(--text-xs);
+                                 color:#065F46;background:#ECFDF5;padding:5px 12px;border-radius:var(--radius-full)">
+                        <i class="fas fa-eye"></i>
+                        Read-only — không chỉnh sửa
+                    </span>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="cu-stats" id="cuStats">
+                <div class="cu-stat">
+                    <div class="cu-stat-ico csi-total"><i class="fas fa-users"></i></div>
+                    <div><div class="cu-stat-num" id="stTotal">--</div><div class="cu-stat-lbl">Tổng khách hàng</div></div>
+                </div>
+                <div class="cu-stat">
+                    <div class="cu-stat-ico csi-bronze"><i class="fas fa-medal"></i></div>
+                    <div><div class="cu-stat-num" id="stBronze">--</div><div class="cu-stat-lbl">Hạng đồng</div></div>
+                </div>
+                <div class="cu-stat">
+                    <div class="cu-stat-ico csi-silver"><i class="fas fa-award"></i></div>
+                    <div><div class="cu-stat-num" id="stSilver">--</div><div class="cu-stat-lbl">Hạng bạc</div></div>
+                </div>
+                <div class="cu-stat">
+                    <div class="cu-stat-ico csi-gold"><i class="fas fa-crown"></i></div>
+                    <div><div class="cu-stat-num" id="stGold">--</div><div class="cu-stat-lbl">Hạng vàng+</div></div>
+                </div>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="cu-toolbar">
+                <div class="cu-searchbox">
+                    <i class="fas fa-search"></i>
+                    <input type="text" class="cu-search-inp" id="searchInput"
+                           placeholder="Tìm theo tên hoặc email...">
+                </div>
+                <div class="cu-pills" id="pillsGroup">
+                    <button class="cu-pill p-on" data-lf="all">Tất cả</button>
+                    <button class="cu-pill" data-lf="bronze">🥉 Đồng</button>
+                    <button class="cu-pill" data-lf="silver">🥈 Bạc</button>
+                    <button class="cu-pill" data-lf="gold">🥇 Vàng</button>
+                    <button class="cu-pill" data-lf="diamond">💎 Kim cương</button>
+                    <button class="cu-pill" data-lf="none">— Chưa có</button>
+                </div>
+                <span class="cu-cnt">Hiển thị <strong id="resultCount">0</strong> khách</span>
+            </div>
+
+            <!-- Table -->
+            <div class="cu-tcard">
+                <table class="cu-table">
+                    <thead>
+                        <tr>
+                            <th style="width:48px;text-align:center;padding-left:var(--space-5)">#</th>
+                            <th style="width:52px"></th>
+                            <th>Khách hàng</th>
+                            <th style="width:200px">Email</th>
+                            <th style="width:145px">Hạng thành viên</th>
+                            <th style="width:100px;text-align:right">Điểm tích lũy</th>
+                            <th style="width:100px">Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody id="customerBody"></tbody>
+                </table>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<!-- Toast container -->
+<div id="toastContainer"
+     style="position:fixed;top:var(--space-6);right:var(--space-6);z-index:9999;
+            display:flex;flex-direction:column;gap:var(--space-3);pointer-events:none"></div>
+
+<script src="/public/js/common.js"></script>
+<script src="/public/js/admin/layout.js"></script>
+<script src="/public/js/admin/customer.js"></script>
+</body>
+</html>

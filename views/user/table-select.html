@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chọn bàn — GoMeal</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <style>
+    /* ============================================================
+       RESET & BASE
+    ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; }
+    body {
+        font-family: 'Outfit', sans-serif;
+        background: #F9F7F5;
+        color: #1F2937;
+        -webkit-font-smoothing: antialiased;
+        min-height: 100vh;
+    }
+    :root {
+        --orange:       #FF6B35;
+        --orange-dark:  #E8551E;
+        --orange-light: #FFF3EE;
+        --orange-grad:  linear-gradient(135deg,#FF6B35 0%,#F7931E 100%);
+        --border:       #EEE9E4;
+        --text-main:    #111827;
+        --text-sub:     #6B7280;
+        --text-xs:      #9CA3AF;
+        --radius-lg:    20px;
+        --radius-md:    14px;
+        --shadow-card:  0 2px 12px rgba(0,0,0,.06);
+    }
+
+    /* ============================================================
+       TOPBAR
+    ============================================================ */
+    .ts-topbar {
+        position: sticky; top: 0; z-index: 100;
+        height: 64px;
+        background: #fff;
+        border-bottom: 1px solid var(--border);
+        display: flex; align-items: center;
+        padding: 0 32px; gap: 16px;
+        box-shadow: 0 1px 8px rgba(0,0,0,.04);
+    }
+    .ts-brand {
+        display: flex; align-items: center; gap: 10px; text-decoration: none;
+    }
+    .ts-brand-icon {
+        width: 38px; height: 38px; border-radius: 12px;
+        background: var(--orange-grad);
+        display: flex; align-items: center; justify-content: center;
+        color: #fff; font-size: .95rem;
+        box-shadow: 0 4px 14px rgba(255,107,53,.4); flex-shrink: 0;
+    }
+    .ts-brand-name {
+        font-size: 1.25rem; font-weight: 900;
+        color: var(--text-main); letter-spacing: -.04em;
+    }
+    .ts-brand-name span { color: var(--orange); }
+    .ts-topbar-sep { width: 1px; height: 24px; background: var(--border); flex-shrink: 0; }
+    .ts-topbar-title { font-size: .84rem; font-weight: 700; color: var(--text-sub); }
+    .ts-topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .ts-stats-pill {
+        display: flex; align-items: center; gap: 7px;
+        padding: 7px 13px; border-radius: 99px;
+        background: #F9F7F5; border: 1px solid var(--border);
+        font-size: .74rem; font-weight: 700; color: var(--text-sub);
+    }
+    .ts-live-dot {
+        width: 7px; height: 7px; border-radius: 50%;
+        background: #10B981; flex-shrink: 0;
+        animation: liveDotPulse 2s ease infinite;
+    }
+    @keyframes liveDotPulse {
+        0%,100%{ box-shadow: 0 0 0 0 rgba(16,185,129,.4); }
+        50%    { box-shadow: 0 0 0 5px rgba(16,185,129,0); }
+    }
+
+    /* ============================================================
+       MAIN
+    ============================================================ */
+    .ts-main { max-width: 1100px; margin: 0 auto; padding: 32px 24px 80px; }
+
+    /* Hero */
+    .ts-hero {
+        display: grid; grid-template-columns: 1fr auto;
+        align-items: center; gap: 24px; margin-bottom: 28px;
+    }
+    .ts-hero-eyebrow {
+        display: inline-flex; align-items: center; gap: 7px;
+        background: var(--orange-light); color: var(--orange);
+        font-size: .66rem; font-weight: 800; letter-spacing: .09em;
+        text-transform: uppercase; padding: 4px 12px; border-radius: 99px;
+        margin-bottom: 10px;
+    }
+    .ts-eye-dot {
+        width: 5px; height: 5px; border-radius: 50%; background: var(--orange);
+        animation: eyeDotBlink 1.6s ease infinite;
+    }
+    @keyframes eyeDotBlink { 0%,100%{opacity:1} 50%{opacity:.2} }
+    .ts-hero h1 {
+        font-size: clamp(1.5rem,2.5vw,2.1rem); font-weight: 900;
+        color: var(--text-main); letter-spacing: -.04em;
+        line-height: 1.18; margin-bottom: 8px;
+    }
+    .ts-hero h1 em { font-style: normal; color: var(--orange); }
+    .ts-hero-sub { font-size: .88rem; color: var(--text-sub); line-height: 1.65; max-width: 440px; }
+
+    .ts-stat-cards { display: flex; gap: 12px; flex-shrink: 0; }
+    .ts-stat-card {
+        background: #fff; border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 14px 18px; text-align: center; min-width: 88px;
+        box-shadow: var(--shadow-card);
+    }
+    .ts-stat-num { font-size: 1.75rem; font-weight: 900; letter-spacing: -.04em; line-height: 1; }
+    .ts-stat-num.orange { color: var(--orange); }
+    .ts-stat-num.green  { color: #10B981; }
+    .ts-stat-label { font-size: .63rem; font-weight: 700; color: var(--text-xs); text-transform: uppercase; letter-spacing: .07em; margin-top: 4px; }
+
+    /* Alert */
+    .ts-alert {
+        display: none; align-items: flex-start; gap: 10px;
+        padding: 12px 16px; border-radius: var(--radius-md);
+        font-size: .84rem; font-weight: 600; line-height: 1.5;
+        margin-bottom: 20px; animation: tsAlertIn .3s ease;
+    }
+    @keyframes tsAlertIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:none} }
+    .ts-alert.show { display: flex; }
+    .ts-alert.err  { background:#FEF2F2; border:1px solid #FECACA; color:#DC2626; }
+    .ts-alert.ok   { background:#F0FDF4; border:1px solid #BBF7D0; color:#16A34A; }
+    .ts-alert.info { background:var(--orange-light); border:1px solid #FFD4C2; color:#C2410C; }
+    .ts-alert i    { flex-shrink:0; margin-top:1px; }
+
+    /* Body grid */
+    .ts-body { display: grid; grid-template-columns: 1fr 308px; gap: 20px; align-items: start; }
+
+    /* Card base */
+    .ts-card {
+        background: #fff; border: 1px solid var(--border);
+        border-radius: var(--radius-lg); overflow: hidden;
+        box-shadow: var(--shadow-card);
+    }
+    .ts-card-hd {
+        padding: 16px 20px 12px; border-bottom: 1px solid #F9F7F5;
+        display: flex; align-items: center; gap: 12px;
+    }
+    .ts-card-hd-icon {
+        width: 34px; height: 34px; border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: .82rem; flex-shrink: 0;
+    }
+    .ts-card-hd-icon.orange { background: var(--orange-light); color: var(--orange); }
+    .ts-card-hd-title { font-size: .9rem; font-weight: 800; color: var(--text-main); }
+    .ts-card-hd-sub   { font-size: .7rem; color: var(--text-xs); margin-top: 1px; }
+
+    /* Filter tabs */
+    .ts-filter-tabs {
+        display: flex; gap: 6px; padding: 12px 20px;
+        border-bottom: 1px solid #F9F7F5; overflow-x: auto;
+    }
+    .ts-tab {
+        padding: 6px 14px; border-radius: 99px;
+        border: 1.5px solid var(--border); background: transparent;
+        font-family: inherit; font-size: .74rem; font-weight: 700;
+        color: var(--text-sub); cursor: pointer; white-space: nowrap; transition: all .17s;
+    }
+    .ts-tab:hover { border-color: #FFD4C2; color: var(--orange); }
+    .ts-tab.active { background: var(--orange); border-color: var(--orange); color: #fff; box-shadow: 0 3px 10px rgba(255,107,53,.28); }
+
+    /* Table grid */
+    .ts-grid-wrap { padding: 16px 20px 20px; }
+    .sk-table-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
+    .sk-table-cell {
+        aspect-ratio: 1; border-radius: 14px;
+        background: linear-gradient(90deg,#F6F4F2 25%,#EEE9E4 50%,#F6F4F2 75%);
+        background-size: 400px 100%; animation: skShimmer 1.4s ease infinite;
+    }
+    @keyframes skShimmer { to{ background-position: -400px 0; } }
+
+    .table-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
+
+    .table-btn {
+        aspect-ratio: 1; border-radius: 14px;
+        border: 2px solid var(--border); background: #fff;
+        cursor: pointer; position: relative;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center; gap: 4px;
+        transition: all .22s cubic-bezier(.34,1.56,.64,1);
+        font-family: inherit; overflow: hidden;
+    }
+    .table-btn::before {
+        content: ''; position: absolute; inset: 0;
+        background: var(--orange-grad); opacity: 0; transition: opacity .22s;
+    }
+    .table-btn:hover:not(.occupied) {
+        border-color: #FFD4C2; transform: translateY(-3px);
+        box-shadow: 0 8px 24px rgba(255,107,53,.16);
+    }
+    .table-btn.selected {
+        border-color: var(--orange);
+        box-shadow: 0 0 0 3px rgba(255,107,53,.2), 0 8px 24px rgba(255,107,53,.18);
+        transform: translateY(-3px);
+    }
+    .table-btn.selected::before { opacity: 1; }
+    .table-btn.occupied { background: #F9F7F5; border-color: #EEE9E4; cursor: not-allowed; opacity: .6; }
+
+    .tb-icon { font-size: 1.3rem; position: relative; z-index: 1; color: var(--text-sub); transition: color .2s; }
+    .table-btn.selected .tb-icon { color: #fff; }
+    .table-btn.occupied .tb-icon { color: #D1D5DB !important; }
+
+    .tb-num { font-size: .72rem; font-weight: 900; position: relative; z-index: 1; color: var(--text-main); transition: color .2s; }
+    .table-btn.selected .tb-num { color: #fff; }
+
+    .tb-cap { font-size: .6rem; font-weight: 600; color: var(--text-xs); position: relative; z-index: 1; transition: color .2s; }
+    .table-btn.selected .tb-cap { color: rgba(255,255,255,.8); }
+
+    .tb-status { position: absolute; top: 7px; right: 7px; width: 7px; height: 7px; border-radius: 50%; }
+    .tb-status.free     { background: #10B981; }
+    .tb-status.occupied { background: #F59E0B; }
+
+    .tb-check {
+        position: absolute; top: 6px; left: 6px;
+        width: 18px; height: 18px; border-radius: 50%;
+        background: rgba(255,255,255,.25); color: #fff; font-size: .6rem;
+        display: none; align-items: center; justify-content: center; z-index: 2;
+    }
+    .table-btn.selected .tb-check { display: flex; }
+
+    .ts-empty { padding: 36px 20px; text-align: center; display: none; }
+    .ts-empty.show { display: block; }
+    .ts-empty i { font-size: 2rem; color: #D1D5DB; margin-bottom: 8px; display: block; }
+    .ts-empty p { font-size: .82rem; color: var(--text-xs); font-weight: 600; }
+
+    /* Selected bar */
+    .ts-selected-bar {
+        display: none; align-items: center; gap: 12px;
+        padding: 12px 20px;
+        background: linear-gradient(135deg,#FFF8F5,#FFF3EE);
+        border-top: 1px solid #FFD4C2;
+    }
+    .ts-selected-bar.show { display: flex; }
+    .ts-sb-icon {
+        width: 36px; height: 36px; border-radius: 10px;
+        background: var(--orange-grad); color: #fff;
+        display: flex; align-items: center; justify-content: center; font-size: .88rem;
+        box-shadow: 0 4px 12px rgba(255,107,53,.35); flex-shrink: 0;
+    }
+    .ts-sb-info { flex: 1; min-width: 0; }
+    .ts-sb-title { font-size: .84rem; font-weight: 800; color: var(--text-main); }
+    .ts-sb-sub   { font-size: .7rem; color: var(--text-sub); margin-top: 1px; }
+    .ts-sb-clear {
+        background: none; border: none; cursor: pointer;
+        color: var(--text-xs); font-size: .76rem; font-weight: 700;
+        padding: 6px 10px; border-radius: 8px; transition: all .15s; flex-shrink: 0;
+    }
+    .ts-sb-clear:hover { background: #FEF2F2; color: #EF4444; }
+
+    /* Right col */
+    .ts-right { display: flex; flex-direction: column; gap: 16px; }
+
+    .ts-legend { padding: 14px 20px; }
+    .ts-legend-title { font-size: .68rem; font-weight: 800; color: var(--text-xs); text-transform: uppercase; letter-spacing: .09em; margin-bottom: 10px; }
+    .ts-legend-items { display: flex; flex-direction: column; gap: 8px; }
+    .ts-legend-item { display: flex; align-items: center; gap: 9px; font-size: .78rem; font-weight: 600; color: #374151; }
+    .ts-legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+
+    .ts-confirm-card { padding: 20px; }
+    .ts-confirm-card h3 { font-size: .9rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px; }
+    .ts-confirm-card p { font-size: .74rem; color: var(--text-sub); line-height: 1.55; margin-bottom: 18px; }
+    .ts-steps { display: flex; flex-direction: column; gap: 9px; margin-bottom: 18px; }
+    .ts-step { display: flex; align-items: center; gap: 10px; font-size: .76rem; color: #374151; font-weight: 600; }
+    .ts-step-num {
+        width: 24px; height: 24px; border-radius: 7px;
+        background: var(--orange-light); color: var(--orange);
+        font-size: .66rem; font-weight: 900;
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+
+    .ts-btn-confirm {
+        width: 100%; padding: 14px;
+        background: var(--orange-grad); border: none; border-radius: 14px;
+        color: #fff; font-family: inherit; font-size: .92rem; font-weight: 800;
+        cursor: pointer; position: relative; overflow: hidden;
+        box-shadow: 0 6px 20px rgba(255,107,53,.38);
+        transition: all .2s cubic-bezier(.34,1.56,.64,1);
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .ts-btn-confirm:disabled { background: #E5E7EB; color: #9CA3AF; box-shadow: none; cursor: not-allowed; transform: none; }
+    .ts-btn-confirm:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(255,107,53,.5); }
+    .ts-btn-confirm .blabel { position: relative; z-index: 1; }
+    .ts-btn-confirm .bspinner {
+        width: 16px; height: 16px; border-radius: 50%;
+        border: 2.5px solid rgba(255,255,255,.35); border-top-color: #fff;
+        animation: btnSpin .7s linear infinite;
+        display: none; position: relative; z-index: 1;
+    }
+    .ts-btn-confirm.loading .bspinner { display: block; }
+    .ts-btn-confirm.loading .blabel   { display: none; }
+    @keyframes btnSpin { to{ transform: rotate(360deg); } }
+
+    /* ============================================================
+       QR MODAL
+    ============================================================ */
+    .qr-overlay {
+        position: fixed; inset: 0; z-index: 500;
+        background: rgba(17,24,39,.55); backdrop-filter: blur(8px);
+        display: none; align-items: center; justify-content: center; padding: 24px;
+    }
+    .qr-overlay.show { display: flex; animation: tsOverlayIn .25s ease; }
+    @keyframes tsOverlayIn { from{opacity:0} to{opacity:1} }
+
+    .qr-modal {
+        background: #fff; border-radius: 24px;
+        width: 100%; max-width: 390px;
+        box-shadow: 0 32px 80px rgba(0,0,0,.22); overflow: hidden;
+        animation: tsModalIn .3s cubic-bezier(.34,1.56,.64,1);
+    }
+    @keyframes tsModalIn { from{opacity:0;transform:scale(.92) translateY(16px)} to{opacity:1;transform:none} }
+
+    .qr-modal-hd {
+        background: var(--orange-grad);
+        padding: 18px 20px 14px;
+        display: flex; align-items: center; gap: 12px;
+    }
+    .qr-modal-hd-icon {
+        width: 40px; height: 40px; border-radius: 12px;
+        background: rgba(255,255,255,.2);
+        display: flex; align-items: center; justify-content: center;
+        color: #fff; font-size: 1.1rem; flex-shrink: 0;
+    }
+    .qr-modal-hd-info { flex: 1; }
+    .qr-modal-hd-title { font-size: .96rem; font-weight: 900; color: #fff; display: flex; align-items: center; gap: 8px; }
+    .qr-table-badge { font-size: .64rem; font-weight: 800; padding: 3px 9px; border-radius: 99px; background: rgba(255,255,255,.2); color: #fff; }
+    .qr-modal-hd-sub  { font-size: .72rem; color: rgba(255,255,255,.75); margin-top: 2px; }
+    .qr-close-btn {
+        width: 32px; height: 32px; border-radius: 9px;
+        background: rgba(255,255,255,.18); border: none; color: #fff;
+        cursor: pointer; font-size: .82rem;
+        display: flex; align-items: center; justify-content: center;
+        transition: background .15s; flex-shrink: 0;
+    }
+    .qr-close-btn:hover { background: rgba(255,255,255,.32); }
+
+    .qr-image-area { padding: 20px 20px 0; display: flex; flex-direction: column; align-items: center; }
+    .qr-image-wrap {
+        position: relative; width: 200px; height: 200px;
+        border: 3px solid #F3F4F6; border-radius: 16px; overflow: hidden;
+        background: #F9FAFB; display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 4px 20px rgba(0,0,0,.08);
+    }
+    .qr-img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .qr-img-fallback {
+        display: none; flex-direction: column;
+        align-items: center; justify-content: center; gap: 8px;
+        width: 100%; height: 100%;
+    }
+    .qr-img-fallback i { font-size: 2.5rem; color: #D1D5DB; }
+    .qr-img-fallback p { font-size: .7rem; color: #9CA3AF; text-align: center; }
+
+    .qr-scan-line {
+        position: absolute; left: 10px; right: 10px; height: 2px;
+        background: linear-gradient(90deg,transparent,var(--orange),transparent);
+        animation: qrScanAnim 2s ease-in-out infinite; z-index: 2;
+    }
+    @keyframes qrScanAnim { 0%{top:10px;opacity:1} 50%{top:calc(100% - 12px);opacity:.7} 100%{top:10px;opacity:1} }
+
+    /* corner brackets */
+    .qr-image-wrap::before, .qr-image-wrap::after {
+        content:''; position:absolute; width:22px; height:22px;
+        border-color: var(--orange); border-style: solid; z-index: 3;
+    }
+    .qr-image-wrap::before { top:6px; left:6px; border-width:3px 0 0 3px; border-radius:4px 0 0 0; }
+    .qr-image-wrap::after  { bottom:6px; right:6px; border-width:0 3px 3px 0; border-radius:0 0 4px 0; }
+
+    .qr-steps-area { padding: 16px 20px 0; }
+    .qr-steps { display: flex; flex-direction: column; gap: 8px; }
+    .qr-step  { display: flex; align-items: center; gap: 10px; font-size: .78rem; color: #374151; font-weight: 600; }
+    .qr-step-num {
+        width: 24px; height: 24px; border-radius: 7px;
+        background: var(--orange-light); color: var(--orange);
+        font-size: .66rem; font-weight: 900;
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all .3s;
+    }
+    .qr-step.done .qr-step-num { background: #ECFDF5; color: #059669; }
+
+    .qr-status-wrap { padding: 14px 20px 6px; }
+    .qr-status-bar {
+        display: flex; align-items: center; gap: 8px;
+        padding: 10px 14px; border-radius: 12px;
+        background: #F9F7F5; border: 1px solid var(--border);
+        font-size: .76rem; font-weight: 700; color: var(--text-sub); transition: all .3s;
+    }
+    .qr-status-bar.waiting  { background:#F9F7F5; border-color:var(--border); color:var(--text-sub); }
+    .qr-status-bar.verified { background:#ECFDF5; border-color:#A7F3D0; color:#059669; }
+    .qr-status-bar.error    { background:#FEF2F2; border-color:#FECACA; color:#DC2626; }
+    .poll-dot {
+        width: 8px; height: 8px; border-radius: 50%;
+        background: var(--orange); flex-shrink: 0;
+        animation: pollBlink 1.2s ease infinite;
+    }
+    .qr-status-bar.verified .poll-dot { background: #059669; animation: none; }
+    @keyframes pollBlink { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.7)} }
+
+    .qr-modal-foot { padding: 10px 20px 20px; }
+    .qr-cancel-btn {
+        width: 100%; padding: 11px;
+        background: none; border: 1.5px solid var(--border); border-radius: 12px;
+        font-family: inherit; font-size: .82rem; font-weight: 700; color: var(--text-sub);
+        cursor: pointer; transition: all .17s;
+    }
+    .qr-cancel-btn:hover { border-color: #FECACA; color: #EF4444; background: #FEF2F2; }
+
+    /* ============================================================
+       SUCCESS OVERLAY
+    ============================================================ */
+    .success-overlay {
+        position: fixed; inset: 0; z-index: 600;
+        background: rgba(255,255,255,.95); backdrop-filter: blur(16px);
+        display: none; flex-direction: column;
+        align-items: center; justify-content: center; gap: 16px;
+        text-align: center; padding: 24px;
+    }
+    .success-overlay.show { display: flex; animation: tsFadeIn .4s ease; }
+    @keyframes tsFadeIn { from{opacity:0} to{opacity:1} }
+    .success-icon-wrap {
+        width: 88px; height: 88px; border-radius: 50%;
+        background: var(--orange-grad);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 2.2rem; color: #fff;
+        box-shadow: 0 12px 40px rgba(255,107,53,.45);
+        animation: tsSuccessPop .5s .15s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    @keyframes tsSuccessPop { from{transform:scale(0);opacity:0} to{transform:scale(1);opacity:1} }
+    .success-title { font-size: 1.5rem; font-weight: 900; color: var(--text-main); letter-spacing: -.03em; }
+    .success-sub   { font-size: .88rem; color: var(--text-sub); }
+    .success-progress { width: 200px; height: 4px; border-radius: 99px; background: #F3F4F6; overflow: hidden; margin-top: 4px; }
+    .success-bar { height: 100%; background: var(--orange-grad); border-radius: 99px; width: 0; animation: tsProgressFill 1.6s .3s ease forwards; }
+    @keyframes tsProgressFill { to{ width:100%; } }
+
+    /* ============================================================
+       RESPONSIVE
+    ============================================================ */
+    @media (max-width: 860px) {
+        .ts-body { grid-template-columns: 1fr; }
+        .ts-right { flex-direction: row; flex-wrap: wrap; }
+        .ts-right .ts-card { flex: 1; min-width: 200px; }
+    }
+    @media (max-width: 600px) {
+        .ts-main { padding: 20px 16px 60px; }
+        .ts-hero { grid-template-columns: 1fr; }
+        .ts-stat-cards { display: none; }
+        .table-grid { grid-template-columns: repeat(3,1fr); }
+        .ts-topbar { padding: 0 16px; }
+        .ts-topbar-title { display: none; }
+        .ts-right { flex-direction: column; }
+    }
+    @media (max-width: 380px) {
+        .table-grid { grid-template-columns: repeat(2,1fr); }
+    }
+    </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="ts-topbar">
+    <a class="ts-brand" href="/views/user/index.html">
+        <div class="ts-brand-icon"><i class="fas fa-utensils"></i></div>
+        <div class="ts-brand-name">GoMeal<span>.</span></div>
+    </a>
+    <div class="ts-topbar-sep"></div>
+    <span class="ts-topbar-title">Chọn bàn &amp; Đặt món</span>
+    <div class="ts-topbar-right">
+        <div class="ts-stats-pill">
+            <div class="ts-live-dot"></div>
+            <span id="tfActiveTables" style="color:#FF6B35;font-weight:800">--</span>&nbsp;bàn đang phục vụ
+        </div>
+        <div class="ts-stats-pill">
+            <i class="fas fa-chair" style="color:#9CA3AF;font-size:.7rem"></i>
+            <span id="tfFreeTables" style="color:#10B981;font-weight:800">--</span>&nbsp;trống
+        </div>
+    </div>
+</header>
+
+<!-- MAIN -->
+<main class="ts-main">
+
+    <!-- Hero -->
+    <div class="ts-hero">
+        <div>
+            <div class="ts-hero-eyebrow"><div class="ts-eye-dot"></div>Đặt bàn thông minh</div>
+            <h1>Chọn bàn, quét QR<br><em>vào menu ngay</em></h1>
+            <p class="ts-hero-sub">Không cần gọi nhân viên — chọn bàn, quét mã QR từ điện thoại và bắt đầu gọi món.</p>
+        </div>
+        <div class="ts-stat-cards">
+            <div class="ts-stat-card">
+                <div class="ts-stat-num orange" id="tfActiveTables2">--</div>
+                <div class="ts-stat-label">Đang phục vụ</div>
+            </div>
+            <div class="ts-stat-card">
+                <div class="ts-stat-num green" id="tfFreeTables2">--</div>
+                <div class="ts-stat-label">Bàn trống</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert -->
+    <div class="ts-alert" id="pageAlert">
+        <i id="alertIcon" class="fas fa-circle-info"></i>
+        <span id="alertMsg"></span>
+    </div>
+
+    <!-- Body -->
+    <div class="ts-body">
+
+        <!-- LEFT: table grid -->
+        <div class="ts-card" style="overflow:visible">
+            <div class="ts-card-hd">
+                <div class="ts-card-hd-icon orange"><i class="fas fa-chair"></i></div>
+                <div>
+                    <div class="ts-card-hd-title">Sơ đồ bàn</div>
+                    <div class="ts-card-hd-sub">Nhấn vào bàn để chọn</div>
+                </div>
+            </div>
+
+            <!-- Filter tabs -->
+            <div class="ts-filter-tabs">
+                <button class="ts-tab active" onclick="filterTables(this,'all')">Tất cả</button>
+                <button class="ts-tab" onclick="filterTables(this,'available')">🟢 Còn trống</button>
+                <button class="ts-tab" onclick="filterTables(this,'occupied')">🟡 Đang dùng</button>
+            </div>
+
+            <!-- Skeleton -->
+            <div class="ts-grid-wrap" id="loadingGrid">
+                <div class="sk-table-grid">
+                    <div class="sk-table-cell"></div><div class="sk-table-cell"></div>
+                    <div class="sk-table-cell"></div><div class="sk-table-cell"></div>
+                    <div class="sk-table-cell"></div><div class="sk-table-cell"></div>
+                    <div class="sk-table-cell"></div><div class="sk-table-cell"></div>
+                </div>
+            </div>
+
+            <!-- Real grid -->
+            <div id="tableGridWrap" style="display:none">
+                <div class="ts-grid-wrap">
+                    <div class="table-grid" id="tableGrid"></div>
+                    <div class="ts-empty" id="tsEmpty">
+                        <i class="fas fa-chair"></i>
+                        <p>Không có bàn nào phù hợp bộ lọc</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Selected bar -->
+            <div class="ts-selected-bar" id="selectedBar">
+                <div class="ts-sb-icon"><i class="fas fa-check"></i></div>
+                <div class="ts-sb-info">
+                    <div class="ts-sb-title" id="selectedBarTitle">Đã chọn bàn</div>
+                    <div class="ts-sb-sub"   id="selectedBarSub">Nhấn "Xác nhận" để tiếp tục</div>
+                </div>
+                <button class="ts-sb-clear" id="clearSelectionBtn">
+                    <i class="fas fa-xmark"></i> Bỏ chọn
+                </button>
+            </div>
+        </div>
+
+        <!-- RIGHT -->
+        <div class="ts-right">
+
+            <!-- Legend -->
+            <div class="ts-card">
+                <div class="ts-card-hd">
+                    <div class="ts-card-hd-icon orange"><i class="fas fa-circle-info"></i></div>
+                    <div><div class="ts-card-hd-title">Chú thích màu sắc</div></div>
+                </div>
+                <div class="ts-legend">
+                    <div class="ts-legend-items">
+                        <div class="ts-legend-item"><div class="ts-legend-dot" style="background:#10B981"></div>Bàn trống — có thể chọn</div>
+                        <div class="ts-legend-item"><div class="ts-legend-dot" style="background:#F59E0B"></div>Đang có khách</div>
+                        <div class="ts-legend-item"><div class="ts-legend-dot" style="background:var(--orange)"></div>Bàn đang được chọn</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Confirm -->
+            <div class="ts-card">
+                <div class="ts-card-hd">
+                    <div class="ts-card-hd-icon orange"><i class="fas fa-qrcode"></i></div>
+                    <div>
+                        <div class="ts-card-hd-title">Xác nhận &amp; Quét QR</div>
+                        <div class="ts-card-hd-sub">3 bước đơn giản</div>
+                    </div>
+                </div>
+                <div class="ts-confirm-card">
+                    <div class="ts-steps">
+                        <div class="ts-step"><div class="ts-step-num">1</div>Chọn bàn trên sơ đồ</div>
+                        <div class="ts-step"><div class="ts-step-num">2</div>Dùng điện thoại quét QR</div>
+                        <div class="ts-step"><div class="ts-step-num">3</div>Laptop tự chuyển vào menu</div>
+                    </div>
+                    <button class="ts-btn-confirm" id="btnConfirm" disabled>
+                        <span class="bspinner"></span>
+                        <span class="blabel"><i class="fas fa-qrcode"></i>&nbsp;&nbsp;Chọn bàn để tiếp tục</span>
+                    </button>
+                </div>
+            </div>
+
+        </div><!-- /ts-right -->
+    </div><!-- /ts-body -->
+</main>
+
+<!-- QR OVERLAY -->
+<div class="qr-overlay" id="qrOverlay">
+    <div class="qr-modal" id="qrModal">
+        <div class="qr-modal-hd">
+            <div class="qr-modal-hd-icon"><i class="fas fa-qrcode"></i></div>
+            <div class="qr-modal-hd-info">
+                <div class="qr-modal-hd-title">
+                    Quét mã QR &nbsp;<span class="qr-table-badge" id="qrTableBadge">Bàn --</span>
+                </div>
+                <div class="qr-modal-hd-sub">Dùng camera điện thoại hướng vào mã bên dưới</div>
+            </div>
+            <button class="qr-close-btn" id="qrCloseBtn" aria-label="Đóng"><i class="fas fa-xmark"></i></button>
+        </div>
+
+        <div class="qr-image-area">
+            <div class="qr-image-wrap">
+                <img class="qr-img" id="qrImage" alt="QR Code"
+                     onerror="this.style.display='none';document.getElementById('qrFallback').style.display='flex'">
+                <div class="qr-img-fallback" id="qrFallback">
+                    <i class="fas fa-qrcode"></i>
+                    <p>Không tải được QR<br>Thử tạo lại bàn trong Admin</p>
+                </div>
+                <div class="qr-scan-line"></div>
+            </div>
+        </div>
+
+        <div class="qr-steps-area">
+            <div class="qr-steps">
+                <div class="qr-step done">
+                    <div class="qr-step-num">1</div>Mở camera trên điện thoại
+                </div>
+                <div class="qr-step" id="qrStep2">
+                    <div class="qr-step-num">2</div>Hướng camera vào mã QR bên trên
+                </div>
+                <div class="qr-step" id="qrStep3">
+                    <div class="qr-step-num">3</div>Màn hình này tự chuyển sang menu
+                </div>
+            </div>
+        </div>
+
+        <div class="qr-status-wrap">
+            <div class="qr-status-bar waiting" id="qrStatusBar">
+                <div class="poll-dot"></div>
+                <span id="qrStatusText">Đang chờ quét QR...</span>
+            </div>
+        </div>
+
+        <div class="qr-modal-foot">
+            <button class="qr-cancel-btn" id="qrCancelBtn">
+                <i class="fas fa-arrow-left"></i>&nbsp; Chọn bàn khác
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- SUCCESS OVERLAY -->
+<div class="success-overlay" id="successOverlay">
+    <div class="success-icon-wrap"><i class="fas fa-check"></i></div>
+    <div class="success-title">Xác thực thành công! 🎉</div>
+    <div class="success-sub">Đang mở thực đơn, vui lòng chờ...</div>
+    <div class="success-progress"><div class="success-bar"></div></div>
+</div>
+
+<!-- dummy slideTrack (giữ ID cho JS) -->
+<div id="slideTrack" style="display:none"></div>
+
+<script src="/public/js/user/table-select.js"></script>
+
+<!-- Filter helper -->
+<script>
+window.filterTables = function(btn, type) {
+    document.querySelectorAll('.ts-tab').forEach(function(t){ t.classList.remove('active'); });
+    btn.classList.add('active');
+    document.querySelectorAll('.table-btn').forEach(function(b){
+        var cell = b.closest('div') || b.parentElement;
+        if (type === 'all') {
+            b.style.display = '';
+        } else if (type === 'available') {
+            b.style.display = b.classList.contains('occupied') ? 'none' : '';
+        } else {
+            b.style.display = b.classList.contains('occupied') ? '' : 'none';
+        }
+    });
+};
+</script>
+</body>
+</html>

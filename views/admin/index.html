@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — Smart Restaurant</title>
+
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/public/css/common.css">
+    <link rel="stylesheet" href="/public/css/admin/layout.css">
+    <link rel="stylesheet" href="/public/css/admin/components.css">
+    <link rel="stylesheet" href="/public/css/admin/pages.css">
+
+    <style>
+        /* ── Analytics Overview Grid ─────────────────────────────── */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-template-rows: auto auto;
+            gap: var(--space-4);
+            margin-bottom: var(--space-5);
+        }
+
+        /* Revenue card — chiếm 4 cột, 2 hàng → lớn nhất */
+        .ag-revenue   { grid-column: span 5; grid-row: span 2; }
+        /* 3 stat cards nhỏ bên phải */
+        .ag-pending   { grid-column: span 4; }
+        .ag-tables    { grid-column: span 3; }
+        .ag-avg       { grid-column: span 4; }
+        .ag-topsell   { grid-column: span 3; }
+
+        /* ── Revenue hero card ─────────────────────────────────── */
+        .rev-hero-card {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 55%, #0f3460 100%);
+            border-radius: var(--radius-2xl);
+            padding: var(--space-6);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-4);
+            position: relative;
+            overflow: hidden;
+        }
+        .rev-hero-card::before {
+            content: '';
+            position: absolute;
+            top: -60px; right: -40px;
+            width: 220px; height: 220px;
+            background: radial-gradient(circle, rgba(249,115,22,0.18) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .rev-hero-card::after {
+            content: '';
+            position: absolute;
+            bottom: -40px; left: 20px;
+            width: 150px; height: 150px;
+            background: radial-gradient(circle, rgba(249,115,22,0.10) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .rhc-label {
+            font-size: 0.70rem;
+            font-weight: var(--font-bold);
+            color: rgba(255,255,255,0.45);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            position: relative; z-index: 1;
+        }
+        .rhc-value {
+            font-size: 2.6rem;
+            font-weight: var(--font-extrabold);
+            color: var(--color-white);
+            letter-spacing: -0.05em;
+            line-height: 1;
+            position: relative; z-index: 1;
+        }
+        .rhc-value.rhc-zero {
+            font-size: var(--text-xl);
+            color: rgba(255,255,255,0.50);
+            font-weight: var(--font-semibold);
+            letter-spacing: -0.01em;
+        }
+        .rhc-zero-hint {
+            display: none;
+            font-size: var(--text-xs);
+            color: rgba(255,255,255,0.35);
+            margin-top: var(--space-1);
+            position: relative; z-index: 1;
+        }
+        .rhc-zero-hint.show { display: block; }
+        .rhc-trend {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: var(--text-xs);
+            font-weight: var(--font-semibold);
+            color: rgba(255,255,255,0.55);
+            position: relative; z-index: 1;
+        }
+        .rhc-trend-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            padding: 3px 8px;
+            border-radius: var(--radius-full);
+            font-size: 0.68rem;
+            font-weight: var(--font-bold);
+        }
+        .rhc-trend-badge.up   { background: rgba(16,185,129,0.20); color: #6EE7B7; }
+        .rhc-trend-badge.neu  { background: rgba(255,255,255,0.10); color: rgba(255,255,255,0.50); }
+        /* Sparkline mini chart */
+        .rhc-chart {
+            flex: 1;
+            position: relative;
+            z-index: 1;
+            min-height: 90px;
+        }
+        .rhc-chart canvas { width: 100% !important; height: 100% !important; }
+        /* Bottom metrics strip */
+        .rhc-metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-3);
+            position: relative; z-index: 1;
+        }
+        .rhc-metric {
+            background: rgba(255,255,255,0.07);
+            border-radius: var(--radius-lg);
+            padding: var(--space-3) var(--space-4);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .rhc-metric-val   { font-size: var(--text-base); font-weight: var(--font-extrabold); color: var(--color-white); letter-spacing: -0.02em; }
+        .rhc-metric-label { font-size: 0.65rem; color: rgba(255,255,255,0.40); margin-top: 2px; font-weight: var(--font-medium); }
+
+        /* ── Stat mini-card ───────────────────────────────────── */
+        .stat-mini-card {
+            background: var(--color-white);
+            border-radius: var(--radius-xl);
+            padding: var(--space-5);
+            border: 1px solid var(--color-gray-100);
+            box-shadow: var(--shadow-card);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+            position: relative;
+            overflow: hidden;
+            transition: all var(--transition-base);
+        }
+        .stat-mini-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+        .smc-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+        }
+        .smc-label {
+            font-size: 0.68rem;
+            font-weight: var(--font-bold);
+            color: var(--color-gray-400);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            line-height: var(--leading-snug);
+        }
+        .smc-icon {
+            width: 40px; height: 40px;
+            border-radius: var(--radius-lg);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; flex-shrink: 0;
+        }
+        .smc-value {
+            font-size: var(--text-3xl);
+            font-weight: var(--font-extrabold);
+            color: var(--color-gray-900);
+            letter-spacing: -0.04em;
+            line-height: 1;
+        }
+        .smc-sub {
+            font-size: var(--text-xs);
+            color: var(--color-gray-400);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        /* Sparkline inline */
+        .smc-sparkline {
+            height: 36px;
+            position: relative;
+        }
+        .smc-sparkline canvas { width: 100% !important; height: 100% !important; }
+        /* Accent left bar */
+        .stat-mini-card::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 14px; bottom: 14px;
+            width: 3px;
+            border-radius: 0 var(--radius-full) var(--radius-full) 0;
+        }
+        .smc-orange::before { background: var(--admin-primary); }
+        .smc-green::before  { background: var(--color-success); }
+        .smc-blue::before   { background: var(--color-info); }
+        .smc-purple::before { background: #8B5CF6; }
+
+        /* ── Top selling card (compact list) ─────────────────── */
+        .topsell-card {
+            background: var(--color-white);
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--color-gray-100);
+            box-shadow: var(--shadow-card);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .tsc-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-4) var(--space-5);
+            border-bottom: 1px solid var(--color-gray-100);
+        }
+        .tsc-title { font-size: var(--text-sm); font-weight: var(--font-bold); color: var(--color-gray-900); }
+        .tsc-badge {
+            font-size: 0.65rem;
+            font-weight: var(--font-bold);
+            background: var(--admin-primary-light);
+            color: var(--admin-primary);
+            padding: 2px 7px;
+            border-radius: var(--radius-full);
+        }
+        .tsc-list { flex: 1; padding: var(--space-2) 0; overflow-y: auto; }
+        .tsc-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-2) var(--space-5);
+            transition: background var(--transition-fast);
+        }
+        .tsc-item:hover { background: var(--admin-primary-subtle); }
+        .tsc-rank {
+            width: 18px;
+            font-size: 0.68rem;
+            font-weight: var(--font-extrabold);
+            color: var(--color-gray-300);
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .tsc-rank.r1 { color: #F59E0B; }
+        .tsc-rank.r2 { color: var(--color-gray-400); }
+        .tsc-rank.r3 { color: #CD7F32; }
+        .tsc-name { flex: 1; font-size: var(--text-xs); font-weight: var(--font-semibold); color: var(--color-gray-800); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+        .tsc-bar-wrap {
+            width: 52px;
+            height: 5px;
+            background: var(--color-gray-100);
+            border-radius: var(--radius-full);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .tsc-bar-fill {
+            height: 100%;
+            border-radius: var(--radius-full);
+            background: var(--admin-primary);
+            transition: width 0.8s ease;
+        }
+        .tsc-qty { font-size: 0.68rem; font-weight: var(--font-extrabold); color: var(--color-gray-700); flex-shrink: 0; white-space: nowrap; }
+
+        /* ── Bottom section ───────────────────────────────────── */
+        .dash-bottom-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 290px;
+            gap: var(--space-5);
+        }
+
+        /* Empty state */
+        .dash-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-10) var(--space-6);
+            text-align: center;
+            gap: var(--space-3);
+        }
+        .de-icon  { font-size: 2.5rem; opacity: 0.22; }
+        .de-title { font-size: var(--text-sm); font-weight: var(--font-bold); color: var(--color-gray-400); }
+        .de-hint  { font-size: var(--text-xs); color: var(--color-gray-300); max-width: 200px; line-height: var(--leading-relaxed); }
+
+        /* Skeleton */
+        .skeleton { animation: skeleton-pulse 1.5s ease infinite; }
+        .sk-block  {
+            background: var(--color-gray-100);
+            border-radius: var(--radius-md);
+        }
+        @keyframes skeleton-pulse {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0.4; }
+        }
+        /* ── Low Stock Warning items ── */
+        .lsw-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-2) 0;
+        }
+        .lsw-name {
+            font-size: var(--text-xs);
+            font-weight: var(--font-semibold);
+            color: var(--color-gray-700);
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            min-width: 0;
+        }
+        .lsw-bar-wrap {
+            width: 70px;
+            height: 6px;
+            background: var(--color-gray-150);
+            border-radius: var(--radius-full);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .lsw-bar-fill {
+            height: 100%;
+            border-radius: var(--radius-full);
+            transition: width 0.4s ease;
+        }
+        .lsw-qty {
+            font-size: 0.68rem;
+            font-weight: var(--font-bold);
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+        .lsw-out {
+            display: inline-flex;
+            align-items: center;
+            background: #FEE2E2;
+            color: #EF4444;
+            font-size: 0.6rem;
+            font-weight: var(--font-extrabold);
+            padding: 1px 5px;
+            border-radius: var(--radius-full);
+            margin-left: 3px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════ APP SHELL ═══════════════ -->
+<div class="admin-app" id="adminApp">
+
+    <!-- Sidebar (loaded by layout.js) -->
+    <div id="admin-sidebar-container"></div>
+
+    <!-- Main -->
+    <main class="admin-main" id="adminMain">
+
+        <!-- ── Topbar ── -->
+        <header class="admin-topbar">
+            <div class="topbar-left">
+                <div class="topbar-title">Dashboard</div>
+                <nav class="topbar-breadcrumb">
+                    <span class="current">Tổng quan hệ thống</span>
+                </nav>
+            </div>
+
+            <div class="topbar-search">
+                <i class="fas fa-search topbar-search-icon"></i>
+                <input type="text" placeholder="Tìm kiếm nhanh...">
+            </div>
+
+            <div class="topbar-actions">
+                <!-- Refresh -->
+                <button class="topbar-action-btn" id="btnRefresh" title="Làm mới dữ liệu">
+                    <i class="fas fa-rotate-right"></i>
+                </button>
+                <!-- Notification -->
+                <button class="topbar-action-btn" id="btnNotif" title="Thông báo">
+                    <i class="fas fa-bell"></i>
+                    <span class="notif-dot" id="notifDot" style="display:none"></span>
+                </button>
+                <!-- Avatar -->
+                <div class="topbar-avatar" id="topbarAvatar" title="Tài khoản">
+                    <span id="avatarInitial">A</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- ── Content ── -->
+        <div class="admin-content">
+
+            <!-- Page header -->
+            <div class="page-header">
+                <div class="page-header-left">
+                    <h1 class="page-heading">Xin chào, <span id="adminName">Admin</span> 👋</h1>
+                    <p class="page-desc" id="dashDate">Đang tải dữ liệu...</p>
+                </div>
+                <div class="page-header-actions">
+                    <button class="btn btn-ghost btn-sm" id="btnExport">
+                        <i class="fas fa-download"></i> Xuất báo cáo
+                    </button>
+                    <a href="/views/admin/orders.html" class="btn btn-primary btn-sm">
+                        <i class="fas fa-receipt"></i> Xem đơn hàng
+                    </a>
+                </div>
+            </div>
+
+            <!-- ══ Analytics Overview Grid ══ -->
+            <div class="analytics-grid" id="analyticsGrid">
+
+                <!-- Revenue Hero Card (5 col × 2 row) -->
+                <div class="ag-revenue">
+                    <div class="rev-hero-card">
+                        <div class="rhc-label">Doanh thu hôm nay</div>
+                        <div>
+                            <div class="rhc-value" id="revValue">
+                                <span class="sk-block" style="width:180px;height:40px;display:inline-block;background:rgba(255,255,255,0.08)"></span>
+                            </div>
+                            <div class="rhc-zero-hint" id="revZeroHint">
+                                Hôm nay chưa có đơn hàng hoàn tất
+                            </div>
+                        </div>
+                        <div class="rhc-trend" id="revTrend" style="display:none">
+                            <span class="rhc-trend-badge neu" id="revTrendBadge">
+                                <i class="fas fa-minus"></i> --
+                            </span>
+                            <span>so với hôm qua</span>
+                        </div>
+                        <!-- Sparkline -->
+                        <div class="rhc-chart">
+                            <canvas id="sparklineRevenue"></canvas>
+                        </div>
+                        <!-- Bottom metrics -->
+                        <div class="rhc-metrics">
+                            <div class="rhc-metric">
+                                <div class="rhc-metric-val" id="metricPeakDay">--</div>
+                                <div class="rhc-metric-label">Ngày cao nhất (7d)</div>
+                            </div>
+                            <div class="rhc-metric">
+                                <div class="rhc-metric-val" id="metricAvgDay">--</div>
+                                <div class="rhc-metric-label">Trung bình/ngày</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pending Orders (4 col) -->
+                <div class="ag-pending">
+                    <div class="stat-mini-card smc-orange">
+                        <div class="smc-top">
+                            <div class="smc-label">Đơn đang chờ</div>
+                            <div class="smc-icon dki-orange">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                        </div>
+                        <div class="smc-value" id="statPending">--</div>
+                        <div class="smc-sparkline"><canvas id="sparkPending"></canvas></div>
+                        <div class="smc-sub">
+                            <i class="fas fa-circle" style="font-size:6px;color:var(--admin-primary)"></i>
+                            <span id="statPendingSub">Cần xử lý ngay</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Tables (3 col) -->
+                <div class="ag-tables">
+                    <div class="stat-mini-card smc-green">
+                        <div class="smc-top">
+                            <div class="smc-label">Bàn đang phục vụ</div>
+                            <div class="smc-icon dki-green">
+                                <i class="fas fa-chair"></i>
+                            </div>
+                        </div>
+                        <div class="smc-value" id="statTables">--</div>
+                        <div class="smc-sparkline"><canvas id="sparkTables"></canvas></div>
+                        <div class="smc-sub" id="statTablesSub">
+                            <i class="fas fa-circle" style="font-size:6px;color:var(--color-success)"></i>
+                            <span>-- bàn còn trống</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Avg Order (4 col) -->
+                <div class="ag-avg">
+                    <div class="stat-mini-card smc-blue">
+                        <div class="smc-top">
+                            <div class="smc-label">Giá trị TB đơn</div>
+                            <div class="smc-icon dki-blue">
+                                <i class="fas fa-receipt"></i>
+                            </div>
+                        </div>
+                        <div class="smc-value" id="statAvg">--</div>
+                        <div class="smc-sparkline"><canvas id="sparkAvg"></canvas></div>
+                        <div class="smc-sub">
+                            <i class="fas fa-circle" style="font-size:6px;color:var(--color-info)"></i>
+                            <span>7 ngày gần nhất</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Selling compact (3 col) -->
+                <div class="ag-topsell">
+                    <div class="topsell-card" style="height:100%">
+                        <div class="tsc-head">
+                            <div class="tsc-title">Bán chạy</div>
+                            <div class="tsc-badge">TOP 5</div>
+                        </div>
+                        <div class="tsc-list" id="topSellMini">
+                            <!-- JS render -->
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /analytics-grid -->
+
+            <!-- ══ Bottom Row ══ -->
+            <div class="dash-bottom-grid">
+
+                <!-- Recent Orders -->
+                <div class="dash-card">
+                    <div class="dash-card-head">
+                        <div class="dash-card-title">
+                            <i class="fas fa-receipt" style="color:var(--admin-primary);margin-right:6px;font-size:0.85em"></i>
+                            Đơn hàng gần đây
+                        </div>
+                        <a href="/views/admin/orders.html" class="dash-card-link">Xem tất cả →</a>
+                    </div>
+                    <div class="dash-card-body" id="recentOrdersList">
+                        <!-- JS render -->
+                    </div>
+                </div>
+
+                <!-- Top Selling (detailed) -->
+                <div class="dash-card">
+                    <div class="dash-card-head">
+                        <div class="dash-card-title">
+                            <i class="fas fa-fire" style="color:#F59E0B;margin-right:6px;font-size:0.85em"></i>
+                            Món bán chạy nhất
+                        </div>
+                        <a href="/views/admin/foods.html" class="dash-card-link">Xem menu →</a>
+                    </div>
+                    <div class="dash-card-body" id="topSellingList">
+                        <!-- JS render -->
+                    </div>
+                </div>
+
+                <!-- Live Tables -->
+                <div class="dash-card">
+                    <div class="dash-live-head">
+                        <div class="dash-card-title">Trạng thái bàn</div>
+                        <div class="dlh-badge">
+                            <div class="dlh-dot"></div>
+                            LIVE
+                        </div>
+                    </div>
+                    <div class="dash-live-body" id="liveTablesList">
+                        <!-- JS render -->
+                    </div>
+                </div>
+
+            </div><!-- /dash-bottom-grid -->
+
+            <!-- ── Low Stock Warning (hidden if no data) ── -->
+            <div id="lowStockWrap" style="display:none">
+                <div class="dash-card" style="border-left:4px solid #F59E0B">
+                    <div class="dash-card-head">
+                        <div class="dch-title">
+                            <i class="fas fa-triangle-exclamation" style="color:#F59E0B;margin-right:6px"></i>
+                            Cảnh báo tồn kho thấp
+                        </div>
+                        <a href="/views/admin/ingredients.html" class="btn btn-ghost btn-xs">Xem kho</a>
+                    </div>
+                    <div class="dash-card-body" id="lowStockList"
+                         style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:var(--space-3);padding:var(--space-4) var(--space-5)">
+                        <!-- JS render -->
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /admin-content -->
+    </main>
+</div><!-- /admin-app -->
+
+<!-- Chart.js CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<!-- Core JS -->
+<script src="/public/js/common.js"></script>
+<script src="/public/js/admin/layout.js"></script>
+
+<!-- Dashboard JS -->
+<script src="/public/js/admin/dashboard.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Đơn hàng — Smart Restaurant</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <link rel="stylesheet" href="/public/css/common.css">
+    <link rel="stylesheet" href="/public/css/admin/layout.css">
+    <link rel="stylesheet" href="/public/css/admin/components.css">
+    <link rel="stylesheet" href="/public/css/admin/pages.css">
+
+    <style>
+        /* ═══════════════════════════════════════════════
+           ORDERS PAGE — Extra Styles
+        ═══════════════════════════════════════════════ */
+
+        /* ── Kanban view (default) ── */
+        .orders-kanban {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--space-4);
+            align-items: start;
+        }
+
+        .kanban-col {
+            background: var(--color-gray-50);
+            border-radius: var(--radius-xl);
+            border: 1.5px solid var(--color-gray-150);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 200px;
+        }
+
+        /* Column header */
+        .kc-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-4) var(--space-5);
+            border-bottom: 2px solid transparent;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        .kc-head-left  { display: flex; align-items: center; gap: var(--space-2); }
+        .kc-head-dot   { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+        .kc-head-title { font-size: var(--text-sm); font-weight: var(--font-extrabold); color: var(--color-gray-800); }
+        .kc-head-badge {
+            font-size: 0.62rem;
+            font-weight: var(--font-extrabold);
+            padding: 2px 7px;
+            border-radius: var(--radius-full);
+            line-height: 1.4;
+        }
+
+        /* Column colour themes */
+        .kc-pending   { border-top-color: var(--status-pending);    }
+        .kc-pending   .kc-head { background: #FFFBEB; border-bottom-color: #FEF3C7; }
+        .kc-pending   .kc-head-dot { background: var(--status-pending); }
+        .kc-pending   .kc-head-badge { background: var(--status-pending-bg); color: #92400E; }
+
+        .kc-processing { border-top-color: var(--status-processing); }
+        .kc-processing .kc-head { background: #EFF6FF; border-bottom-color: #DBEAFE; }
+        .kc-processing .kc-head-dot { background: var(--status-processing); }
+        .kc-processing .kc-head-badge { background: var(--status-processing-bg); color: #1D4ED8; }
+
+        .kc-ready     { border-top-color: #8B5CF6;                  }
+        .kc-ready     .kc-head { background: #F5F3FF; border-bottom-color: #EDE9FE; }
+        .kc-ready     .kc-head-dot { background: #8B5CF6; }
+        .kc-ready     .kc-head-badge { background: #EDE9FE; color: #5B21B6; }
+
+        .kc-completed { border-top-color: var(--status-completed);  }
+        .kc-completed .kc-head { background: #F0FDF4; border-bottom-color: var(--status-completed-bg); }
+        .kc-completed .kc-head-dot { background: var(--status-completed); }
+        .kc-completed .kc-head-badge { background: var(--status-completed-bg); color: #065F46; }
+
+        /* Cards list */
+        .kc-list {
+            padding: var(--space-3);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+            flex: 1;
+        }
+
+        /* Order Kanban card */
+        .order-kcard {
+            background: var(--color-white);
+            border-radius: var(--radius-lg);
+            border: 1.5px solid var(--color-gray-150);
+            padding: var(--space-4);
+            cursor: pointer;
+            transition: all var(--transition-base);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+            position: relative;
+        }
+        .order-kcard:hover {
+            border-color: var(--admin-primary);
+            box-shadow: 0 4px 16px rgba(249,115,22,0.12);
+            transform: translateY(-2px);
+        }
+
+        /* Card top row */
+        .okc-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--space-2);
+        }
+        .okc-id {
+            font-size: 0.68rem;
+            font-weight: var(--font-extrabold);
+            color: var(--color-gray-400);
+            letter-spacing: 0.04em;
+        }
+        .okc-table {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            background: var(--admin-primary-light);
+            color: var(--admin-primary);
+            border-radius: var(--radius-full);
+            font-size: 0.62rem;
+            font-weight: var(--font-extrabold);
+            flex-shrink: 0;
+        }
+
+        /* Customer name */
+        .okc-customer {
+            font-size: var(--text-sm);
+            font-weight: var(--font-bold);
+            color: var(--color-gray-900);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Items preview */
+        .okc-items {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .okc-item-line {
+            font-size: 0.67rem;
+            color: var(--color-gray-500);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .okc-more {
+            font-size: 0.62rem;
+            color: var(--color-gray-400);
+            font-style: italic;
+        }
+
+        /* Card bottom row */
+        .okc-bottom {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: var(--space-2);
+            border-top: 1px dashed var(--color-gray-150);
+        }
+        .okc-amount {
+            font-size: var(--text-sm);
+            font-weight: var(--font-extrabold);
+            color: var(--color-gray-900);
+            letter-spacing: -0.02em;
+        }
+        .okc-time {
+            font-size: 0.62rem;
+            color: var(--color-gray-400);
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        /* Next-step action button (inside card) */
+        .okc-action-btn {
+            width: 100%;
+            padding: 0.45rem;
+            border-radius: var(--radius-md);
+            border: none;
+            font-family: var(--font-primary);
+            font-size: 0.68rem;
+            font-weight: var(--font-bold);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        .okc-btn-process { background: #DBEAFE; color: #1D4ED8; }
+        .okc-btn-process:hover { background: #BFDBFE; }
+        .okc-btn-ready   { background: #EDE9FE; color: #5B21B6; }
+        .okc-btn-ready:hover { background: #DDD6FE; }
+        .okc-btn-complete { background: var(--color-success); color: var(--color-white); box-shadow: 0 2px 8px rgba(16,185,129,0.28); }
+        .okc-btn-complete:hover { background: var(--color-success-dark); transform: translateY(-1px); }
+        .okc-btn-cancel  { background: var(--color-gray-100); color: var(--color-gray-500); }
+        .okc-btn-cancel:hover  { background: #FEE2E2; color: #B91C1C; }
+
+        /* Loading shimmer for card */
+        .okc-shimmer {
+            height: 120px;
+            background: var(--color-white);
+            border-radius: var(--radius-lg);
+            border: 1.5px solid var(--color-gray-150);
+            animation: sk-pulse 1.5s ease infinite;
+        }
+
+        /* Empty column state */
+        .kc-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-8) var(--space-4);
+            gap: var(--space-2);
+            color: var(--color-gray-300);
+        }
+        .kc-empty i   { font-size: 1.8rem; }
+        .kc-empty span { font-size: 0.7rem; font-weight: var(--font-medium); }
+
+        /* ── Table view ── */
+        .order-table-view { display: none; }
+
+        /* Toolbar */
+        .orders-toolbar {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            background: var(--color-white);
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--color-gray-100);
+            box-shadow: var(--shadow-card);
+            padding: var(--space-3) var(--space-5);
+            flex-wrap: wrap;
+        }
+        .ot-search {
+            flex: 1;
+            min-width: 200px;
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: 0.45rem var(--space-3);
+            background: var(--color-gray-50);
+            border: 1.5px solid var(--color-gray-200);
+            border-radius: var(--radius-md);
+            transition: all var(--transition-fast);
+        }
+        .ot-search:focus-within {
+            border-color: var(--admin-primary);
+            background: var(--color-white);
+            box-shadow: 0 0 0 3px rgba(249,115,22,0.10);
+        }
+        .ot-search-ico { color: var(--color-gray-400); font-size: 0.85rem; }
+        .ot-search-inp {
+            flex: 1; border: none; background: transparent; outline: none;
+            font-family: var(--font-primary); font-size: var(--text-sm);
+            color: var(--color-gray-800);
+        }
+        .ot-search-inp::placeholder { color: var(--color-gray-400); }
+
+        /* Date filter */
+        .ot-date-inp {
+            padding: 0.45rem var(--space-3);
+            background: var(--color-gray-50);
+            border: 1.5px solid var(--color-gray-200);
+            border-radius: var(--radius-md);
+            font-family: var(--font-primary);
+            font-size: var(--text-sm);
+            color: var(--color-gray-700);
+            outline: none;
+            cursor: pointer;
+            transition: border-color var(--transition-fast);
+        }
+        .ot-date-inp:focus { border-color: var(--admin-primary); }
+
+        /* Auto-refresh indicator */
+        .auto-refresh-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--color-success);
+            animation: pulse-live 2s ease infinite;
+            flex-shrink: 0;
+        }
+        @keyframes pulse-live {
+            0%,100% { opacity:1; box-shadow: 0 0 0 0 rgba(16,185,129,0.4); }
+            50%      { opacity:0.7; box-shadow: 0 0 0 5px rgba(16,185,129,0); }
+        }
+        .auto-refresh-label {
+            font-size: 0.65rem;
+            color: var(--color-gray-400);
+            font-weight: var(--font-medium);
+        }
+
+        /* ── Detail Modal ── */
+        .odm-header-info {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+            padding: var(--space-5) var(--space-6);
+            background: var(--color-gray-50);
+            border-bottom: 1px solid var(--color-gray-100);
+            flex-wrap: wrap;
+            gap: var(--space-3);
+        }
+        .odm-meta-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 12px;
+            border-radius: var(--radius-full);
+            font-size: 0.7rem;
+            font-weight: var(--font-bold);
+            background: var(--color-white);
+            border: 1px solid var(--color-gray-200);
+            color: var(--color-gray-700);
+        }
+        .odm-meta-chip i { color: var(--admin-primary); }
+
+        /* Items list in modal */
+        .odm-items-list { display: flex; flex-direction: column; gap: var(--space-2); }
+        .odm-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+            padding: var(--space-3) var(--space-4);
+            background: var(--color-gray-50);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--color-gray-100);
+            transition: background var(--transition-fast);
+        }
+        .odm-item:hover { background: var(--admin-primary-subtle); }
+        .odm-item-num {
+            width: 24px; height: 24px;
+            border-radius: 50%;
+            background: var(--admin-primary-light);
+            color: var(--admin-primary);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.65rem;
+            font-weight: var(--font-extrabold);
+            flex-shrink: 0;
+        }
+        .odm-item-name { flex: 1; font-size: var(--text-sm); font-weight: var(--font-semibold); color: var(--color-gray-800); }
+        .odm-item-qty  {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 28px; height: 24px; padding: 0 6px;
+            background: var(--admin-primary-light);
+            color: var(--admin-primary);
+            border-radius: var(--radius-full);
+            font-size: 0.68rem; font-weight: var(--font-extrabold);
+            flex-shrink: 0;
+        }
+        .odm-item-price { font-size: var(--text-sm); font-weight: var(--font-bold); color: var(--color-gray-700); flex-shrink: 0; white-space: nowrap; }
+
+        /* Summary box */
+        .odm-summary-box {
+            background: var(--color-gray-50);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--color-gray-200);
+            overflow: hidden;
+        }
+        .odm-sum-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-3) var(--space-4);
+            font-size: var(--text-sm);
+            border-bottom: 1px solid var(--color-gray-100);
+        }
+        .odm-sum-row:last-child { border-bottom: none; }
+        .odm-sum-row.odm-total {
+            background: var(--color-white);
+            font-weight: var(--font-extrabold);
+            font-size: var(--text-base);
+        }
+        .odm-sum-label { color: var(--color-gray-500); }
+        .odm-sum-val   { font-weight: var(--font-bold); color: var(--color-gray-800); }
+        .odm-total .odm-sum-val { color: var(--admin-primary); font-size: var(--text-lg); letter-spacing: -0.02em; }
+
+        /* Action zone in modal */
+        .odm-action-zone {
+            padding: var(--space-4) var(--space-6);
+            background: var(--color-gray-50);
+            border-top: 1px solid var(--color-gray-100);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+        }
+        .odm-action-zone-title {
+            font-size: 0.68rem;
+            font-weight: var(--font-bold);
+            color: var(--color-gray-400);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+        .odm-action-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: var(--space-3);
+            align-items: center;
+        }
+
+        /* Pay & release button — prominent */
+        .btn-pay-release {
+            background: var(--color-success);
+            color: var(--color-white);
+            border: none;
+            padding: 0.75rem var(--space-5);
+            border-radius: var(--radius-lg);
+            font-family: var(--font-primary);
+            font-size: var(--text-sm);
+            font-weight: var(--font-extrabold);
+            cursor: pointer;
+            transition: all var(--transition-base);
+            box-shadow: 0 3px 12px rgba(16,185,129,0.32);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-2);
+            width: 100%;
+        }
+        .btn-pay-release:hover {
+            background: var(--color-success-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(16,185,129,0.42);
+        }
+        .btn-pay-release:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Status selector row */
+        .odm-status-select-wrap {
+            display: flex;
+            gap: var(--space-2);
+        }
+        .odm-status-sel {
+            flex: 1;
+            padding: 0.5rem var(--space-3);
+            border: 1.5px solid var(--color-gray-200);
+            border-radius: var(--radius-md);
+            font-family: var(--font-primary);
+            font-size: var(--text-sm);
+            color: var(--color-gray-700);
+            background: var(--color-white);
+            outline: none;
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236B7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right var(--space-3) center;
+            padding-right: 2rem;
+            transition: border-color var(--transition-fast);
+        }
+        .odm-status-sel:focus { border-color: var(--admin-primary); }
+
+        /* Note box in modal */
+        .odm-note-box {
+            padding: var(--space-3) var(--space-4);
+            background: #FFFBEB;
+            border: 1px solid #FEF3C7;
+            border-radius: var(--radius-md);
+            font-size: var(--text-xs);
+            color: #92400E;
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-2);
+        }
+        .odm-note-box i { color: #F59E0B; flex-shrink: 0; margin-top: 1px; }
+
+        /* Status flow steps */
+        .status-flow {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            background: var(--color-white);
+            border: 1px solid var(--color-gray-200);
+            border-radius: var(--radius-full);
+            padding: 3px;
+            overflow: hidden;
+        }
+        .sf-step {
+            flex: 1;
+            text-align: center;
+            padding: 5px 8px;
+            border-radius: var(--radius-full);
+            font-size: 0.6rem;
+            font-weight: var(--font-bold);
+            color: var(--color-gray-400);
+            white-space: nowrap;
+            transition: all var(--transition-fast);
+        }
+        .sf-step.sf-done  { color: var(--color-gray-500); }
+        .sf-step.sf-active-pending    { background: var(--status-pending-bg);    color: #92400E; }
+        .sf-step.sf-active-processing { background: var(--status-processing-bg); color: #1D4ED8; }
+        .sf-step.sf-active-ready      { background: #EDE9FE; color: #5B21B6; }
+        .sf-step.sf-active-completed  { background: var(--status-completed-bg);  color: #065F46; }
+        .sf-step.sf-active-cancelled  { background: var(--status-cancelled-bg);  color: #B91C1C; }
+        .sf-arrow {
+            font-size: 0.55rem;
+            color: var(--color-gray-300);
+            flex-shrink: 0;
+            padding: 0 1px;
+        }
+
+        /* Skeleton */
+        .skeleton { animation: sk-pulse 1.5s ease infinite; }
+        .sk-block  { background: var(--color-gray-100); border-radius: var(--radius-md); }
+        @keyframes sk-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    </style>
+</head>
+<body>
+
+<div class="admin-app" id="adminApp">
+
+    <div id="admin-sidebar-container"></div>
+
+    <main class="admin-main" id="adminMain">
+
+        <!-- ── Topbar ── -->
+        <header class="admin-topbar">
+            <div class="topbar-left">
+                <div class="topbar-title">Đơn hàng</div>
+                <nav class="topbar-breadcrumb">
+                    <a href="/views/admin/index.html">Dashboard</a>
+                    <span class="separator">/</span>
+                    <span class="current">Đơn hàng</span>
+                </nav>
+            </div>
+
+            <div class="topbar-search">
+                <i class="fas fa-search topbar-search-icon"></i>
+                <input type="text" id="topbarSearch" placeholder="Tìm theo bàn, khách, mã đơn...">
+            </div>
+
+            <div class="topbar-actions">
+                <button class="topbar-action-btn" id="btnRefresh" title="Làm mới dữ liệu">
+                    <i class="fas fa-rotate-right"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- ── Content ── -->
+        <div class="admin-content orders-page">
+
+            <!-- Page header -->
+            <div class="page-header">
+                <div class="page-header-left">
+                    <h1 class="page-heading">Theo dõi đơn hàng <span id="headCount"></span></h1>
+                    <p class="page-desc">Quản lý và xử lý đơn hàng thời gian thực theo từng trạng thái</p>
+                </div>
+                <div class="page-header-actions">
+                    <!-- View toggle: Kanban / Table -->
+                    <div class="view-toggle">
+                        <button class="vt-btn vt-active" id="btnKanban" title="Kanban">
+                            <i class="fas fa-table-columns"></i>
+                        </button>
+                        <button class="vt-btn" id="btnTable" title="Bảng">
+                            <i class="fas fa-list"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status summary bar -->
+            <div class="order-status-bar" id="statusBar">
+                <div class="osb-item osb-all osb-active" data-filter="all">
+                    <div class="osb-count" id="sbAll">--</div>
+                    <div class="osb-label">Tất cả</div>
+                </div>
+                <div class="osb-item osb-pending" data-filter="pending">
+                    <div class="osb-count" id="sbPending">--</div>
+                    <div class="osb-label">⏳ Chờ xác nhận</div>
+                </div>
+                <div class="osb-item osb-proc" data-filter="processing">
+                    <div class="osb-count" id="sbProcessing">--</div>
+                    <div class="osb-label">🍳 Đang nấu</div>
+                </div>
+                <div class="osb-item" data-filter="ready" style="flex:1;border-right:1px solid var(--color-gray-100);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:var(--space-4) var(--space-5);cursor:pointer;transition:background var(--transition-fast);text-align:center">
+                    <div class="osb-count" id="sbReady" style="color:#8B5CF6">--</div>
+                    <div class="osb-label">✅ Sẵn sàng</div>
+                </div>
+                <div class="osb-item osb-done" data-filter="completed">
+                    <div class="osb-count" id="sbCompleted">--</div>
+                    <div class="osb-label">🎉 Hoàn thành</div>
+                </div>
+                <div class="osb-item osb-cancel" data-filter="cancelled">
+                    <div class="osb-count" id="sbCancelled">--</div>
+                    <div class="osb-label">❌ Huỷ</div>
+                </div>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="orders-toolbar">
+                <div class="ot-search">
+                    <i class="fas fa-search ot-search-ico"></i>
+                    <input type="text" class="ot-search-inp" id="searchInput"
+                           placeholder="Tìm theo tên khách, số bàn, mã đơn...">
+                </div>
+
+                <input type="date" class="ot-date-inp" id="dateFilter" title="Lọc theo ngày">
+
+                <button class="btn btn-secondary btn-sm" id="btnClearFilter" style="display:none">
+                    <i class="fas fa-xmark"></i> Xoá lọc
+                </button>
+
+                <!-- Auto-refresh indicator -->
+                <div style="display:flex;align-items:center;gap:var(--space-2);margin-left:auto;flex-shrink:0">
+                    <div class="auto-refresh-dot" id="refreshDot"></div>
+                    <span class="auto-refresh-label" id="refreshLabel">Tự cập nhật 30s</span>
+                </div>
+            </div>
+
+            <!-- ── KANBAN VIEW (default) ── -->
+            <div class="orders-kanban" id="kanbanView">
+
+                <!-- Pending -->
+                <div class="kanban-col kc-pending">
+                    <div class="kc-head">
+                        <div class="kc-head-left">
+                            <div class="kc-head-dot"></div>
+                            <span class="kc-head-title">Chờ xác nhận</span>
+                        </div>
+                        <span class="kc-head-badge" id="kcBadgePending">0</span>
+                    </div>
+                    <div class="kc-list" id="colPending"></div>
+                </div>
+
+                <!-- Processing -->
+                <div class="kanban-col kc-processing">
+                    <div class="kc-head">
+                        <div class="kc-head-left">
+                            <div class="kc-head-dot"></div>
+                            <span class="kc-head-title">Đang nấu</span>
+                        </div>
+                        <span class="kc-head-badge" id="kcBadgeProcessing">0</span>
+                    </div>
+                    <div class="kc-list" id="colProcessing"></div>
+                </div>
+
+                <!-- Ready -->
+                <div class="kanban-col kc-ready">
+                    <div class="kc-head">
+                        <div class="kc-head-left">
+                            <div class="kc-head-dot"></div>
+                            <span class="kc-head-title">Sẵn sàng</span>
+                        </div>
+                        <span class="kc-head-badge" id="kcBadgeReady">0</span>
+                    </div>
+                    <div class="kc-list" id="colReady"></div>
+                </div>
+
+                <!-- Completed -->
+                <div class="kanban-col kc-completed">
+                    <div class="kc-head">
+                        <div class="kc-head-left">
+                            <div class="kc-head-dot"></div>
+                            <span class="kc-head-title">Hoàn thành</span>
+                        </div>
+                        <span class="kc-head-badge" id="kcBadgeCompleted">0</span>
+                    </div>
+                    <div class="kc-list" id="colCompleted"></div>
+                </div>
+
+            </div><!-- /kanban -->
+
+            <!-- ── TABLE VIEW (hidden) ── -->
+            <div class="order-table-view" id="tableView">
+                <div class="card" style="overflow:hidden">
+                    <div class="table-wrapper">
+                        <table class="table" id="ordersTable">
+                            <thead>
+                                <tr>
+                                    <th style="width:72px">Mã đơn</th>
+                                    <th style="width:70px">Bàn</th>
+                                    <th>Khách hàng</th>
+                                    <th>Món</th>
+                                    <th style="width:110px">Tổng tiền</th>
+                                    <th style="width:90px">Trạng thái</th>
+                                    <th style="width:110px">Thời gian</th>
+                                    <th style="width:60px"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="ordersTableBody">
+                                <!-- JS render -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /admin-content -->
+    </main>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     MODAL: Order Detail
+═══════════════════════════════════════════ -->
+<div class="modal-overlay" id="orderDetailModal">
+    <div class="modal modal-lg" style="max-height:90vh;overflow-y:auto;display:flex;flex-direction:column">
+
+        <!-- Head (sticky) -->
+        <div class="modal-header">
+            <div style="display:flex;align-items:center;gap:var(--space-3)">
+                <div style="width:38px;height:38px;border-radius:var(--radius-md);background:var(--admin-primary-light);color:var(--admin-primary);display:flex;align-items:center;justify-content:center">
+                    <i class="fas fa-receipt"></i>
+                </div>
+                <div>
+                    <div class="modal-title" id="modalOrderTitle">Chi tiết đơn hàng</div>
+                    <!-- Status flow breadcrumb -->
+                    <div class="status-flow" id="modalStatusFlow" style="margin-top:5px">
+                        <span class="sf-step" data-step="pending">⏳ Chờ</span>
+                        <span class="sf-arrow">›</span>
+                        <span class="sf-step" data-step="processing">🍳 Nấu</span>
+                        <span class="sf-arrow">›</span>
+                        <span class="sf-step" data-step="ready">✅ Xong</span>
+                        <span class="sf-arrow">›</span>
+                        <span class="sf-step" data-step="completed">🎉 Hoàn thành</span>
+                    </div>
+                </div>
+            </div>
+            <button class="modal-close" id="modalClose"><i class="fas fa-xmark"></i></button>
+        </div>
+
+        <!-- Meta info strip -->
+        <div class="odm-header-info" id="modalMetaStrip">
+            <!-- JS render: table_number, customer, phone, time, note -->
+        </div>
+
+        <!-- Body: items + summary -->
+        <div style="padding:var(--space-5) var(--space-6);flex:1;overflow-y:auto">
+
+            <!-- Items label -->
+            <div style="font-size:0.7rem;font-weight:var(--font-bold);color:var(--color-gray-400);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:var(--space-3)">
+                <i class="fas fa-utensils" style="margin-right:5px"></i>Danh sách món
+            </div>
+
+            <!-- Items list -->
+            <div class="odm-items-list" id="modalItemsList">
+                <!-- JS render -->
+            </div>
+
+            <!-- Summary -->
+            <div class="odm-summary-box" style="margin-top:var(--space-4)">
+                <div class="odm-sum-row" id="modalSumSubtotal">
+                    <span class="odm-sum-label">Tạm tính</span>
+                    <span class="odm-sum-val">--</span>
+                </div>
+                <div class="odm-sum-row" id="modalSumDiscount" style="display:none">
+                    <span class="odm-sum-label">Giảm giá</span>
+                    <span class="odm-sum-val" style="color:var(--color-success)">--</span>
+                </div>
+                <div class="odm-sum-row odm-total">
+                    <span class="odm-sum-label">Tổng thanh toán</span>
+                    <span class="odm-sum-val" id="modalSumTotal">--</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Action zone (sticky bottom) -->
+        <div class="odm-action-zone" id="modalActionZone">
+            <!-- JS renders this based on status -->
+        </div>
+
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     MODAL: Confirm Pay & Release
+═══════════════════════════════════════════ -->
+<div class="modal-overlay" id="payReleaseModal">
+    <div class="modal" style="max-width:420px">
+        <div class="modal-header">
+            <div class="modal-title" style="font-size:var(--text-base)">Xác nhận thanh toán</div>
+            <button class="modal-close" id="payReleaseModalClose"><i class="fas fa-xmark"></i></button>
+        </div>
+        <div style="padding:var(--space-7) var(--space-6);text-align:center;display:flex;flex-direction:column;align-items:center;gap:var(--space-4)">
+            <div style="width:68px;height:68px;border-radius:50%;background:var(--color-success-light, #D1FAE5);display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:var(--color-success)">
+                <i class="fas fa-cash-register"></i>
+            </div>
+            <div style="font-size:var(--text-xl);font-weight:var(--font-extrabold);color:var(--color-gray-900);letter-spacing:-0.02em">
+                Thanh toán & Trả bàn?
+            </div>
+            <div style="font-size:var(--text-sm);color:var(--color-gray-500);max-width:300px;line-height:var(--leading-relaxed)">
+                Đơn <strong id="payReleaseOrderId"></strong> — Bàn <strong id="payReleaseTable"></strong><br>
+                Tổng: <strong id="payReleaseAmount" style="color:var(--admin-primary)"></strong>
+            </div>
+            <div style="font-size:var(--text-xs);color:var(--color-gray-400);background:var(--color-gray-50);border-radius:var(--radius-md);padding:var(--space-3) var(--space-4);width:100%;text-align:left">
+                <i class="fas fa-circle-info" style="color:var(--color-info);margin-right:5px"></i>
+                Hành động này sẽ: đánh dấu đơn <strong>Hoàn thành</strong>, giải phóng bàn sang <strong>Sẵn sàng</strong>, cộng điểm thành viên và trừ tồn kho.
+            </div>
+            <div style="display:flex;gap:var(--space-3);width:100%">
+                <button class="btn btn-secondary" id="btnPayReleaseCancel" style="flex:1">Huỷ</button>
+                <button class="btn-pay-release" id="btnPayReleaseConfirm" style="flex:1.5">
+                    <i class="fas fa-check-circle"></i> Xác nhận thanh toán
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast container -->
+<div id="toastContainer"
+     style="position:fixed;top:var(--space-6);right:var(--space-6);z-index:9999;display:flex;flex-direction:column;gap:var(--space-3);pointer-events:none">
+</div>
+
+<script src="/public/js/common.js"></script>
+<script src="/public/js/admin/layout.js"></script>
+<script src="/public/js/admin/orders.js"></script>
+
+</body>
+</html>

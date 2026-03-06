@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lịch sử đơn hàng — GoMeal</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <link rel="stylesheet" href="/public/css/common.css">
+    <link rel="stylesheet" href="/public/css/user/layout.css">
+    <link rel="stylesheet" href="/public/css/user/components.css">
+    <link rel="stylesheet" href="/public/css/user/pages.css">
+
+    <style>
+    /* ================================================================
+       HISTORY PAGE — prefix .hs-
+       ================================================================ */
+
+    /* ── Summary Strip ──────────────────────────────────────────── */
+    .hs-summary-strip {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin-bottom: 24px;
+    }
+
+    .hs-stat-card {
+        background: #fff;
+        border-radius: 18px;
+        border: 1px solid #EEE9E4;
+        padding: 18px 20px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        transition: box-shadow .2s;
+    }
+    .hs-stat-card:hover {
+        box-shadow: 0 6px 24px rgba(0,0,0,.08);
+    }
+
+    .hs-stat-icon {
+        width: 44px; height: 44px;
+        border-radius: 14px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+    .hs-stat-icon.orange  { background: #FFF3EE; color: #FF6B35; }
+    .hs-stat-icon.green   { background: #ECFDF5; color: #10B981; }
+    .hs-stat-icon.amber   { background: #FFFBEB; color: #F59E0B; }
+    .hs-stat-icon.violet  { background: #F5F3FF; color: #8B5CF6; }
+
+    .hs-stat-body { min-width: 0; flex: 1; }
+    .hs-stat-val {
+        font-size: 1.5rem; font-weight: 900;
+        color: #111827; letter-spacing: -.04em; line-height: 1;
+        margin-bottom: 3px;
+    }
+    .hs-stat-label {
+        font-size: .68rem; font-weight: 600;
+        color: #9CA3AF; text-transform: uppercase; letter-spacing: .06em;
+    }
+
+    /* ── Filter / Tab bar ────────────────────────────────────────── */
+    .hs-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+
+    .hs-tabs {
+        display: flex;
+        gap: 6px;
+        background: #F6F4F2;
+        border-radius: 14px;
+        padding: 5px;
+    }
+
+    .hs-tab {
+        padding: 8px 18px;
+        border-radius: 10px;
+        border: none;
+        background: transparent;
+        font-family: 'Outfit', sans-serif;
+        font-size: .8rem;
+        font-weight: 700;
+        color: #9CA3AF;
+        cursor: pointer;
+        transition: all .18s;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        white-space: nowrap;
+    }
+    .hs-tab:hover { color: #374151; }
+    .hs-tab.active {
+        background: #fff;
+        color: #FF6B35;
+        box-shadow: 0 2px 10px rgba(0,0,0,.08);
+    }
+
+    .hs-tab-count {
+        font-size: .6rem;
+        font-weight: 900;
+        padding: 2px 7px;
+        border-radius: 99px;
+        background: #EEE9E4;
+        color: #9CA3AF;
+    }
+    .hs-tab.active .hs-tab-count {
+        background: #FFF3EE;
+        color: #FF6B35;
+    }
+
+    .hs-search-wrap {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #fff;
+        border: 1.5px solid #EEE9E4;
+        border-radius: 12px;
+        padding: 9px 14px;
+        transition: border-color .17s;
+        flex: 1;
+        max-width: 280px;
+    }
+    .hs-search-wrap:focus-within {
+        border-color: #FF6B35;
+        box-shadow: 0 0 0 3px rgba(255,107,53,.08);
+    }
+    .hs-search-wrap i { color: #C4BAB3; font-size: .84rem; flex-shrink: 0; }
+    .hs-search-inp {
+        flex: 1; border: none; outline: none;
+        font-family: 'Outfit', sans-serif;
+        font-size: .82rem; color: #111827; background: transparent;
+    }
+    .hs-search-inp::placeholder { color: #C4BAB3; }
+
+    /* ── Orders list ─────────────────────────────────────────────── */
+    .hs-list {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    /* Order card */
+    .hs-order-card {
+        background: #fff;
+        border-radius: 20px;
+        border: 1px solid #EEE9E4;
+        overflow: hidden;
+        transition: all .2s ease;
+        animation: hsCardIn .25s ease both;
+    }
+    @keyframes hsCardIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    .hs-order-card:hover {
+        border-color: #FFD4C2;
+        box-shadow: 0 8px 28px rgba(0,0,0,.08);
+        transform: translateY(-2px);
+    }
+
+    /* Card top stripe by status */
+    .hs-order-card::before {
+        content: '';
+        display: block;
+        height: 3px;
+        width: 100%;
+    }
+    .hs-order-card.status-pending::before    { background: linear-gradient(90deg, #F59E0B, #FCD34D); }
+    .hs-order-card.status-processing::before { background: linear-gradient(90deg, #3B82F6, #60A5FA); }
+    .hs-order-card.status-completed::before  { background: linear-gradient(90deg, #10B981, #34D399); }
+    .hs-order-card.status-cancelled::before  { background: linear-gradient(90deg, #EF4444, #F87171); }
+
+    .hs-card-body {
+        padding: 18px 22px;
+        display: flex;
+        align-items: flex-start;
+        gap: 18px;
+    }
+
+    /* Order number circle */
+    .hs-order-num-circle {
+        width: 52px; height: 52px;
+        border-radius: 16px;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        flex-shrink: 0;
+        font-weight: 900;
+    }
+    .status-pending    .hs-order-num-circle { background: #FFFBEB; color: #D97706; }
+    .status-processing .hs-order-num-circle { background: #EFF6FF; color: #2563EB; }
+    .status-completed  .hs-order-num-circle { background: #ECFDF5; color: #059669; }
+    .status-cancelled  .hs-order-num-circle { background: #FEF2F2; color: #DC2626; }
+
+    .hs-order-num-label {
+        font-size: .52rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        opacity: .65;
+        line-height: 1;
+        margin-bottom: 1px;
+    }
+    .hs-order-num-val {
+        font-size: 1rem;
+        font-weight: 900;
+        letter-spacing: -.02em;
+        line-height: 1;
+    }
+
+    /* Card main info */
+    .hs-card-info { flex: 1; min-width: 0; }
+
+    .hs-card-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+    }
+
+    .hs-card-title {
+        font-size: .96rem;
+        font-weight: 800;
+        color: #111827;
+        letter-spacing: -.02em;
+    }
+
+    /* Status badge */
+    .hs-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: .66rem;
+        font-weight: 800;
+        padding: 4px 12px;
+        border-radius: 99px;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+    .hs-badge i { font-size: .55rem; }
+    .hs-badge.pending    { background: #FFFBEB; color: #D97706; border: 1.5px solid #FCD34D; }
+    .hs-badge.processing { background: #EFF6FF; color: #2563EB; border: 1.5px solid #BFDBFE; }
+    .hs-badge.completed  { background: #ECFDF5; color: #059669; border: 1.5px solid #A7F3D0; }
+    .hs-badge.cancelled  { background: #FEF2F2; color: #DC2626; border: 1.5px solid #FECACA; }
+
+    /* Meta grid */
+    .hs-card-meta {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+
+    .hs-meta-item {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    .hs-meta-label {
+        font-size: .62rem;
+        font-weight: 700;
+        color: #C4BAB3;
+        text-transform: uppercase;
+        letter-spacing: .07em;
+    }
+    .hs-meta-val {
+        font-size: .84rem;
+        font-weight: 700;
+        color: #374151;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .hs-meta-val i {
+        font-size: .72rem;
+        color: #FF6B35;
+    }
+    .hs-meta-val.price {
+        color: #FF6B35;
+        font-size: .96rem;
+        font-weight: 900;
+    }
+
+    /* Card actions */
+    .hs-card-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 22px;
+        border-top: 1px solid #F9F7F5;
+        background: #FDFCFC;
+    }
+
+    .hs-detail-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 8px 18px;
+        border-radius: 10px;
+        background: #FFF3EE;
+        border: 1.5px solid #FFD4C2;
+        color: #FF6B35;
+        font-family: 'Outfit', sans-serif;
+        font-size: .78rem;
+        font-weight: 800;
+        cursor: pointer;
+        transition: all .17s;
+    }
+    .hs-detail-btn:hover {
+        background: #FF6B35;
+        color: #fff;
+        border-color: transparent;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(255,107,53,.35);
+    }
+
+    .hs-reorder-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 8px 18px;
+        border-radius: 10px;
+        background: #F9F7F5;
+        border: 1.5px solid #EEE9E4;
+        color: #6B7280;
+        font-family: 'Outfit', sans-serif;
+        font-size: .78rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all .17s;
+    }
+    .hs-reorder-btn:hover {
+        border-color: #FF6B35;
+        color: #FF6B35;
+        background: #FFF3EE;
+    }
+
+    .hs-card-time {
+        margin-left: auto;
+        font-size: .68rem;
+        color: #C4BAB3;
+        font-weight: 600;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .hs-card-time i { font-size: .62rem; }
+
+    /* ── Skeleton ─────────────────────────────────────────────────── */
+    .hs-sk {
+        background: linear-gradient(90deg, #F6F4F2 25%, #EEE9E4 50%, #F6F4F2 75%);
+        background-size: 600px 100%;
+        animation: hsSk 1.4s ease infinite;
+        border-radius: 8px;
+        display: block;
+    }
+    @keyframes hsSk { 0%{background-position:-600px 0} 100%{background-position:600px 0} }
+
+    .hs-sk-card {
+        background: #fff;
+        border-radius: 20px;
+        border: 1px solid #EEE9E4;
+        overflow: hidden;
+        padding: 18px 22px;
+        display: flex;
+        gap: 16px;
+    }
+    .hs-sk-circle { width: 52px; height: 52px; border-radius: 16px; flex-shrink: 0; }
+    .hs-sk-lines  { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+    .hs-sk-l1     { height: 14px; border-radius: 7px; }
+    .hs-sk-l2     { height: 11px; width: 65%; border-radius: 6px; }
+    .hs-sk-l3     { height: 11px; width: 45%; border-radius: 6px; }
+
+    /* ── Empty state ──────────────────────────────────────────────── */
+    .hs-empty {
+        text-align: center;
+        padding: 72px 24px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+    }
+    .hs-empty-illustration {
+        width: 100px; height: 100px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #FFF3EE, #F9F7F5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.8rem;
+        margin-bottom: 4px;
+        box-shadow: 0 8px 28px rgba(255,107,53,.12);
+    }
+    .hs-empty-title {
+        font-size: 1.1rem;
+        font-weight: 900;
+        color: #374151;
+        letter-spacing: -.02em;
+    }
+    .hs-empty-sub {
+        font-size: .84rem;
+        color: #9CA3AF;
+        line-height: 1.6;
+        max-width: 280px;
+    }
+    .hs-empty-cta {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 11px 26px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #FF6B35, #F7931E);
+        color: #fff;
+        font-family: 'Outfit', sans-serif;
+        font-size: .86rem;
+        font-weight: 800;
+        text-decoration: none;
+        margin-top: 4px;
+        box-shadow: 0 4px 18px rgba(255,107,53,.38);
+        transition: all .2s;
+        border: none;
+        cursor: pointer;
+    }
+    .hs-empty-cta:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 26px rgba(255,107,53,.50);
+    }
+
+    /* ── Pagination ───────────────────────────────────────────────── */
+    .hs-pagination {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        margin-top: 24px;
+    }
+    .hs-page-btn {
+        width: 36px; height: 36px;
+        border-radius: 10px;
+        border: 1.5px solid #EEE9E4;
+        background: #fff;
+        color: #6B7280;
+        font-family: 'Outfit', sans-serif;
+        font-size: .82rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all .17s;
+    }
+    .hs-page-btn:hover:not(:disabled) {
+        border-color: #FF6B35;
+        color: #FF6B35;
+        background: #FFF3EE;
+    }
+    .hs-page-btn.active {
+        background: #FF6B35;
+        color: #fff;
+        border-color: #FF6B35;
+        box-shadow: 0 3px 12px rgba(255,107,53,.35);
+    }
+    .hs-page-btn:disabled {
+        opacity: .35;
+        cursor: not-allowed;
+    }
+
+    /* ── ORDER DETAIL MODAL ───────────────────────────────────────── */
+    .hs-modal-overlay {
+        position: fixed; inset: 0;
+        background: rgba(17,24,39,.55);
+        backdrop-filter: blur(6px);
+        z-index: 500;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+    .hs-modal-overlay.show { display: flex; }
+
+    .hs-modal {
+        background: #fff;
+        border-radius: 24px;
+        width: 100%;
+        max-width: 560px;
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 40px 100px rgba(0,0,0,.25);
+        animation: hsModalIn .28s cubic-bezier(.34,1.56,.64,1);
+        overflow: hidden;
+    }
+    @keyframes hsModalIn {
+        from { opacity: 0; transform: scale(.9) translateY(20px); }
+        to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    /* Modal header */
+    .hs-modal-hd {
+        padding: 22px 24px 18px;
+        border-bottom: 1px solid #F3F4F6;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        flex-shrink: 0;
+        background: linear-gradient(135deg, #FDFCFC, #fff);
+    }
+    .hs-modal-hd-left { flex: 1; min-width: 0; }
+    .hs-modal-hd-eyebrow {
+        font-size: .62rem;
+        font-weight: 700;
+        color: #C4BAB3;
+        text-transform: uppercase;
+        letter-spacing: .1em;
+        margin-bottom: 4px;
+    }
+    .hs-modal-hd-title {
+        font-size: 1.2rem;
+        font-weight: 900;
+        color: #111827;
+        letter-spacing: -.03em;
+        margin-bottom: 8px;
+    }
+    .hs-modal-close {
+        width: 34px; height: 34px;
+        border-radius: 10px;
+        border: 1.5px solid #EEE9E4;
+        background: #fff;
+        color: #6B7280;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: .88rem;
+        transition: all .17s;
+        flex-shrink: 0;
+    }
+    .hs-modal-close:hover {
+        border-color: #EF4444;
+        color: #EF4444;
+        background: #FEF2F2;
+    }
+
+    /* Modal meta chips */
+    .hs-modal-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+    }
+    .hs-modal-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: #F6F4F2;
+        border-radius: 8px;
+        padding: 4px 10px;
+        font-size: .7rem;
+        font-weight: 700;
+        color: #6B7280;
+    }
+    .hs-modal-chip i {
+        font-size: .65rem;
+        color: #FF6B35;
+    }
+
+    /* Modal body — scrollable */
+    .hs-modal-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 18px 24px;
+        scrollbar-width: thin;
+        scrollbar-color: #EEE9E4 transparent;
+    }
+    .hs-modal-body::-webkit-scrollbar { width: 4px; }
+    .hs-modal-body::-webkit-scrollbar-thumb { background: #EEE9E4; border-radius: 4px; }
+
+    /* Section label */
+    .hs-modal-section-label {
+        font-size: .65rem;
+        font-weight: 800;
+        color: #C4BAB3;
+        text-transform: uppercase;
+        letter-spacing: .1em;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .hs-modal-section-label::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: #F3F4F6;
+    }
+
+    /* Item rows */
+    .hs-modal-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 11px 0;
+        border-bottom: 1px solid #F9F7F5;
+    }
+    .hs-modal-item:last-child { border-bottom: none; }
+
+    .hs-mi-idx {
+        width: 28px; height: 28px;
+        border-radius: 8px;
+        background: #F6F4F2;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .7rem;
+        font-weight: 800;
+        color: #9CA3AF;
+        flex-shrink: 0;
+    }
+    .hs-mi-info { flex: 1; min-width: 0; }
+    .hs-mi-name {
+        font-size: .86rem;
+        font-weight: 700;
+        color: #111827;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-bottom: 2px;
+    }
+    .hs-mi-unit { font-size: .68rem; color: #9CA3AF; font-weight: 500; }
+    .hs-mi-qty {
+        font-size: .72rem;
+        font-weight: 800;
+        color: #fff;
+        background: #FF6B35;
+        padding: 2px 9px;
+        border-radius: 99px;
+        flex-shrink: 0;
+    }
+    .hs-mi-total {
+        font-size: .9rem;
+        font-weight: 900;
+        color: #111827;
+        letter-spacing: -.02em;
+        flex-shrink: 0;
+        min-width: 80px;
+        text-align: right;
+    }
+
+    /* No items message */
+    .hs-modal-no-items {
+        text-align: center;
+        padding: 28px 0;
+        color: #9CA3AF;
+        font-size: .82rem;
+    }
+    .hs-modal-no-items i {
+        display: block;
+        font-size: 1.8rem;
+        margin-bottom: 8px;
+        color: #E5E7EB;
+    }
+
+    /* Modal footer — summary */
+    .hs-modal-ft {
+        padding: 16px 24px;
+        border-top: 1px solid #F3F4F6;
+        flex-shrink: 0;
+        background: #FDFCFC;
+    }
+    .hs-modal-sum-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: .82rem;
+        color: #6B7280;
+        margin-bottom: 6px;
+    }
+    .hs-modal-sum-row.discount { color: #10B981; }
+    .hs-modal-sum-row.total {
+        font-size: 1rem;
+        font-weight: 900;
+        color: #111827;
+        border-top: 1px dashed #EEE9E4;
+        padding-top: 10px;
+        margin-top: 4px;
+        margin-bottom: 0;
+    }
+    .hs-modal-sum-row.total span:last-child { color: #FF6B35; }
+
+    /* ── Toast ─────────────────────────────────────────────────────── */
+    #hsToastContainer {
+        position: fixed;
+        top: 20px; right: 20px;
+        z-index: 999;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        pointer-events: none;
+    }
+    .hs-toast {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 11px 16px;
+        border-radius: 14px;
+        background: #fff;
+        border-left: 4px solid #FF6B35;
+        box-shadow: 0 8px 28px rgba(0,0,0,.14);
+        font-family: 'Outfit', sans-serif;
+        font-size: .8rem;
+        color: #1A1A1A;
+        max-width: 320px;
+        pointer-events: all;
+        animation: hsToastIn .25s ease;
+        line-height: 1.4;
+    }
+    @keyframes hsToastIn { from{opacity:0;transform:translateX(14px)} to{opacity:1;transform:translateX(0)} }
+    .hs-toast.success { border-color: #10B981; }
+    .hs-toast.error   { border-color: #EF4444; }
+    .hs-toast.info    { border-color: #FF6B35; }
+    .hs-toast i.success { color: #10B981; }
+    .hs-toast i.error   { color: #EF4444; }
+    .hs-toast i.info    { color: #FF6B35; }
+
+    /* ── Responsive ───────────────────────────────────────────────── */
+    @media (max-width: 1100px) {
+        .hs-summary-strip { grid-template-columns: repeat(2,1fr); }
+    }
+    @media (max-width: 768px) {
+        .hs-card-meta { grid-template-columns: repeat(2,1fr); }
+        .hs-summary-strip { grid-template-columns: repeat(2,1fr); }
+        .hs-toolbar { flex-direction: column; align-items: stretch; }
+        .hs-search-wrap { max-width: 100%; }
+    }
+    @media (max-width: 480px) {
+        .hs-summary-strip { grid-template-columns: 1fr 1fr; gap: 10px; }
+        .hs-card-body { flex-direction: column; gap: 12px; }
+        .hs-card-meta { grid-template-columns: 1fr 1fr; }
+        .hs-modal { border-radius: 20px 20px 0 0; max-height: 95vh; }
+        .hs-modal-overlay { align-items: flex-end; padding: 0; }
+    }
+    </style>
+</head>
+<body>
+
+<div class="user-app">
+
+    <!-- SIDEBAR -->
+    <div id="user-sidebar-container"></div>
+
+    <!-- MAIN -->
+    <main class="user-main">
+
+        <!-- ── TOPBAR ──────────────────────────────────────────── -->
+        <header class="user-topbar">
+            <div class="topbar-left">
+                <div id="topbarMobileToggle"></div>
+                <p class="topbar-greeting" id="topbarGreetingText">Theo dõi đơn hàng của bạn</p>
+                <h2 class="topbar-title" data-page-title>Lịch sử đặt món</h2>
+            </div>
+
+            <div class="topbar-search">
+                <i class="fas fa-magnifying-glass"></i>
+                <input type="text" class="topbar-search-input" id="topbarSearchProxy"
+                    placeholder="Tìm mã đơn, số bàn..." autocomplete="off">
+            </div>
+
+            <div class="topbar-actions">
+                <button class="topbar-action-btn" id="refreshBtn" title="Làm mới">
+                    <i class="fas fa-rotate-right" id="refreshIcon"></i>
+                </button>
+                <a href="/views/user/settings.html" class="topbar-action-btn" title="Cài đặt">
+                    <i class="fas fa-gear"></i>
+                </a>
+                <span class="topbar-username" id="topbarUserName" style="display:none"></span>
+                <div class="topbar-avatar" id="topbarAvatar"
+                    onclick="window.location.href='/views/user/profile.html'" title="Hồ sơ">
+                    <i class="fas fa-user"></i>
+                </div>
+            </div>
+        </header>
+
+        <!-- ── PAGE CONTENT ────────────────────────────────────── -->
+        <div class="user-content">
+
+            <!-- Summary strip -->
+            <div class="hs-summary-strip" id="hsSummaryStrip">
+                <!-- Skeletons -->
+                <div class="hs-stat-card">
+                    <div class="hs-sk hs-sk-circle"></div>
+                    <div style="flex:1;display:flex;flex-direction:column;gap:8px">
+                        <div class="hs-sk" style="height:22px;border-radius:8px"></div>
+                        <div class="hs-sk" style="height:11px;width:60%;border-radius:6px"></div>
+                    </div>
+                </div>
+                <div class="hs-stat-card">
+                    <div class="hs-sk hs-sk-circle"></div>
+                    <div style="flex:1;display:flex;flex-direction:column;gap:8px">
+                        <div class="hs-sk" style="height:22px;border-radius:8px"></div>
+                        <div class="hs-sk" style="height:11px;width:60%;border-radius:6px"></div>
+                    </div>
+                </div>
+                <div class="hs-stat-card">
+                    <div class="hs-sk hs-sk-circle"></div>
+                    <div style="flex:1;display:flex;flex-direction:column;gap:8px">
+                        <div class="hs-sk" style="height:22px;border-radius:8px"></div>
+                        <div class="hs-sk" style="height:11px;width:60%;border-radius:6px"></div>
+                    </div>
+                </div>
+                <div class="hs-stat-card">
+                    <div class="hs-sk hs-sk-circle"></div>
+                    <div style="flex:1;display:flex;flex-direction:column;gap:8px">
+                        <div class="hs-sk" style="height:22px;border-radius:8px"></div>
+                        <div class="hs-sk" style="height:11px;width:60%;border-radius:6px"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="hs-toolbar">
+                <!-- Status tabs -->
+                <div class="hs-tabs" id="hsTabs">
+                    <button class="hs-tab active" data-status="all">
+                        <i class="fas fa-list"></i>
+                        Tất cả
+                        <span class="hs-tab-count" id="hsCountAll">0</span>
+                    </button>
+                    <button class="hs-tab" data-status="pending">
+                        <i class="fas fa-clock"></i>
+                        Chờ xử lý
+                        <span class="hs-tab-count" id="hsCountPending">0</span>
+                    </button>
+                    <button class="hs-tab" data-status="processing">
+                        <i class="fas fa-fire-burner"></i>
+                        Đang làm
+                        <span class="hs-tab-count" id="hsCountProcessing">0</span>
+                    </button>
+                    <button class="hs-tab" data-status="completed">
+                        <i class="fas fa-circle-check"></i>
+                        Hoàn thành
+                        <span class="hs-tab-count" id="hsCountCompleted">0</span>
+                    </button>
+                    <button class="hs-tab" data-status="cancelled">
+                        <i class="fas fa-circle-xmark"></i>
+                        Đã hủy
+                        <span class="hs-tab-count" id="hsCountCancelled">0</span>
+                    </button>
+                </div>
+
+                <!-- Search -->
+                <div class="hs-search-wrap">
+                    <i class="fas fa-magnifying-glass"></i>
+                    <input type="text" class="hs-search-inp" id="hsSearchInp"
+                        placeholder="Tìm mã đơn, số bàn..." autocomplete="off">
+                </div>
+            </div>
+
+            <!-- Order list -->
+            <div class="hs-list" id="hsOrderList">
+                <!-- Skeleton cards -->
+                <div class="hs-sk-card"><div class="hs-sk hs-sk-circle"></div><div class="hs-sk-lines"><div class="hs-sk hs-sk-l1"></div><div class="hs-sk hs-sk-l2"></div><div class="hs-sk hs-sk-l3"></div></div></div>
+                <div class="hs-sk-card"><div class="hs-sk hs-sk-circle"></div><div class="hs-sk-lines"><div class="hs-sk hs-sk-l1"></div><div class="hs-sk hs-sk-l2"></div><div class="hs-sk hs-sk-l3"></div></div></div>
+                <div class="hs-sk-card"><div class="hs-sk hs-sk-circle"></div><div class="hs-sk-lines"><div class="hs-sk hs-sk-l1"></div><div class="hs-sk hs-sk-l2"></div><div class="hs-sk hs-sk-l3"></div></div></div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="hs-pagination" id="hsPagination" style="display:none"></div>
+
+        </div><!-- /user-content -->
+
+    </main>
+
+    <div id="chatbotBubble"></div>
+
+</div><!-- /user-app -->
+
+
+<!-- ================================================================
+     ORDER DETAIL MODAL
+     ================================================================ -->
+<div class="hs-modal-overlay" id="hsModalOverlay">
+    <div class="hs-modal" id="hsModal">
+
+        <div class="hs-modal-hd">
+            <div class="hs-modal-hd-left">
+                <p class="hs-modal-hd-eyebrow">Chi tiết đơn hàng</p>
+                <h2 class="hs-modal-hd-title" id="hsModalTitle">Đơn hàng #—</h2>
+                <div class="hs-modal-chips" id="hsModalChips">
+                    <!-- Injected by JS -->
+                </div>
+            </div>
+            <button class="hs-modal-close" id="hsModalClose">
+                <i class="fas fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="hs-modal-body">
+            <p class="hs-modal-section-label">Danh sách món</p>
+            <div id="hsModalItems">
+                <!-- Injected by JS -->
+            </div>
+        </div>
+
+        <div class="hs-modal-ft">
+            <div class="hs-modal-sum-row">
+                <span>Tạm tính</span>
+                <span id="hsModalSubtotal">—</span>
+            </div>
+            <div class="hs-modal-sum-row discount" id="hsModalDiscountRow" style="display:none">
+                <span><i class="fas fa-tag" style="font-size:.7rem"></i> Giảm giá</span>
+                <span id="hsModalDiscount">—</span>
+            </div>
+            <div class="hs-modal-sum-row total">
+                <span>Tổng cộng</span>
+                <span id="hsModalTotal">—</span>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Toast container -->
+<div id="hsToastContainer"></div>
+
+<!-- Scripts -->
+<script src="/public/js/common.js"></script>
+<script src="/public/js/user/layout.js"></script>
+<script src="/public/js/user/history.js"></script>
+
+</body>
+</html>

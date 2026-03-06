@@ -1,0 +1,371 @@
+<!-- ================================================================
+     GOMEAL — ADMIN SIDEBAR COMPONENT
+     File: public/components/admin-sidebar.html
+     Load bằng: loadComponent('#sidebar-container', '/public/components/admin-sidebar.html')
+     Lưu ý: KHÔNG có thẻ <html>, <head>, <body>
+     ================================================================ -->
+
+<aside class="admin-sidebar" id="adminSidebar">
+
+    <!-- ── HEADER / BRAND ── -->
+    <div class="sidebar-header">
+        <a href="/views/admin/index.html" class="sidebar-brand">
+            <div class="sidebar-brand-icon">
+                <i class="fas fa-utensils"></i>
+            </div>
+            <div class="sidebar-brand-info">
+                <div class="sidebar-brand-text res-name">GoMeal</div>
+                <div class="sidebar-brand-subtitle">Admin Dashboard</div>
+            </div>
+        </a>
+
+        <!-- Collapse button (desktop) -->
+        <button class="sidebar-collapse-btn" id="sidebarCollapseBtn" title="Thu gọn sidebar">
+            <i class="fas fa-bars"></i>
+        </button>
+    </div>
+
+    <!-- ── NAVIGATION ── -->
+    <nav class="sidebar-nav" id="sidebarNav">
+
+        <!-- ─ Tổng quan ─ -->
+        <div class="nav-section">
+            <div class="nav-section-title">Tổng quan</div>
+            <div class="nav-item">
+                <a href="/views/admin/index.html" class="nav-link" data-page="index">
+                    <span class="nav-link-icon"><i class="fas fa-chart-line"></i></span>
+                    <span class="nav-link-text">Dashboard</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- ─ Thực đơn ─ -->
+        <div class="nav-section">
+            <div class="nav-section-title">Thực đơn</div>
+
+            <!-- Dropdown: Quản lý Menu -->
+            <div class="nav-item has-dropdown" id="menuDropdown">
+                <a href="#" class="nav-link nav-dropdown-trigger" data-dropdown="menuDropdown">
+                    <span class="nav-link-icon"><i class="fas fa-book-open"></i></span>
+                    <span class="nav-link-text">Quản lý Menu</span>
+                    <span class="nav-link-arrow"><i class="fas fa-chevron-right"></i></span>
+                </a>
+                <div class="nav-dropdown">
+                    <a href="/views/admin/categories.html" class="nav-dropdown-item" data-page="categories">
+                        <i class="fas fa-layer-group nav-dropdown-icon"></i>
+                        Danh mục món
+                    </a>
+                    <a href="/views/admin/foods.html" class="nav-dropdown-item" data-page="foods">
+                        <i class="fas fa-drumstick-bite nav-dropdown-icon"></i>
+                        Món ăn
+                    </a>
+                    <a href="/views/admin/food-create.html" class="nav-dropdown-item" data-page="food-create">
+                        <i class="fas fa-plus nav-dropdown-icon"></i>
+                        Thêm món ăn
+                    </a>
+                    <a href="/views/admin/ingredients.html" class="nav-dropdown-item" data-page="ingredients">
+                        <i class="fas fa-seedling nav-dropdown-icon"></i>
+                        Nguyên liệu & Kho
+                    </a>
+                </div>
+            </div>
+
+            <!-- Combo -->
+            <div class="nav-item">
+                <a href="/views/admin/combos.html" class="nav-link" data-page="combos">
+                    <span class="nav-link-icon"><i class="fas fa-box-open"></i></span>
+                    <span class="nav-link-text">Combo khuyến mãi</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- ─ Đơn hàng ─ -->
+        <div class="nav-section">
+            <div class="nav-section-title">Đơn hàng</div>
+            <div class="nav-item">
+                <a href="/views/admin/orders.html" class="nav-link" data-page="orders">
+                    <span class="nav-link-icon"><i class="fas fa-receipt"></i></span>
+                    <span class="nav-link-text">Quản lý đơn hàng</span>
+                    <span class="nav-link-badge" id="pendingBadge" style="display:none">0</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- ─ Cơ sở ─ -->
+        <div class="nav-section">
+            <div class="nav-section-title">Cơ sở</div>
+            <div class="nav-item">
+                <a href="/views/admin/tables.html" class="nav-link" data-page="tables">
+                    <span class="nav-link-icon"><i class="fas fa-chair"></i></span>
+                    <span class="nav-link-text">Quản lý bàn</span>
+                </a>
+            </div>
+            <div class="nav-item">
+                <a href="/views/admin/staff.html" class="nav-link" data-page="staff">
+                    <span class="nav-link-icon"><i class="fas fa-user-tie"></i></span>
+                    <span class="nav-link-text">Nhân viên</span>
+                </a>
+            </div>
+            <div class="nav-item">
+                <a href="/views/admin/customer.html" class="nav-link" data-page="customer">
+                    <span class="nav-link-icon"><i class="fas fa-users"></i></span>
+                    <span class="nav-link-text">Khách hàng</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- ─ Marketing ─ -->
+        <div class="nav-section">
+            <div class="nav-section-title">Marketing</div>
+            <div class="nav-item">
+                <a href="/views/admin/promotions.html" class="nav-link" data-page="promotions">
+                    <span class="nav-link-icon"><i class="fas fa-tag"></i></span>
+                    <span class="nav-link-text">Mã giảm giá</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- ─ Hệ thống ─ -->
+        <div class="nav-section">
+            <div class="nav-section-title">Hệ thống</div>
+            <div class="nav-item">
+                <a href="/views/admin/chatbot.html" class="nav-link" data-page="chatbot">
+                    <span class="nav-link-icon"><i class="fas fa-robot"></i></span>
+                    <span class="nav-link-text">Chatbot AI</span>
+                    <span class="nav-link-tag">AI</span>
+                </a>
+            </div>
+            <div class="nav-item">
+                <a href="/views/admin/settings.html" class="nav-link" data-page="settings">
+                    <span class="nav-link-icon"><i class="fas fa-cog"></i></span>
+                    <span class="nav-link-text">Cài đặt</span>
+                </a>
+            </div>
+        </div>
+
+    </nav>
+
+    <!-- ── FOOTER / USER INFO ── -->
+    <div class="sidebar-footer">
+        <!-- Quick actions -->
+        <div class="sidebar-quick-actions">
+            <a href="/views/admin/settings.html" class="sidebar-quick-btn" title="Cài đặt">
+                <i class="fas fa-cog"></i>
+            </a>
+            <a href="#" class="sidebar-quick-btn" title="Thông báo" id="adminNotifyBtn">
+                <i class="fas fa-bell"></i>
+            </a>
+            <button class="sidebar-quick-btn sidebar-logout-btn" title="Đăng xuất" id="adminLogoutBtn">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+
+        <!-- User card -->
+        <div class="sidebar-user" id="adminUserCard">
+            <div class="sidebar-user-avatar" id="adminAvatarText">A</div>
+            <div class="sidebar-user-info">
+                <div class="sidebar-user-name" id="adminUserName">Admin User</div>
+                <div class="sidebar-user-role">Quản trị viên</div>
+            </div>
+            <div class="sidebar-user-status">
+                <span class="status-dot online"></span>
+            </div>
+        </div>
+    </div>
+
+</aside>
+
+<!-- ── SIDEBAR OVERLAY (mobile) ── -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+
+<!-- ================================================================
+     INLINE STYLES CHO CÁC PHẦN MỞ RỘNG CHƯA CÓ TRONG layout.css
+     ================================================================ -->
+<style>
+/* ── Sidebar brand info layout ── */
+.sidebar-brand-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+/* ── Collapse button ── */
+.sidebar-collapse-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 7px;
+    background: var(--color-gray-100);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-gray-500);
+    font-size: 0.75rem;
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+    margin-left: auto;
+}
+.sidebar-collapse-btn:hover {
+    background: var(--admin-primary-light);
+    color: var(--admin-primary);
+}
+
+/* ── Dropdown icons ── */
+.nav-dropdown-icon {
+    width: 14px;
+    text-align: center;
+    color: var(--color-gray-400);
+    flex-shrink: 0;
+    font-size: 0.75rem;
+}
+.nav-dropdown-item {
+    gap: var(--space-2);
+}
+
+/* ── AI tag badge ── */
+.nav-link-tag {
+    font-size: 0.6rem;
+    font-weight: 800;
+    padding: 2px 6px;
+    background: linear-gradient(135deg, #6366F1, #8B5CF6);
+    color: white;
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+    line-height: 1.4;
+    flex-shrink: 0;
+}
+
+/* ── Quick actions row ── */
+.sidebar-quick-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 0 var(--space-3) var(--space-3);
+}
+
+.sidebar-quick-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-md);
+    background: var(--color-gray-50);
+    border: 1px solid var(--color-gray-150);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-gray-500);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-size: 0.8rem;
+    text-decoration: none;
+}
+
+.sidebar-quick-btn:hover {
+    background: var(--admin-primary-light);
+    border-color: var(--admin-primary);
+    color: var(--admin-primary);
+}
+
+.sidebar-logout-btn:hover {
+    background: var(--color-error-light);
+    border-color: var(--color-error);
+    color: var(--color-error);
+}
+
+/* ── Online status dot ── */
+.sidebar-user-status {
+    flex-shrink: 0;
+}
+
+.status-dot {
+    display: block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 2px solid var(--color-white);
+}
+
+.status-dot.online  { background: var(--color-success); }
+.status-dot.offline { background: var(--color-gray-400); }
+.status-dot.busy    { background: var(--color-error); }
+
+/* ── Sidebar collapsed state ── */
+.admin-sidebar.collapsed {
+    width: 68px;
+}
+
+.admin-sidebar.collapsed .sidebar-brand-info,
+.admin-sidebar.collapsed .nav-section-title,
+.admin-sidebar.collapsed .nav-link-text,
+.admin-sidebar.collapsed .nav-link-arrow,
+.admin-sidebar.collapsed .nav-link-badge,
+.admin-sidebar.collapsed .nav-link-tag,
+.admin-sidebar.collapsed .nav-dropdown,
+.admin-sidebar.collapsed .sidebar-user-info,
+.admin-sidebar.collapsed .sidebar-user-status,
+.admin-sidebar.collapsed .sidebar-quick-actions,
+.admin-sidebar.collapsed .sidebar-brand-subtitle {
+    display: none;
+}
+
+.admin-sidebar.collapsed .sidebar-brand {
+    justify-content: center;
+    padding: var(--space-2);
+}
+
+.admin-sidebar.collapsed .nav-link {
+    justify-content: center;
+    padding: 0.65rem;
+}
+
+.admin-sidebar.collapsed .nav-link-icon {
+    margin: 0;
+    width: 36px;
+    height: 36px;
+    font-size: var(--text-base);
+}
+
+.admin-sidebar.collapsed .sidebar-user {
+    justify-content: center;
+    padding: var(--space-3);
+}
+
+.admin-sidebar.collapsed .sidebar-user-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: var(--text-sm);
+}
+
+.admin-sidebar.collapsed + .admin-main {
+    margin-left: 68px;
+}
+
+/* Tooltip khi collapsed */
+.admin-sidebar.collapsed .nav-link {
+    position: relative;
+}
+
+.admin-sidebar.collapsed .nav-link::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: calc(100% + 12px);
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--color-gray-900);
+    color: white;
+    font-size: var(--text-xs);
+    font-weight: var(--font-semibold);
+    padding: 5px 10px;
+    border-radius: var(--radius-md);
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-fast);
+    z-index: 100;
+}
+
+.admin-sidebar.collapsed .nav-link:hover::after {
+    opacity: 1;
+}
+</style>

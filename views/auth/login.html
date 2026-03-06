@@ -1,0 +1,1427 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập — GoMeal</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <style>
+    /* ============================================================
+       RESET & BASE
+    ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; }
+    body {
+        font-family: 'Outfit', sans-serif;
+        background: #0f1117;
+        color: #1F2937;
+        -webkit-font-smoothing: antialiased;
+        min-height: 100vh;
+        overflow: hidden;
+    }
+
+    /* ============================================================
+       LAYOUT — FULL SCREEN SPLIT
+    ============================================================ */
+    .auth-shell {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    /* ============================================================
+       LEFT — SLIDESHOW PANEL
+    ============================================================ */
+    .panel-left {
+        position: relative;
+        overflow: hidden;
+        background: #0f1117;
+    }
+
+    /* Brand top-left */
+    .left-brand {
+        position: absolute;
+        top: 2rem;
+        left: 2.5rem;
+        z-index: 30;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .brand-icon {
+        width: 46px; height: 46px;
+        background: #FFC107;
+        border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        color: #111827;
+        font-size: 1.2rem;
+        box-shadow: 0 6px 24px rgba(255,193,7,0.55);
+        flex-shrink: 0;
+    }
+
+    .brand-name {
+        font-size: 1.5rem;
+        font-weight: 900;
+        color: #fff;
+        letter-spacing: -0.04em;
+    }
+
+    .brand-name span { color: #FFC107; }
+
+    /* ── Slides ── */
+    .slide-track { position: absolute; inset: 0; }
+
+    .slide {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        transition: opacity 1s ease, transform 1.4s cubic-bezier(0.4,0,0.2,1);
+        transform: scale(1.06);
+    }
+
+    .slide.is-active {
+        opacity: 1;
+        transform: scale(1);
+        z-index: 2;
+    }
+
+    .slide.is-leaving {
+        opacity: 0;
+        transform: scale(0.96);
+        z-index: 1;
+    }
+
+    .slide-img {
+        position: absolute;
+        inset: 0;
+        background-size: cover;
+        background-position: center;
+    }
+
+    .slide-grad {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+            170deg,
+            rgba(0,0,0,0.10) 0%,
+            rgba(0,0,0,0.46) 50%,
+            rgba(0,0,0,0.90) 100%
+        );
+    }
+
+    /* slide 1 */
+    .slide:nth-child(1) .slide-img {
+        background-image: url('/home/assets/images/banner-1.jpg');
+        background-image: linear-gradient(135deg, #1a0a00 0%, #3d1a00 40%, #1a0a00 100%);
+    }
+    /* slide 2 */
+    .slide:nth-child(2) .slide-img {
+        background-image: url('/home/assets/images/banner-2.jpg');
+        background-image: linear-gradient(135deg, #001a0a 0%, #003d1a 40%, #001a0a 100%);
+    }
+    /* slide 3 */
+    .slide:nth-child(3) .slide-img {
+        background-image: url('/home/assets/images/banner-3.jpg');
+        background-image: linear-gradient(135deg, #00101a 0%, #00243d 40%, #00101a 100%);
+    }
+
+    /* Food illustration (dùng CSS art thay ảnh để luôn hiển thị đẹp) */
+    .slide-illustration {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1;
+    }
+
+    .illus-ring {
+        position: absolute;
+        border-radius: 50%;
+        border: 1px solid rgba(255,193,7,0.12);
+        animation: ringPulse 6s ease-in-out infinite;
+    }
+    .illus-ring:nth-child(1){ width:340px; height:340px; animation-delay:0s; }
+    .illus-ring:nth-child(2){ width:480px; height:480px; animation-delay:1s; opacity:.6; }
+    .illus-ring:nth-child(3){ width:620px; height:620px; animation-delay:2s; opacity:.3; }
+
+    @keyframes ringPulse {
+        0%,100% { transform: scale(1); opacity: inherit; }
+        50%     { transform: scale(1.04); }
+    }
+
+    .illus-center {
+        width: 220px;
+        height: 220px;
+        background: radial-gradient(circle at 38% 35%, rgba(255,193,7,0.22), transparent 60%),
+                    radial-gradient(circle at 65% 65%, rgba(249,115,22,0.18), transparent 55%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        z-index: 2;
+        border: 1.5px solid rgba(255,193,7,0.2);
+        box-shadow:
+            0 0 80px rgba(255,193,7,0.12),
+            inset 0 0 40px rgba(255,193,7,0.06);
+    }
+
+    .illus-icon {
+        font-size: 5rem;
+        filter: drop-shadow(0 8px 24px rgba(255,193,7,0.5));
+        animation: iconFloat 4s ease-in-out infinite;
+    }
+
+    @keyframes iconFloat {
+        0%,100% { transform: translateY(0) rotate(-3deg); }
+        50%     { transform: translateY(-12px) rotate(3deg); }
+    }
+
+    /* floating food items */
+    .food-orbit {
+        position: absolute;
+        font-size: 2.2rem;
+        filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
+        animation: orbitFloat 5s ease-in-out infinite;
+    }
+    .food-orbit.f1 { top: 20%; left: 20%; animation-delay: 0s; }
+    .food-orbit.f2 { top: 22%; right: 18%; animation-delay: 1.2s; }
+    .food-orbit.f3 { bottom: 30%; left: 15%; animation-delay: 0.8s; }
+    .food-orbit.f4 { bottom: 28%; right: 20%; animation-delay: 2s; }
+
+    @keyframes orbitFloat {
+        0%,100% { transform: translateY(0); }
+        50%     { transform: translateY(-14px); }
+    }
+
+    /* ── Slide copy ── */
+    .slide-copy {
+        position: absolute;
+        bottom: 0;
+        left: 0; right: 0;
+        padding: 3rem 3rem 2.5rem;
+        z-index: 5;
+        transform: translateY(20px);
+        opacity: 0;
+        transition: transform 0.8s 0.35s cubic-bezier(0.34,1.56,0.64,1),
+                    opacity 0.7s 0.35s ease;
+    }
+
+    .slide.is-active .slide-copy {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    .slide-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255,193,7,0.15);
+        border: 1px solid rgba(255,193,7,0.35);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        color: #FFC107;
+        font-size: 0.68rem;
+        font-weight: 800;
+        padding: 5px 14px;
+        border-radius: 999px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        margin-bottom: 1rem;
+    }
+
+    .chip-dot {
+        width: 5px; height: 5px;
+        background: #FFC107;
+        border-radius: 50%;
+        animation: chipBlink 1.6s ease infinite;
+    }
+
+    @keyframes chipBlink {
+        0%,100% { opacity:1; }
+        50%     { opacity:0.25; }
+    }
+
+    .slide-h {
+        font-size: clamp(1.7rem, 2.8vw, 2.5rem);
+        font-weight: 900;
+        color: #fff;
+        line-height: 1.15;
+        letter-spacing: -0.03em;
+        margin-bottom: 0.75rem;
+        text-shadow: 0 2px 24px rgba(0,0,0,0.5);
+    }
+
+    .slide-h em {
+        font-style: normal;
+        color: #FFC107;
+    }
+
+    .slide-p {
+        font-size: 0.9rem;
+        color: rgba(255,255,255,0.62);
+        line-height: 1.7;
+        max-width: 400px;
+        font-family: 'Nunito', sans-serif;
+        font-weight: 500;
+    }
+
+    /* ── Dots ── */
+    .dots-row {
+        position: absolute;
+        bottom: 2.25rem;
+        right: 2.75rem;
+        z-index: 30;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .dot-btn {
+        width: 8px; height: 8px;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.3);
+        border: none;
+        cursor: pointer;
+        padding: 0;
+        transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    .dot-btn.is-active {
+        width: 28px;
+        background: #FFC107;
+    }
+
+    /* ── Floating stats badge ── */
+    .stats-float {
+        position: absolute;
+        top: 50%;
+        right: -18px;
+        transform: translateY(-50%);
+        z-index: 30;
+        background: #fff;
+        border-radius: 20px;
+        padding: 1.25rem 1.5rem;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.22);
+        min-width: 186px;
+        animation: statsFloat 4.5s ease-in-out infinite;
+    }
+
+    @keyframes statsFloat {
+        0%,100% { transform: translateY(-50%); }
+        50%     { transform: translateY(calc(-50% - 10px)); }
+    }
+
+    .sf-label {
+        font-size: 0.62rem;
+        font-weight: 800;
+        color: #9CA3AF;
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+        margin-bottom: 0.875rem;
+    }
+
+    .sf-row { display: flex; flex-direction: column; gap: 2px; margin-bottom: 0.875rem; }
+    .sf-row:last-of-type { margin-bottom: 0; }
+
+    .sf-name  { font-size: 0.68rem; color: #9CA3AF; font-weight: 600; }
+    .sf-val   { font-size: 1.5rem; font-weight: 900; color: #111827; letter-spacing: -0.04em; line-height: 1; }
+    .sf-trend {
+        font-size: 0.68rem; font-weight: 700; color: #10B981;
+        display: flex; align-items: center; gap: 3px; margin-top: 2px;
+    }
+    .sf-sep { height: 1px; background: #F3F4F6; margin: 0.75rem 0; }
+
+    /* ============================================================
+       RIGHT — FORM PANEL
+    ============================================================ */
+    .panel-right {
+        background: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2.5rem 2.5rem;
+        position: relative;
+        overflow-y: auto;
+    }
+
+    /* Subtle decorative circles */
+    .panel-right::before {
+        content: '';
+        position: absolute;
+        top: -100px; right: -100px;
+        width: 380px; height: 380px;
+        background: radial-gradient(circle, rgba(255,193,7,0.07), transparent 65%);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+    .panel-right::after {
+        content: '';
+        position: absolute;
+        bottom: -80px; left: -80px;
+        width: 300px; height: 300px;
+        background: radial-gradient(circle, rgba(249,115,22,0.05), transparent 65%);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+
+    .form-card {
+        width: 100%;
+        max-width: 420px;
+        position: relative;
+        z-index: 1;
+        animation: cardSlideIn 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+
+    @keyframes cardSlideIn {
+        from { opacity: 0; transform: translateY(28px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Role tabs ── */
+    .role-tabs {
+        display: flex;
+        gap: 4px;
+        background: #F3F4F6;
+        border-radius: 14px;
+        padding: 4px;
+        margin-bottom: 2.25rem;
+    }
+
+    .rtab {
+        flex: 1;
+        display: flex; align-items: center; justify-content: center;
+        gap: 8px;
+        padding: 0.6rem 1rem;
+        border-radius: 10px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #9CA3AF;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        border: none;
+        background: none;
+        font-family: 'Outfit', sans-serif;
+        white-space: nowrap;
+    }
+
+    .rtab i { font-size: 0.8rem; transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+
+    .rtab.is-active {
+        background: #fff;
+        color: #111827;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.04);
+    }
+    .rtab.is-active i { transform: scale(1.2); }
+    .rtab.is-active.rtab-user  i { color: #E6A800; }
+    .rtab.is-active.rtab-admin i { color: #F97316; }
+
+    /* ── Form header ── */
+    .form-head { margin-bottom: 1.75rem; }
+
+    .eyebrow {
+        display: flex; align-items: center; gap: 10px;
+        font-size: 0.72rem; font-weight: 800;
+        color: #E6A800; text-transform: uppercase; letter-spacing: 0.1em;
+        margin-bottom: 0.5rem;
+    }
+
+    .eyebrow-bar {
+        width: 22px; height: 2.5px;
+        background: #FFC107;
+        border-radius: 99px;
+        flex-shrink: 0;
+    }
+
+    .form-h1 {
+        font-size: 1.875rem;
+        font-weight: 900;
+        color: #111827;
+        letter-spacing: -0.04em;
+        line-height: 1.15;
+        margin-bottom: 0.375rem;
+    }
+
+    .form-sub {
+        font-size: 0.875rem;
+        color: #9CA3AF;
+        font-family: 'Nunito', sans-serif;
+        font-weight: 500;
+        line-height: 1.6;
+    }
+
+    /* ── Alert ── */
+    .form-alert {
+        display: none;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 0.875rem 1.125rem;
+        border-radius: 12px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        line-height: 1.5;
+        margin-bottom: 1.125rem;
+        animation: alertPop 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    .form-alert.show { display: flex; }
+
+    .form-alert.err {
+        background: #FEF2F2;
+        border: 1px solid #FECACA;
+        color: #DC2626;
+    }
+
+    .form-alert.ok {
+        background: #F0FDF4;
+        border: 1px solid #BBF7D0;
+        color: #16A34A;
+    }
+
+    .form-alert i { margin-top: 2px; flex-shrink: 0; }
+
+    @keyframes alertPop {
+        from { opacity:0; transform:translateY(-8px) scale(0.97); }
+        to   { opacity:1; transform:translateY(0) scale(1); }
+    }
+
+    /* ── Fields ── */
+    .fields { display: flex; flex-direction: column; gap: 1.125rem; }
+
+    .field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+        animation: fieldIn 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+
+    .field:nth-child(1){ animation-delay:0.06s; }
+    .field:nth-child(2){ animation-delay:0.12s; }
+    .field:nth-child(3){ animation-delay:0.18s; }
+
+    @keyframes fieldIn {
+        from { opacity:0; transform:translateX(-12px); }
+        to   { opacity:1; transform:translateX(0); }
+    }
+
+    .flabel {
+        font-size: 0.8125rem;
+        font-weight: 700;
+        color: #374151;
+    }
+
+    .fwrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .ficon {
+        position: absolute;
+        left: 1rem;
+        color: #9CA3AF;
+        font-size: 0.875rem;
+        pointer-events: none;
+        transition: color 0.2s;
+        z-index: 2;
+    }
+
+    .finput {
+        width: 100%;
+        padding: 0.8125rem 1rem 0.8125rem 2.75rem;
+        background: #F9FAFB;
+        border: 1.5px solid #E5E7EB;
+        border-radius: 12px;
+        font-size: 0.9375rem;
+        font-family: 'Outfit', sans-serif;
+        color: #1F2937;
+        outline: none;
+        transition: all 0.2s ease;
+        -webkit-appearance: none;
+        appearance: none;
+    }
+
+    .finput::placeholder { color: #9CA3AF; }
+
+    .finput:focus {
+        background: #fff;
+        border-color: #FFC107;
+        box-shadow: 0 0 0 4px rgba(255,193,7,0.13);
+    }
+
+    .fwrap:focus-within .ficon { color: #E6A800; }
+
+    /* admin focus */
+    .is-admin .finput:focus {
+        border-color: #F97316;
+        box-shadow: 0 0 0 4px rgba(249,115,22,0.10);
+    }
+
+    .is-admin .fwrap:focus-within .ficon { color: #F97316; }
+
+    /* error */
+    .field.has-err .finput {
+        border-color: #EF4444;
+        background: #FFF8F8;
+        box-shadow: 0 0 0 3px rgba(239,68,68,0.09);
+    }
+
+    .ferr {
+        display: none;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #EF4444;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .field.has-err .ferr { display: flex; }
+
+    /* password toggle */
+    .ptoggle {
+        position: absolute;
+        right: 0.875rem;
+        background: none; border: none;
+        color: #9CA3AF;
+        font-size: 0.9rem;
+        cursor: pointer;
+        padding: 4px;
+        transition: color 0.2s;
+        z-index: 2;
+        line-height: 1;
+    }
+
+    .ptoggle:hover { color: #374151; }
+
+    /* ── Inline row ── */
+    .inline-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .clabel {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 0.8125rem;
+        color: #4B5563;
+        cursor: pointer;
+        font-weight: 500;
+        user-select: none;
+        font-family: 'Nunito', sans-serif;
+    }
+
+    .clabel input { width: 15px; height: 15px; accent-color: #FFC107; cursor: pointer; }
+
+    .flink {
+        font-size: 0.8125rem;
+        font-weight: 700;
+        color: #E6A800;
+        transition: color 0.2s;
+        text-decoration: none;
+    }
+    .flink:hover { color: #FF6B35; }
+
+    /* ── Submit button ── */
+    .btn-go {
+        width: 100%;
+        padding: 0.9375rem;
+        background: #FFC107;
+        color: #111827;
+        border: none;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 800;
+        font-family: 'Outfit', sans-serif;
+        cursor: pointer;
+        transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1);
+        display: flex; align-items: center; justify-content: center;
+        gap: 10px;
+        position: relative;
+        overflow: hidden;
+        margin-top: 0.5rem;
+        box-shadow: 0 4px 22px rgba(255,193,7,0.42);
+        letter-spacing: -0.01em;
+    }
+
+    .btn-go::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 55%);
+        pointer-events: none;
+    }
+
+    .btn-go:hover:not(:disabled) {
+        background: #E6A800;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(255,193,7,0.58);
+    }
+
+    .btn-go:active:not(:disabled) {
+        transform: translateY(0);
+        box-shadow: 0 2px 12px rgba(255,193,7,0.35);
+    }
+
+    .btn-go:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* Admin variant */
+    .btn-go.admin-go {
+        background: #F97316;
+        color: #fff;
+        box-shadow: 0 4px 22px rgba(249,115,22,0.42);
+    }
+    .btn-go.admin-go:hover:not(:disabled) {
+        background: #EA6C0A;
+        box-shadow: 0 8px 30px rgba(249,115,22,0.55);
+    }
+
+    /* spinner */
+    .bspinner {
+        width: 18px; height: 18px;
+        border: 2.5px solid rgba(0,0,0,0.2);
+        border-top-color: currentColor;
+        border-radius: 50%;
+        animation: bspin 0.7s linear infinite;
+        display: none; flex-shrink: 0;
+    }
+
+    .admin-go .bspinner { border-color: rgba(255,255,255,0.25); border-top-color: #fff; }
+
+    .btn-go.loading .bspinner  { display: block; }
+    .btn-go.loading .blabel    { display: none; }
+    .btn-go.loading .barrow    { display: none; }
+
+    @keyframes bspin { to { transform: rotate(360deg); } }
+
+    /* ── Separator ── */
+    .sep {
+        display: flex;
+        align-items: center;
+        gap: 0.875rem;
+    }
+    .sep-line  { flex: 1; height: 1px; background: #E5E7EB; }
+    .sep-label {
+        font-size: 0.7rem;
+        font-weight: 800;
+        color: #9CA3AF;
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+        white-space: nowrap;
+    }
+
+    /* ── Social grid ── */
+    .social-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+    }
+
+    .sbtn {
+        height: 46px;
+        border-radius: 12px;
+        border: 1.5px solid #E5E7EB;
+        background: #fff;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.125rem;
+        color: #4B5563;
+        cursor: pointer;
+        transition: all 0.22s cubic-bezier(0.34,1.56,0.64,1);
+        text-decoration: none;
+    }
+
+    .sbtn:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.10); }
+    .sbtn.g:hover  { border-color:#EA4335; color:#EA4335; background:#FFF5F5; }
+    .sbtn.fb:hover { border-color:#1877F2; color:#1877F2; background:#EFF6FF; }
+    .sbtn.tw:hover { border-color:#1DA1F2; color:#1DA1F2; background:#F0F9FF; }
+    .sbtn.ig:hover { border-color:#E4405F; color:#E4405F; background:#FFF0F4; }
+
+    /* ── Footer ── */
+    .form-foot {
+        text-align: center;
+        font-size: 0.875rem;
+        color: #6B7280;
+        font-family: 'Nunito', sans-serif;
+        font-weight: 500;
+    }
+
+    .ffoot-link {
+        font-weight: 800;
+        color: #E6A800;
+        font-family: 'Outfit', sans-serif;
+        transition: color 0.2s;
+        text-decoration: none;
+    }
+    .ffoot-link:hover { color: #FF6B35; }
+
+    /* Spacing utility */
+    .mt12 { margin-top: 0.75rem; }
+    .mt16 { margin-top: 1rem; }
+    .mt20 { margin-top: 1.25rem; }
+    .mt24 { margin-top: 1.5rem; }
+
+    /* ============================================================
+       RESPONSIVE
+    ============================================================ */
+    @media (max-width: 960px) {
+        .auth-shell { grid-template-columns: 1fr; }
+        .panel-left { display: none; }
+        .panel-right { padding: 2.5rem 1.75rem; }
+        body { overflow-y: auto; }
+    }
+
+    @media (max-width: 480px) {
+        .social-grid { grid-template-columns: repeat(2,1fr); }
+        .form-h1 { font-size: 1.625rem; }
+        .panel-right { padding: 2rem 1.25rem; }
+    }
+    </style>
+</head>
+<body>
+
+<div class="auth-shell">
+
+    <!-- ══════════════════════════════════════════
+         LEFT PANEL — SLIDESHOW
+    ══════════════════════════════════════════ -->
+    <div class="panel-left">
+
+        <!-- Brand -->
+        <div class="left-brand">
+            <div class="brand-icon"><i class="fas fa-utensils"></i></div>
+            <div class="brand-name">GoMeal<span>.</span></div>
+        </div>
+
+        <!-- Slides -->
+        <div class="slide-track" id="slideTrack">
+
+            <!-- Slide 1 -->
+            <div class="slide is-active">
+                <div class="slide-img" style="background-image:url('/home/assets/images/banner-1.jpg')"></div>
+                <!-- Fallback gradient if image missing -->
+                <div style="position:absolute;inset:0;background:linear-gradient(135deg,#2d1400,#6b3000,#2d1400);z-index:0"></div>
+                <div class="slide-illustration" style="z-index:1">
+                    <div class="illus-ring"></div>
+                    <div class="illus-ring"></div>
+                    <div class="illus-ring"></div>
+                    <div class="food-orbit f1">🍔</div>
+                    <div class="food-orbit f2">🍕</div>
+                    <div class="food-orbit f3">🌮</div>
+                    <div class="food-orbit f4">🍜</div>
+                    <div class="illus-center">
+                        <div class="illus-icon">🍽️</div>
+                    </div>
+                </div>
+                <div class="slide-grad"></div>
+                <div class="slide-copy">
+                    <div class="slide-chip">
+                        <div class="chip-dot"></div>
+                        Đặt món thông minh
+                    </div>
+                    <h2 class="slide-h">Trải nghiệm ẩm thực<br><em>đỉnh cao</em> tại bàn</h2>
+                    <p class="slide-p">Quét QR, chọn món yêu thích và thưởng thức — không cần chờ đợi, không cần gọi nhân viên.</p>
+                </div>
+            </div>
+
+            <!-- Slide 2 -->
+            <div class="slide">
+                <div class="slide-img" style="background-image:url('/home/assets/images/banner-2.jpg')"></div>
+                <div style="position:absolute;inset:0;background:linear-gradient(135deg,#001a0e,#004d28,#001a0e);z-index:0"></div>
+                <div class="slide-illustration" style="z-index:1">
+                    <div class="illus-ring"></div>
+                    <div class="illus-ring"></div>
+                    <div class="illus-ring"></div>
+                    <div class="food-orbit f1">🥗</div>
+                    <div class="food-orbit f2">🥩</div>
+                    <div class="food-orbit f3">🍱</div>
+                    <div class="food-orbit f4">🍣</div>
+                    <div class="illus-center" style="background:radial-gradient(circle at 38% 35%, rgba(16,185,129,0.2), transparent 60%), radial-gradient(circle at 65% 65%, rgba(5,150,105,0.15), transparent 55%); border-color:rgba(16,185,129,0.2)">
+                        <div class="illus-icon">🌿</div>
+                    </div>
+                </div>
+                <div class="slide-grad"></div>
+                <div class="slide-copy">
+                    <div class="slide-chip" style="background:rgba(16,185,129,0.15);border-color:rgba(16,185,129,0.35);color:#10B981">
+                        <div class="chip-dot" style="background:#10B981"></div>
+                        Thực đơn phong phú
+                    </div>
+                    <h2 class="slide-h">Hàng trăm món ngon<br><em style="color:#34D399">mới mỗi ngày</em></h2>
+                    <p class="slide-p">Từ món Á đến món Âu, từ ăn vặt đến tiệc sang — tất cả trong một ứng dụng duy nhất.</p>
+                </div>
+            </div>
+
+            <!-- Slide 3 -->
+            <div class="slide">
+                <div class="slide-img" style="background-image:url('/home/assets/images/banner-3.jpg')"></div>
+                <div style="position:absolute;inset:0;background:linear-gradient(135deg,#00101a,#003050,#00101a);z-index:0"></div>
+                <div class="slide-illustration" style="z-index:1">
+                    <div class="illus-ring"></div>
+                    <div class="illus-ring"></div>
+                    <div class="illus-ring"></div>
+                    <div class="food-orbit f1">☕</div>
+                    <div class="food-orbit f2">🧋</div>
+                    <div class="food-orbit f3">🍰</div>
+                    <div class="food-orbit f4">🍦</div>
+                    <div class="illus-center" style="background:radial-gradient(circle at 38% 35%, rgba(59,130,246,0.2), transparent 60%), radial-gradient(circle at 65% 65%, rgba(139,92,246,0.15), transparent 55%); border-color:rgba(59,130,246,0.2)">
+                        <div class="illus-icon">✨</div>
+                    </div>
+                </div>
+                <div class="slide-grad"></div>
+                <div class="slide-copy">
+                    <div class="slide-chip" style="background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.35);color:#60A5FA">
+                        <div class="chip-dot" style="background:#60A5FA"></div>
+                        Ưu đãi độc quyền
+                    </div>
+                    <h2 class="slide-h">Voucher & combo<br><em style="color:#93C5FD">tiết kiệm</em> mỗi tuần</h2>
+                    <p class="slide-p">Đăng ký thành viên VIP để nhận ưu đãi đặc biệt, tích điểm đổi quà và nhiều đặc quyền hơn.</p>
+                </div>
+            </div>
+
+        </div><!-- /slide-track -->
+
+        <!-- Dots -->
+        <div class="dots-row" id="dotsRow">
+            <button class="dot-btn is-active" data-idx="0"></button>
+            <button class="dot-btn" data-idx="1"></button>
+            <button class="dot-btn" data-idx="2"></button>
+        </div>
+
+        <!-- Floating stats badge -->
+        <div class="stats-float">
+            <div class="sf-label">GoMeal Thống kê</div>
+            <div class="sf-row">
+                <span class="sf-name">Đơn hàng hôm nay</span>
+                <span class="sf-val" id="sfOrders">1,284</span>
+                <span class="sf-trend"><i class="fas fa-arrow-trend-up"></i> +18% so hôm qua</span>
+            </div>
+            <div class="sf-sep"></div>
+            <div class="sf-row">
+                <span class="sf-name">Thành viên mới</span>
+                <span class="sf-val">+47</span>
+                <span class="sf-trend"><i class="fas fa-arrow-trend-up"></i> Tuần này</span>
+            </div>
+        </div>
+
+    </div><!-- /panel-left -->
+
+
+    <!-- ══════════════════════════════════════════
+         RIGHT PANEL — FORM
+    ══════════════════════════════════════════ -->
+    <div class="panel-right">
+        <div class="form-card" id="formCard">
+
+            <!-- Role tabs -->
+            <div class="role-tabs" id="roleTabs">
+                <button class="rtab rtab-user is-active" data-role="customer" onclick="switchRole('customer')">
+                    <i class="fas fa-user"></i> Khách hàng
+                </button>
+                <button class="rtab rtab-admin" data-role="admin" onclick="switchRole('admin')">
+                    <i class="fas fa-shield-halved"></i> Quản trị viên
+                </button>
+            </div>
+
+            <!-- Form header -->
+            <div class="form-head">
+                <div class="eyebrow">
+                    <div class="eyebrow-bar"></div>
+                    <span id="eyebrowText">Chào mừng trở lại</span>
+                </div>
+                <h1 class="form-h1" id="formTitle">Đăng nhập</h1>
+                <p class="form-sub" id="formSub">Nhập thông tin tài khoản để tiếp tục</p>
+            </div>
+
+            <!-- Alert -->
+            <div class="form-alert" id="formAlert">
+                <i class="fas fa-circle-exclamation" id="alertIcon"></i>
+                <span id="alertMsg"></span>
+            </div>
+
+            <!-- Form -->
+            <form class="fields" id="loginForm" novalidate autocomplete="off">
+
+                <!-- Email -->
+                <div class="field" id="fEmail">
+                    <label class="flabel" for="email">Email</label>
+                    <div class="fwrap">
+                        <i class="fas fa-envelope ficon"></i>
+                        <input
+                            class="finput" id="email" name="email" type="email"
+                            placeholder="you@example.com"
+                            autocomplete="email"
+                        >
+                    </div>
+                    <span class="ferr">
+                        <i class="fas fa-circle-xmark"></i>
+                        <span id="emailErrMsg">Email không hợp lệ</span>
+                    </span>
+                </div>
+
+                <!-- Password -->
+                <div class="field" id="fPassword">
+                    <label class="flabel" for="password">Mật khẩu</label>
+                    <div class="fwrap">
+                        <i class="fas fa-lock ficon"></i>
+                        <input
+                            class="finput" id="password" name="password" type="password"
+                            placeholder="••••••••"
+                            autocomplete="current-password"
+                        >
+                        <button type="button" class="ptoggle" id="pwdToggle" aria-label="Hiện mật khẩu">
+                            <i class="fas fa-eye" id="pwdEyeIcon"></i>
+                        </button>
+                    </div>
+                    <span class="ferr">
+                        <i class="fas fa-circle-xmark"></i>
+                        <span id="passwordErrMsg">Mật khẩu phải có ít nhất 6 ký tự</span>
+                    </span>
+                </div>
+
+                <!-- Remember + Forgot -->
+                <div class="inline-row">
+                    <label class="clabel">
+                        <input type="checkbox" id="rememberMe"> Ghi nhớ đăng nhập
+                    </label>
+                    <a href="#" class="flink" id="forgotLink">Quên mật khẩu?</a>
+                </div>
+
+                <!-- Submit -->
+                <button type="submit" class="btn-go" id="btnSubmit">
+                    <div class="bspinner"></div>
+                    <span class="blabel" id="btnLabel">Đăng nhập</span>
+                    <i class="fas fa-arrow-right barrow" id="btnArrow"></i>
+                </button>
+
+            </form>
+
+            <!-- Divider -->
+            <div class="sep mt20">
+                <div class="sep-line"></div>
+                <span class="sep-label">hoặc đăng nhập với</span>
+                <div class="sep-line"></div>
+            </div>
+
+            <!-- Social -->
+            <div class="social-grid mt16">
+                <a href="#" class="sbtn g" title="Google" onclick="handleSocial('google'); return false;">
+                    <i class="fab fa-google"></i>
+                </a>
+                <a href="#" class="sbtn fb" title="Facebook" onclick="handleSocial('facebook'); return false;">
+                    <i class="fab fa-facebook-f"></i>
+                </a>
+                <a href="#" class="sbtn tw" title="Twitter / X" onclick="handleSocial('twitter'); return false;">
+                    <i class="fab fa-x-twitter"></i>
+                </a>
+                <a href="#" class="sbtn ig" title="Instagram" onclick="handleSocial('instagram'); return false;">
+                    <i class="fab fa-instagram"></i>
+                </a>
+            </div>
+
+            <!-- Footer -->
+            <p class="form-foot mt24">
+                Chưa có tài khoản?
+                <a href="/views/auth/register.html" class="ffoot-link">Đăng ký miễn phí</a>
+            </p>
+
+        </div><!-- /form-card -->
+    </div><!-- /panel-right -->
+
+</div><!-- /auth-shell -->
+
+
+<script>
+/* ================================================================
+   LOGIN.JS — Inline script
+   ================================================================ */
+'use strict';
+
+/* ── State ── */
+let currentRole = 'customer'; // 'customer' | 'admin'
+let slideIndex  = 0;
+let slideTimer  = null;
+const SLIDES    = document.querySelectorAll('.slide');
+const DOTS      = document.querySelectorAll('.dot-btn');
+
+/* ================================================================
+   1. SLIDESHOW
+   ================================================================ */
+function goToSlide(idx) {
+    if (idx === slideIndex) return;
+
+    // Mark current as leaving
+    SLIDES[slideIndex].classList.remove('is-active');
+    SLIDES[slideIndex].classList.add('is-leaving');
+    DOTS[slideIndex].classList.remove('is-active');
+
+    // Remove leaving class after transition
+    const prev = slideIndex;
+    setTimeout(function () {
+        try { SLIDES[prev].classList.remove('is-leaving'); } catch(_){}
+    }, 1400);
+
+    slideIndex = idx;
+    SLIDES[slideIndex].classList.add('is-active');
+    DOTS[slideIndex].classList.add('is-active');
+}
+
+function nextSlide() {
+    goToSlide((slideIndex + 1) % SLIDES.length);
+}
+
+function startSlideShow() {
+    if (slideTimer) clearInterval(slideTimer);
+    slideTimer = setInterval(nextSlide, 5000);
+}
+
+// Dot click
+DOTS.forEach(function(dot) {
+    dot.addEventListener('click', function() {
+        const idx = parseInt(this.getAttribute('data-idx'), 10);
+        if (!isNaN(idx)) {
+            goToSlide(idx);
+            startSlideShow(); // reset timer
+        }
+    });
+});
+
+// Touch swipe on left panel
+(function() {
+    let startX = 0;
+    const track = document.getElementById('slideTrack');
+    if (!track) return;
+    track.addEventListener('touchstart', function(e) {
+        startX = e.touches[0].clientX;
+    }, { passive: true });
+    track.addEventListener('touchend', function(e) {
+        const diff = startX - e.changedTouches[0].clientX;
+        if (Math.abs(diff) > 50) {
+            if (diff > 0) nextSlide();
+            else goToSlide((slideIndex - 1 + SLIDES.length) % SLIDES.length);
+            startSlideShow();
+        }
+    }, { passive: true });
+})();
+
+startSlideShow();
+
+/* ================================================================
+   2. ROLE SWITCH
+   ================================================================ */
+function switchRole(role) {
+    if (role === currentRole) return;
+    currentRole = role;
+
+    const card    = document.getElementById('formCard');
+    const btnGo   = document.getElementById('btnSubmit');
+    const eyebrow = document.getElementById('eyebrowText');
+    const sub     = document.getElementById('formSub');
+    const label   = document.getElementById('btnLabel');
+
+    // Update tab styles
+    document.querySelectorAll('.rtab').forEach(function(t) {
+        t.classList.toggle('is-active', t.getAttribute('data-role') === role);
+    });
+
+    if (role === 'admin') {
+        card.classList.add('is-admin');
+        btnGo.classList.add('admin-go');
+        eyebrow.textContent  = 'Khu vực quản trị';
+        document.getElementById('formTitle').textContent = 'Đăng nhập Admin';
+        sub.textContent  = 'Chỉ dành cho quản trị viên được uỷ quyền';
+        label.textContent = 'Truy cập hệ thống';
+    } else {
+        card.classList.remove('is-admin');
+        btnGo.classList.remove('admin-go');
+        eyebrow.textContent  = 'Chào mừng trở lại';
+        document.getElementById('formTitle').textContent = 'Đăng nhập';
+        sub.textContent  = 'Nhập thông tin tài khoản để tiếp tục';
+        label.textContent = 'Đăng nhập';
+    }
+
+    // Clear alert and errors when switching
+    hideAlert();
+    clearErrors();
+}
+
+/* ================================================================
+   3. VALIDATION HELPERS
+   ================================================================ */
+function showFieldError(fieldId, msg) {
+    try {
+        const field = document.getElementById(fieldId);
+        if (!field) return;
+        field.classList.add('has-err');
+        const errSpan = field.querySelector('[id$="ErrMsg"]');
+        if (errSpan && msg) errSpan.textContent = msg;
+    } catch(_) {}
+}
+
+function clearFieldError(fieldId) {
+    try {
+        const field = document.getElementById(fieldId);
+        if (field) field.classList.remove('has-err');
+    } catch(_) {}
+}
+
+function clearErrors() {
+    ['fEmail','fPassword'].forEach(clearFieldError);
+}
+
+function showAlert(msg, type) {
+    try {
+        const box  = document.getElementById('formAlert');
+        const icon = document.getElementById('alertIcon');
+        const text = document.getElementById('alertMsg');
+        if (!box) return;
+
+        box.className = 'form-alert show ' + (type === 'success' ? 'ok' : 'err');
+        icon.className = type === 'success'
+            ? 'fas fa-circle-check'
+            : 'fas fa-circle-exclamation';
+        text.textContent = msg;
+    } catch(_) {}
+}
+
+function hideAlert() {
+    try {
+        const box = document.getElementById('formAlert');
+        if (box) box.classList.remove('show');
+    } catch(_) {}
+}
+
+function setLoading(on) {
+    try {
+        const btn = document.getElementById('btnSubmit');
+        if (!btn) return;
+        btn.classList.toggle('loading', on);
+        btn.disabled = on;
+    } catch(_) {}
+}
+
+/* ================================================================
+   4. FORM SUBMIT — Kết nối API
+   ================================================================ */
+document.getElementById('loginForm').addEventListener('submit', async function handleSubmit(e) {
+    e.preventDefault();
+    hideAlert();
+    clearErrors();
+
+    const email    = (document.getElementById('email').value    || '').trim();
+    const password = (document.getElementById('password').value || '').trim();
+
+    // ── Client validation ──
+    let hasErr = false;
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showFieldError('fEmail', 'Vui lòng nhập email hợp lệ');
+        hasErr = true;
+    }
+
+    if (!password || password.length < 6) {
+        showFieldError('fPassword', 'Mật khẩu phải có ít nhất 6 ký tự');
+        hasErr = true;
+    }
+
+    if (hasErr) return;
+
+    // ── Call API ──
+    setLoading(true);
+
+    try {
+        const res = await fetch('/api/auth/login', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ email, password }),
+        });
+
+        let data = null;
+        try {
+            const txt = await res.text();
+            if (txt) data = JSON.parse(txt);
+        } catch(_) {
+            data = null;
+        }
+
+        if (res.ok && data && data.token) {
+            // ── Success ──
+            const user  = data.user || {};
+            const token = data.token;
+            const role  = user.role || 'customer';
+
+            // Save session
+            try {
+                localStorage.setItem('authToken', token);
+                localStorage.setItem('userRole',  role);
+                localStorage.setItem('adminInfo', JSON.stringify({
+                    name: user.name || 'Admin',
+                    role: role,
+                    email: user.email || email,
+                }));
+                // Remember email if checked
+                if (document.getElementById('rememberMe').checked) {
+                    localStorage.setItem('savedEmail', email);
+                } else {
+                    localStorage.removeItem('savedEmail');
+                }
+            } catch(_) { /* localStorage blocked */ }
+
+            showAlert('Đăng nhập thành công! Đang chuyển hướng...', 'success');
+
+            // Redirect theo role
+            setTimeout(function() {
+                try {
+                    if (role === 'admin') {
+                        window.location.href = '/views/admin/index.html';
+                    } else {
+                        window.location.href = '/views/user/index.html';
+                    }
+                } catch(_) {}
+            }, 900);
+
+        } else {
+            // ── API error ──
+            const msg = (data && data.message) ? data.message : 'Đăng nhập thất bại. Vui lòng thử lại.';
+
+            if (res.status === 401) {
+                showFieldError('fEmail', ' ');
+                showFieldError('fPassword', msg);
+            } else {
+                showAlert(msg, 'error');
+            }
+        }
+
+    } catch (netErr) {
+        showAlert('Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.', 'error');
+        console.warn('[Login] Network error:', netErr.message);
+    }
+
+    setLoading(false);
+});
+
+/* ================================================================
+   5. LIVE VALIDATION (xóa lỗi khi user gõ lại)
+   ================================================================ */
+document.getElementById('email').addEventListener('input', function() {
+    clearFieldError('fEmail');
+    hideAlert();
+});
+
+document.getElementById('password').addEventListener('input', function() {
+    clearFieldError('fPassword');
+    hideAlert();
+});
+
+/* ================================================================
+   6. PASSWORD TOGGLE
+   ================================================================ */
+document.getElementById('pwdToggle').addEventListener('click', function() {
+    try {
+        const inp  = document.getElementById('password');
+        const icon = document.getElementById('pwdEyeIcon');
+        if (!inp) return;
+
+        if (inp.type === 'password') {
+            inp.type  = 'text';
+            icon.className = 'fas fa-eye-slash';
+        } else {
+            inp.type  = 'password';
+            icon.className = 'fas fa-eye';
+        }
+    } catch(_) {}
+});
+
+/* ================================================================
+   7. SOCIAL LOGIN PLACEHOLDER
+   ================================================================ */
+function handleSocial(provider) {
+    showAlert(`Đăng nhập ${provider} đang được phát triển.`, 'error');
+}
+
+/* ================================================================
+   8. RESTORE SAVED EMAIL
+   ================================================================ */
+(function restoreEmail() {
+    try {
+        const saved = localStorage.getItem('savedEmail');
+        if (saved) {
+            const emailInput = document.getElementById('email');
+            const rememberCb = document.getElementById('rememberMe');
+            if (emailInput) emailInput.value = saved;
+            if (rememberCb) rememberCb.checked = true;
+        }
+    } catch(_) {}
+})();
+
+/* ================================================================
+   9. REDIRECT IF ALREADY LOGGED IN
+   Chỉ redirect khi token CÒN HỢP LỆ trên server.
+   Nếu server trả 401/403 → xóa token cũ, ở lại trang login.
+   ================================================================ */
+(function checkAlreadyLoggedIn() {
+    try {
+        const token = localStorage.getItem('authToken');
+        const role  = localStorage.getItem('userRole');
+
+        // Không có token → không cần kiểm tra
+        if (!token || !role) return;
+
+        // Verify token với server trước khi redirect
+        fetch('/api/auth/verify', {
+            method: 'GET',
+            headers: { 'Authorization': 'Bearer ' + token }
+        })
+        .then(function(res) {
+            if (res.ok) {
+                // Token hợp lệ → redirect
+                const dest = role === 'admin'
+                    ? '/views/admin/index.html'
+                    : '/views/user/index.html';
+                window.location.href = dest;
+            } else {
+                // Token hết hạn / không hợp lệ → xóa và ở lại trang login
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('userRole');
+                localStorage.removeItem('adminInfo');
+            }
+        })
+        .catch(function() {
+            // Lỗi mạng hoặc endpoint không tồn tại → không redirect, ở lại login
+            // Không xóa token vì có thể chỉ là mất mạng tạm thời
+        });
+    } catch(_) {}
+})();
+
+/* ================================================================
+   10. COUNTER ANIMATION (stats badge)
+   ================================================================ */
+(function animateCounter() {
+    try {
+        const el  = document.getElementById('sfOrders');
+        if (!el) return;
+        let count = 1000;
+        const target = 1284;
+        const step   = Math.ceil((target - count) / 40);
+        const timer  = setInterval(function() {
+            count = Math.min(count + step, target);
+            el.textContent = count.toLocaleString('vi-VN');
+            if (count >= target) clearInterval(timer);
+        }, 30);
+    } catch(_) {}
+})();
+</script>
+<script src="/public/js/common.js"></script>
+<script src="/public/js/auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nhân viên — Smart Restaurant</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/public/css/common.css">
+    <link rel="stylesheet" href="/public/css/admin/layout.css">
+    <link rel="stylesheet" href="/public/css/admin/components.css">
+    <link rel="stylesheet" href="/public/css/admin/pages.css">
+
+    <style>
+        /* ── Animations ── */
+        @keyframes fadeUp  { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes scaleIn { from{opacity:0;transform:scale(.94)}       to{opacity:1;transform:scale(1)}     }
+        @keyframes rowIn   { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:translateX(0)}}
+        @keyframes shimmer { 0%{background-position:-600px 0} 100%{background-position:600px 0} }
+
+        /* ── Stats strip ── */
+        .sp-stats {
+            display:grid; grid-template-columns:repeat(4,1fr);
+            gap:var(--space-4); animation:fadeUp .35s ease both;
+        }
+        .sp-stat {
+            background:var(--color-white); border-radius:var(--radius-2xl);
+            padding:var(--space-5); border:1.5px solid var(--color-gray-100);
+            box-shadow:0 1px 4px rgba(0,0,0,.05);
+            display:flex; align-items:center; gap:var(--space-4);
+            cursor:pointer; transition:all .2s ease; user-select:none;
+        }
+        .sp-stat:hover  { transform:translateY(-2px); box-shadow:0 8px 20px rgba(0,0,0,.09); }
+        .sp-stat.st-on  { border-color:var(--admin-primary); background:var(--admin-primary-subtle); }
+        .sp-ico { width:48px; height:48px; border-radius:var(--radius-xl); display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0; }
+        .ico-all     { background:linear-gradient(135deg,#EDE9FE,#F5F3FF); color:#7C3AED; }
+        .ico-manager { background:linear-gradient(135deg,#FEF3C7,#FFFBEB); color:#D97706; }
+        .ico-cashier { background:linear-gradient(135deg,#D1FAE5,#ECFDF5); color:#059669; }
+        .ico-waiter  { background:linear-gradient(135deg,#DBEAFE,#EFF6FF); color:#2563EB; }
+        .sp-num { font-size:var(--text-3xl); font-weight:900; letter-spacing:-.05em; line-height:1; color:var(--color-gray-900); }
+        .sp-lbl { font-size:.62rem; color:var(--color-gray-400); font-weight:700; text-transform:uppercase; letter-spacing:.05em; margin-top:3px; }
+
+        /* ── Toolbar ── */
+        .sp-toolbar {
+            display:flex; align-items:center; gap:var(--space-3);
+            background:var(--color-white); border-radius:var(--radius-xl);
+            border:1px solid var(--color-gray-100); box-shadow:0 1px 3px rgba(0,0,0,.04);
+            padding:var(--space-3) var(--space-5); flex-wrap:wrap;
+            animation:fadeUp .35s .06s ease both;
+        }
+        .sp-search {
+            flex:1; min-width:200px;
+            display:flex; align-items:center; gap:var(--space-2);
+            padding:.5rem var(--space-4); background:var(--color-gray-50);
+            border:1.5px solid var(--color-gray-200); border-radius:var(--radius-lg);
+            transition:all .2s ease;
+        }
+        .sp-search:focus-within {
+            border-color:var(--admin-primary); background:var(--color-white);
+            box-shadow:0 0 0 3px rgba(249,115,22,.1);
+        }
+        .sp-search i   { font-size:.82rem; color:var(--color-gray-400); flex-shrink:0; }
+        .sp-search-inp {
+            flex:1; border:none; background:transparent; outline:none;
+            font-family:var(--font-primary); font-size:var(--text-sm); color:var(--color-gray-800);
+        }
+        .sp-search-inp::placeholder { color:var(--color-gray-400); }
+        .sp-pills {
+            display:flex; align-items:center; gap:3px;
+            background:var(--color-gray-100); border-radius:var(--radius-md); padding:3px;
+        }
+        .sp-pill {
+            padding:.3rem .9rem; border-radius:var(--radius-sm); border:none; background:transparent;
+            font-family:var(--font-primary); font-size:var(--text-xs); font-weight:700;
+            color:var(--color-gray-500); cursor:pointer; white-space:nowrap; transition:all .16s ease;
+        }
+        .sp-pill.p-on { background:var(--color-white); color:var(--admin-primary); box-shadow:0 1px 4px rgba(0,0,0,.08); }
+        .sp-cnt { font-size:var(--text-xs); color:var(--color-gray-400); margin-left:auto; flex-shrink:0; }
+        .sp-cnt strong { color:var(--color-gray-700); }
+
+        /* ── Table card ── */
+        .sp-tcard {
+            background:var(--color-white); border-radius:var(--radius-2xl);
+            border:1px solid var(--color-gray-100); box-shadow:0 1px 4px rgba(0,0,0,.05);
+            overflow:hidden; animation:fadeUp .35s .1s ease both;
+        }
+        .sp-table { width:100%; border-collapse:collapse; }
+        .sp-table thead th {
+            padding:var(--space-3) var(--space-5); background:var(--color-gray-50);
+            text-align:left; font-size:.64rem; font-weight:700; color:var(--color-gray-400);
+            text-transform:uppercase; letter-spacing:.07em;
+            border-bottom:1px solid var(--color-gray-100); white-space:nowrap;
+        }
+        .sp-table tbody tr { border-bottom:1px solid var(--color-gray-50); transition:background .14s ease; }
+        .sp-table tbody tr:last-child { border-bottom:none; }
+        .sp-table tbody tr:hover { background:var(--admin-primary-subtle); }
+        .sp-table tbody tr.tr-in { animation:rowIn .28s ease both; }
+        .sp-table td { padding:var(--space-4) var(--space-5); font-size:var(--text-sm); vertical-align:middle; }
+
+        /* Avatar initials */
+        .sp-ava {
+            width:40px; height:40px; border-radius:var(--radius-xl);
+            display:inline-flex; align-items:center; justify-content:center;
+            font-size:.88rem; font-weight:800; flex-shrink:0; user-select:none;
+            transition:transform var(--transition-bounce);
+        }
+        tr:hover .sp-ava { transform:scale(1.12) rotate(-5deg); }
+
+        .sp-name { font-weight:700; color:var(--color-gray-900); display:block; }
+        .sp-code { font-size:.64rem; color:var(--color-gray-400); font-family:'Courier New',monospace; display:block; margin-top:2px; }
+
+        .sp-email {
+            display:inline-flex; align-items:center; gap:4px;
+            font-size:.67rem; color:var(--color-gray-500);
+            background:var(--color-gray-50); padding:3px 9px;
+            border-radius:var(--radius-full); border:1px solid var(--color-gray-100);
+            max-width:185px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+        }
+
+        /* Role badges */
+        .sp-badge {
+            display:inline-flex; align-items:center; gap:5px;
+            padding:4px 11px; border-radius:var(--radius-full);
+            font-size:.65rem; font-weight:700; white-space:nowrap; border:1px solid transparent;
+        }
+        .b-manager { background:#FFF7ED; color:#C2410C; border-color:#FED7AA; }
+        .b-cashier { background:#ECFDF5; color:#065F46; border-color:#A7F3D0; }
+        .b-waiter  { background:#EFF6FF; color:#1D4ED8; border-color:#BFDBFE; }
+        .b-default { background:var(--color-gray-100); color:var(--color-gray-500); border-color:var(--color-gray-200); }
+
+        .sp-date { font-size:.7rem; color:var(--color-gray-400); display:block; }
+        .sp-sal  { font-weight:700; color:var(--color-gray-800); display:block; }
+        .sp-sals { font-size:.62rem; color:var(--color-gray-400); }
+
+        /* Delete btn - shows on row hover */
+        .sp-delbtn {
+            width:32px; height:32px;
+            display:inline-flex; align-items:center; justify-content:center;
+            border-radius:var(--radius-md); border:1.5px solid var(--color-gray-200);
+            background:var(--color-white); color:var(--color-gray-400);
+            cursor:pointer; font-size:.82rem; transition:all .18s ease; opacity:0;
+        }
+        tr:hover .sp-delbtn { opacity:1; }
+        .sp-delbtn:hover {
+            border-color:var(--color-error); background:var(--color-error-light);
+            color:var(--color-error); transform:scale(1.06);
+        }
+
+        /* Skeleton */
+        .sk { border-radius:var(--radius-md); background:linear-gradient(90deg,#f0f0f0 25%,#e4e4e4 50%,#f0f0f0 75%); background-size:600px 100%; animation:shimmer 1.4s ease infinite; }
+
+        /* Empty state */
+        .sp-empty { padding:var(--space-16) var(--space-6); display:flex; flex-direction:column; align-items:center; text-align:center; gap:var(--space-4); }
+        .sp-empty-ico { width:72px; height:72px; border-radius:var(--radius-2xl); background:var(--color-gray-50); border:1.5px dashed var(--color-gray-200); display:flex; align-items:center; justify-content:center; font-size:1.7rem; color:var(--color-gray-200); }
+        .sp-empty-t { font-size:var(--text-xl); font-weight:800; color:var(--color-gray-300); }
+        .sp-empty-d { font-size:var(--text-sm); color:var(--color-gray-400); max-width:280px; line-height:1.6; }
+
+        /* ══════════════════════════════════════════
+           ADD MODAL
+        ══════════════════════════════════════════ */
+        .sm-body { padding:var(--space-6); display:flex; flex-direction:column; gap:var(--space-6); overflow-y:auto; flex:1; }
+        .sm-sh {
+            display:flex; align-items:center; gap:var(--space-2);
+            font-size:.64rem; font-weight:700; color:var(--color-gray-400);
+            text-transform:uppercase; letter-spacing:.08em;
+            padding-bottom:var(--space-3); border-bottom:1px solid var(--color-gray-100);
+            margin-bottom:var(--space-1);
+        }
+        .sm-sh i { color:var(--admin-primary); font-size:.8rem; }
+        .sm-g2  { display:grid; grid-template-columns:1fr 1fr; gap:var(--space-4); margin-top:var(--space-4); }
+        .sm-fw  { grid-column:1/-1; }
+
+        /* Inputs in modal */
+        .m-lbl { display:block; font-size:var(--text-xs); font-weight:700; color:var(--color-gray-600); margin-bottom:var(--space-2); }
+        .m-req { color:var(--color-error); margin-left:2px; }
+        .m-inp {
+            width:100%; padding:.54rem var(--space-4);
+            border:1.5px solid var(--color-gray-200); border-radius:var(--radius-lg);
+            font-family:var(--font-primary); font-size:var(--text-sm); color:var(--color-gray-800);
+            background:var(--color-white); outline:none;
+            transition:all .2s ease; box-sizing:border-box;
+        }
+        .m-inp::placeholder { color:var(--color-gray-400); }
+        .m-inp:focus         { border-color:var(--admin-primary); box-shadow:0 0 0 3px rgba(249,115,22,.1); }
+        .m-inp.inp-err       { border-color:var(--color-error); }
+        .m-inp.inp-err:focus { box-shadow:0 0 0 3px rgba(239,68,68,.1); }
+        .m-err { font-size:.66rem; color:var(--color-error); margin-top:4px; display:none; }
+        .m-err.show { display:block; }
+
+        /* Role picker */
+        .sp-rpick { display:grid; grid-template-columns:repeat(3,1fr); gap:var(--space-3); margin-top:var(--space-3); }
+        .sp-rc {
+            padding:var(--space-4) var(--space-3); border-radius:var(--radius-xl);
+            border:2px solid var(--color-gray-200); background:var(--color-white);
+            cursor:pointer; display:flex; flex-direction:column;
+            align-items:center; gap:var(--space-2); text-align:center;
+            transition:all .2s ease;
+        }
+        .sp-rc:hover { border-color:var(--admin-primary); box-shadow:0 4px 14px rgba(249,115,22,.1); }
+        .sp-rc-ico {
+            width:44px; height:44px; border-radius:var(--radius-lg);
+            display:flex; align-items:center; justify-content:center; font-size:1.1rem;
+            transition:transform .22s var(--transition-bounce);
+        }
+        .sp-rc:hover .sp-rc-ico { transform:scale(1.12) rotate(-6deg); }
+        .sp-rc-name { font-size:.74rem; font-weight:700; color:var(--color-gray-600); }
+        .sp-rc-sub  { font-size:.6rem; color:var(--color-gray-400); line-height:1.35; }
+
+        /* Active role card states */
+        .sp-rc[data-rid="2"].rc-on { border-color:#D97706; background:#FFFBEB; }
+        .sp-rc[data-rid="2"].rc-on .sp-rc-ico  { background:#FEF3C7; color:#D97706; }
+        .sp-rc[data-rid="2"].rc-on .sp-rc-name { color:#92400E; }
+
+        .sp-rc[data-rid="3"].rc-on { border-color:#059669; background:#ECFDF5; }
+        .sp-rc[data-rid="3"].rc-on .sp-rc-ico  { background:#D1FAE5; color:#065F46; }
+        .sp-rc[data-rid="3"].rc-on .sp-rc-name { color:#065F46; }
+
+        .sp-rc[data-rid="4"].rc-on { border-color:#2563EB; background:#EFF6FF; }
+        .sp-rc[data-rid="4"].rc-on .sp-rc-ico  { background:#DBEAFE; color:#1D4ED8; }
+        .sp-rc[data-rid="4"].rc-on .sp-rc-name { color:#1D4ED8; }
+
+        /* Password eye / strength */
+        .m-pw-wrap  { position:relative; }
+        .m-pw-eye   {
+            position:absolute; right:12px; top:50%; transform:translateY(-50%);
+            background:none; border:none; cursor:pointer;
+            color:var(--color-gray-400); font-size:.84rem; padding:2px; transition:color .15s;
+        }
+        .m-pw-eye:hover { color:var(--color-gray-700); }
+        .m-pw-bar   { height:3px; background:var(--color-gray-100); border-radius:99px; margin-top:5px; overflow:hidden; }
+        .m-pw-fill  { height:100%; border-radius:99px; transition:width .3s ease, background .3s ease; width:0; }
+        .m-pw-hint  { font-size:.61rem; color:var(--color-gray-400); margin-top:3px; }
+
+        /* Modal footer */
+        .sm-foot {
+            display:flex; align-items:center; justify-content:space-between;
+            gap:var(--space-3); padding:var(--space-4) var(--space-6);
+            border-top:1px solid var(--color-gray-100); background:var(--color-gray-50);
+            flex-shrink:0;
+        }
+        .sm-note { font-size:.66rem; color:var(--color-gray-400); display:flex; align-items:center; gap:5px; }
+
+        /* ══════════════════════════════════════════
+           DELETE MODAL
+        ══════════════════════════════════════════ */
+        .del-body {
+            padding:var(--space-8) var(--space-6);
+            display:flex; flex-direction:column; align-items:center;
+            text-align:center; gap:var(--space-5);
+        }
+        .del-av-wrap { position:relative; }
+        .del-av { width:72px; height:72px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:var(--text-2xl); font-weight:800; }
+        .del-dot { position:absolute; bottom:-3px; right:-3px; width:24px; height:24px; border-radius:50%; background:var(--color-error); color:var(--color-white); display:flex; align-items:center; justify-content:center; font-size:.58rem; border:2.5px solid var(--color-white); }
+        .del-name { font-size:var(--text-xl); font-weight:800; color:var(--color-gray-900); letter-spacing:-.03em; }
+        .del-sub  { font-size:var(--text-sm); color:var(--color-gray-400); }
+        .del-warn {
+            width:100%; background:#FFF1F2; border:1px solid #FECDD3; border-radius:var(--radius-lg);
+            padding:var(--space-4); font-size:.71rem; color:#9F1239; text-align:left;
+            display:flex; align-items:flex-start; gap:var(--space-2); line-height:1.6;
+        }
+        .del-warn i { flex-shrink:0; margin-top:2px; }
+        .del-warn code { background:#FEE2E2; padding:1px 5px; border-radius:3px; font-size:.85em; font-family:'Courier New',monospace; }
+
+        /* ── Responsive ── */
+        @media(max-width:960px){ .sp-stats{grid-template-columns:repeat(2,1fr);} }
+        @media(max-width:640px){
+            .sm-g2{grid-template-columns:1fr;}
+            .sp-rpick{grid-template-columns:1fr;}
+        }
+    </style>
+</head>
+<body>
+
+<div class="admin-app" id="adminApp">
+    <div id="admin-sidebar-container"></div>
+
+    <main class="admin-main" id="adminMain">
+
+        <!-- Topbar -->
+        <header class="admin-topbar">
+            <div class="topbar-left">
+                <div class="topbar-title">Nhân viên</div>
+                <nav class="topbar-breadcrumb">
+                    <a href="/views/admin/index.html">Dashboard</a>
+                    <span class="separator">/</span>
+                    <span class="current">Vận hành</span>
+                    <span class="separator">/</span>
+                    <span class="current">Nhân viên</span>
+                </nav>
+            </div>
+            <div class="topbar-search">
+                <i class="fas fa-search topbar-search-icon"></i>
+                <input type="text" id="topbarSearch" placeholder="Tìm tên, email, mã nhân viên...">
+            </div>
+            <div class="topbar-actions">
+                <button class="topbar-action-btn" id="btnRefresh" title="Làm mới">
+                    <i class="fas fa-rotate-right"></i>
+                </button>
+                <button class="btn btn-primary-admin btn-sm" id="btnAddStaff">
+                    <i class="fas fa-user-plus"></i> Thêm nhân viên
+                </button>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="admin-content" style="display:flex;flex-direction:column;gap:var(--space-5)">
+
+            <!-- Page header -->
+            <div class="page-header">
+                <div class="page-header-left">
+                    <h1 class="page-heading">
+                        Danh sách nhân viên
+                        <span id="headCount" style="font-size:var(--text-xl);font-weight:500;color:var(--color-gray-400)"></span>
+                    </h1>
+                    <p class="page-desc">Quản lý hồ sơ nhân sự và tài khoản đăng nhập hệ thống</p>
+                </div>
+                <div class="page-header-actions">
+                    <span style="display:inline-flex;align-items:center;gap:6px;font-size:var(--text-xs);
+                                 color:#1D4ED8;background:#DBEAFE;padding:5px 12px;border-radius:var(--radius-full)">
+                        <i class="fas fa-circle-info"></i>
+                        Thêm nhân viên = tạo tài khoản + hồ sơ nhân sự cùng lúc
+                    </span>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="sp-stats">
+                <div class="sp-stat st-on" id="scAll" data-f="all">
+                    <div class="sp-ico ico-all"><i class="fas fa-users"></i></div>
+                    <div><div class="sp-num" id="scAllN">--</div><div class="sp-lbl">Tổng nhân viên</div></div>
+                </div>
+                <div class="sp-stat" id="scManager" data-f="manager">
+                    <div class="sp-ico ico-manager"><i class="fas fa-user-tie"></i></div>
+                    <div><div class="sp-num" id="scManagerN">--</div><div class="sp-lbl">Quản lý</div></div>
+                </div>
+                <div class="sp-stat" id="scCashier" data-f="cashier">
+                    <div class="sp-ico ico-cashier"><i class="fas fa-cash-register"></i></div>
+                    <div><div class="sp-num" id="scCashierN">--</div><div class="sp-lbl">Thu ngân</div></div>
+                </div>
+                <div class="sp-stat" id="scWaiter" data-f="waiter">
+                    <div class="sp-ico ico-waiter"><i class="fas fa-concierge-bell"></i></div>
+                    <div><div class="sp-num" id="scWaiterN">--</div><div class="sp-lbl">Phục vụ</div></div>
+                </div>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="sp-toolbar">
+                <div class="sp-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" class="sp-search-inp" id="searchInput"
+                           placeholder="Tìm theo tên, email, mã nhân viên, vai trò...">
+                </div>
+                <div class="sp-pills" id="pillsGroup">
+                    <button class="sp-pill p-on" data-rf="all">Tất cả</button>
+                    <button class="sp-pill" data-rf="manager">👔 Quản lý</button>
+                    <button class="sp-pill" data-rf="cashier">💰 Thu ngân</button>
+                    <button class="sp-pill" data-rf="waiter">🛎 Phục vụ</button>
+                </div>
+                <span class="sp-cnt">Hiển thị <strong id="resultCount">0</strong> nhân viên</span>
+            </div>
+
+            <!-- Table -->
+            <div class="sp-tcard">
+                <table class="sp-table">
+                    <thead>
+                        <tr>
+                            <th style="width:52px;padding-left:var(--space-5)"></th>
+                            <th>Nhân viên</th>
+                            <th style="width:190px">Email</th>
+                            <th style="width:150px">Vai trò</th>
+                            <th style="width:150px">Ngày vào / Mã NV</th>
+                            <th style="width:125px">Lương tháng</th>
+                            <th style="width:56px;text-align:center">Xoá</th>
+                        </tr>
+                    </thead>
+                    <tbody id="staffBody"></tbody>
+                </table>
+            </div>
+
+        </div><!-- /admin-content -->
+    </main>
+</div>
+
+<!-- ═══════════════════════════════════════
+     MODAL — Thêm nhân viên
+═══════════════════════════════════════ -->
+<div class="modal-overlay" id="addModal">
+    <div class="modal modal-lg"
+         style="max-height:92vh;overflow:hidden;display:flex;flex-direction:column;animation:scaleIn .22s ease">
+
+        <div class="modal-header">
+            <div style="display:flex;align-items:center;gap:var(--space-3)">
+                <div style="width:42px;height:42px;border-radius:var(--radius-lg);
+                            background:var(--admin-primary-light);color:var(--admin-primary);
+                            display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+                <div>
+                    <div class="modal-title">Thêm nhân viên mới</div>
+                    <div style="font-size:.67rem;color:var(--color-gray-400);margin-top:1px">
+                        Backend 2-in-1: tạo <strong>tài khoản user</strong> + <strong>hồ sơ staff</strong> trong một transaction
+                    </div>
+                </div>
+            </div>
+            <button class="modal-close" id="addModalClose"><i class="fas fa-xmark"></i></button>
+        </div>
+
+        <div class="sm-body">
+
+            <!-- Sect 1: Tài khoản -->
+            <div>
+                <div class="sm-sh"><i class="fas fa-key"></i> Thông tin tài khoản đăng nhập</div>
+                <div class="sm-g2">
+                    <div class="sm-fw">
+                        <label class="m-lbl" for="mName">Họ và tên <span class="m-req">*</span></label>
+                        <input type="text" class="m-inp" id="mName" placeholder="Nguyễn Văn An" autocomplete="name">
+                        <div class="m-err" id="errName">Vui lòng nhập họ tên.</div>
+                    </div>
+                    <div>
+                        <label class="m-lbl" for="mEmail">Email đăng nhập <span class="m-req">*</span></label>
+                        <input type="email" class="m-inp" id="mEmail" placeholder="nhanvien@smartres.vn" autocomplete="email">
+                        <div class="m-err" id="errEmail">Nhập địa chỉ email hợp lệ.</div>
+                    </div>
+                    <div>
+                        <label class="m-lbl" for="mPassword">Mật khẩu <span class="m-req">*</span></label>
+                        <div class="m-pw-wrap">
+                            <input type="password" class="m-inp" id="mPassword"
+                                   placeholder="Tối thiểu 8 ký tự" autocomplete="new-password"
+                                   style="padding-right:2.8rem">
+                            <button type="button" class="m-pw-eye" id="pwEyeBtn">
+                                <i class="fas fa-eye" id="pwEyeIco"></i>
+                            </button>
+                        </div>
+                        <div class="m-pw-bar"><div class="m-pw-fill" id="pwBar"></div></div>
+                        <div class="m-pw-hint" id="pwHint">Nhập mật khẩu để kiểm tra độ mạnh</div>
+                        <div class="m-err" id="errPassword">Mật khẩu phải có ít nhất 8 ký tự.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sect 2: Vai trò -->
+            <div>
+                <div class="sm-sh"><i class="fas fa-id-badge"></i> Vai trò & chức vụ</div>
+                <label class="m-lbl" style="margin-top:var(--space-3)">
+                    Chọn vai trò <span class="m-req">*</span>
+                </label>
+                <div class="sp-rpick" id="rolePicker">
+                    <button type="button" class="sp-rc" data-rid="2">
+                        <div class="sp-rc-ico" style="background:#FEF3C7;color:#D97706"><i class="fas fa-user-tie"></i></div>
+                        <div class="sp-rc-name">Quản lý</div>
+                        <div class="sp-rc-sub">Toàn quyền quản trị</div>
+                    </button>
+                    <button type="button" class="sp-rc" data-rid="3">
+                        <div class="sp-rc-ico" style="background:#D1FAE5;color:#059669"><i class="fas fa-cash-register"></i></div>
+                        <div class="sp-rc-name">Thu ngân</div>
+                        <div class="sp-rc-sub">Xử lý thanh toán</div>
+                    </button>
+                    <button type="button" class="sp-rc" data-rid="4">
+                        <div class="sp-rc-ico" style="background:#DBEAFE;color:#2563EB"><i class="fas fa-concierge-bell"></i></div>
+                        <div class="sp-rc-name">Phục vụ</div>
+                        <div class="sp-rc-sub">Nhận & xử lý đơn</div>
+                    </button>
+                </div>
+                <input type="hidden" id="mRoleId">
+                <div class="m-err" id="errRole" style="margin-top:8px">Vui lòng chọn vai trò.</div>
+            </div>
+
+            <!-- Sect 3: Nhân sự (optional) -->
+            <div>
+                <div class="sm-sh">
+                    <i class="fas fa-briefcase"></i> Thông tin nhân sự
+                    <span style="font-weight:400;font-style:italic;font-size:.6rem;margin-left:4px">(không bắt buộc)</span>
+                </div>
+                <div class="sm-g2">
+                    <div>
+                        <label class="m-lbl" for="mEmpCode">Mã nhân viên</label>
+                        <input type="text" class="m-inp" id="mEmpCode" placeholder="VD: NV001, KT-02...">
+                    </div>
+                    <div>
+                        <label class="m-lbl" for="mHireDate">Ngày vào làm</label>
+                        <input type="date" class="m-inp" id="mHireDate">
+                    </div>
+                    <div class="sm-fw">
+                        <label class="m-lbl" for="mSalary">Mức lương (VNĐ/tháng)</label>
+                        <div style="position:relative">
+                            <input type="number" class="m-inp" id="mSalary"
+                                   placeholder="VD: 8000000" min="0" step="500000"
+                                   style="padding-right:4rem">
+                            <span style="position:absolute;right:var(--space-3);top:50%;transform:translateY(-50%);
+                                         font-size:.7rem;font-weight:700;color:var(--color-gray-400)">₫/tháng</span>
+                        </div>
+                        <div id="salPreview" style="font-size:.64rem;color:var(--admin-primary);margin-top:3px;min-height:15px"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /sm-body -->
+
+        <div class="sm-foot">
+            <div class="sm-note">
+                <i class="fas fa-shield-halved" style="color:var(--admin-primary)"></i>
+                Mật khẩu mã hoá bcrypt (salt 10)
+            </div>
+            <div style="display:flex;gap:var(--space-3)">
+                <button class="btn btn-secondary" id="addModalCancel">Huỷ bỏ</button>
+                <button class="btn btn-primary-admin" id="btnSubmit">
+                    <i class="fas fa-user-plus"></i> Tạo nhân viên
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     MODAL — Xác nhận xoá
+═══════════════════════════════════════ -->
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal" style="max-width:420px;animation:scaleIn .22s ease">
+        <div class="modal-header">
+            <div class="modal-title" style="font-size:var(--text-base)">Xác nhận xoá nhân viên</div>
+            <button class="modal-close" id="delClose"><i class="fas fa-xmark"></i></button>
+        </div>
+        <div class="del-body">
+            <div class="del-av-wrap">
+                <div class="del-av" id="delAva"></div>
+                <div class="del-dot"><i class="fas fa-exclamation"></i></div>
+            </div>
+            <div>
+                <div class="del-name" id="delName"></div>
+                <div class="del-sub"  id="delEmail" style="margin-top:4px;font-size:.72rem"></div>
+                <div style="margin-top:10px" id="delBadge"></div>
+            </div>
+            <div class="del-warn">
+                <i class="fas fa-triangle-exclamation" style="color:#F43F5E"></i>
+                <span>
+                    Hồ sơ trong bảng <code>staff</code> sẽ bị xoá vĩnh viễn.<br>
+                    Tài khoản đăng nhập trong bảng <code>users</code> vẫn còn.<br>
+                    Hành động <strong>không thể hoàn tác</strong>.
+                </span>
+            </div>
+            <div style="display:flex;gap:var(--space-3);width:100%">
+                <button class="btn btn-secondary" id="delCancel" style="flex:1">
+                    <i class="fas fa-arrow-left"></i> Giữ lại
+                </button>
+                <button class="btn btn-danger" id="delConfirm" style="flex:1">
+                    <i class="fas fa-trash"></i> Xoá nhân viên
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast container -->
+<div id="toastContainer"
+     style="position:fixed;top:var(--space-6);right:var(--space-6);z-index:9999;
+            display:flex;flex-direction:column;gap:var(--space-3);pointer-events:none"></div>
+
+<script src="/public/js/common.js"></script>
+<script src="/public/js/admin/layout.js"></script>
+<script src="/public/js/admin/staff.js"></script>
+</body>
+</html>

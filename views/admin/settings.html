@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cài đặt — Smart Restaurant</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/public/css/common.css">
+    <link rel="stylesheet" href="/public/css/admin/layout.css">
+    <link rel="stylesheet" href="/public/css/admin/components.css">
+    <link rel="stylesheet" href="/public/css/admin/pages.css">
+
+    <style>
+        @keyframes fadeUp  { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes shimmer { 0%{background-position:-600px 0} 100%{background-position:600px 0} }
+        @keyframes toastIn { from{opacity:0;transform:translateX(18px)} to{opacity:1;transform:translateX(0)} }
+        @keyframes spin    { to{transform:rotate(360deg)} }
+
+        /* ══════════════════════════════════════
+           TWO-COLUMN LAYOUT: 220px sidebar + 1fr main
+        ══════════════════════════════════════ */
+        .st-grid {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            gap: var(--space-5);
+            align-items: start;
+            animation: fadeUp .35s ease both;
+        }
+
+        /* ── Left sidebar ── */
+        .st-sidebar {
+            display: flex; flex-direction: column; gap: var(--space-4);
+            position: sticky; top: var(--space-4);
+        }
+        .sb-card {
+            background: var(--color-white);
+            border-radius: var(--radius-2xl);
+            border: 1px solid var(--color-gray-100);
+            box-shadow: 0 1px 4px rgba(0,0,0,.05);
+            overflow: hidden;
+        }
+        .sb-hd {
+            padding: var(--space-3) var(--space-4);
+            font-size: .61rem; font-weight: 800;
+            color: var(--color-gray-400); text-transform: uppercase; letter-spacing: .09em;
+            border-bottom: 1px solid var(--color-gray-100);
+            display: flex; align-items: center; gap: 6px;
+        }
+        .sb-hd i { color: var(--admin-primary); font-size: .76rem; }
+
+        /* Nav links inside sidebar */
+        .sb-link {
+            display: flex; align-items: center; gap: 10px;
+            padding: var(--space-3) var(--space-4);
+            font-size: var(--text-xs); font-weight: 600;
+            color: var(--color-gray-500); text-decoration: none;
+            border-bottom: 1px solid var(--color-gray-50);
+            transition: background .13s, color .13s;
+            cursor: pointer;
+        }
+        .sb-link:last-child { border-bottom: none; }
+        .sb-link:hover { background: var(--color-gray-50); color: var(--color-gray-800); }
+        .sb-link.active {
+            background: var(--admin-primary-subtle);
+            color: var(--admin-primary);
+            border-left: 3px solid var(--admin-primary);
+            padding-left: calc(var(--space-4) - 3px);
+        }
+        .sb-link i { width: 14px; text-align: center; font-size: .8rem; flex-shrink: 0; }
+
+        /* API status rows */
+        .sb-body { padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); }
+        .sb-row { display: flex; align-items: center; justify-content: space-between; }
+        .sb-row-lbl { font-size: .62rem; color: var(--color-gray-400); font-weight: 600; }
+
+        .sb-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: .6rem; font-weight: 700;
+            padding: 2px 8px; border-radius: var(--radius-full); border: 1px solid transparent;
+        }
+        .sb-ok   { background: #ECFDF5; color: #065F46; border-color: #A7F3D0; }
+        .sb-err  { background: #FFF5F5; color: #991B1B; border-color: #FECACA; }
+        .sb-load { background: var(--color-gray-100); color: var(--color-gray-500); border-color: var(--color-gray-200); }
+        .sb-dot  { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+        .sb-divider { height: 1px; background: var(--color-gray-100); }
+        .sb-mono { font-family: monospace; font-size: .59rem; color: var(--color-gray-500); background: var(--color-gray-50); padding: 2px 6px; border-radius: 4px; }
+
+        /* ── Main content area ── */
+        .st-main { display: flex; flex-direction: column; gap: var(--space-5); }
+
+        /* ── Section card ── */
+        .st-section {
+            background: var(--color-white);
+            border-radius: var(--radius-2xl);
+            border: 1.5px solid var(--color-gray-100);
+            box-shadow: 0 2px 8px rgba(0,0,0,.06);
+            overflow: hidden;
+            animation: fadeUp .35s ease both;
+        }
+        .st-sec-hd {
+            padding: var(--space-5) var(--space-6);
+            border-bottom: 1px solid var(--color-gray-100);
+            display: flex; align-items: center; gap: var(--space-4);
+        }
+        .sec-ico {
+            width: 44px; height: 44px; border-radius: var(--radius-lg);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; flex-shrink: 0;
+        }
+        .ico-org  { background: var(--admin-primary-light); color: var(--admin-primary); }
+        .ico-blue { background: #DBEAFE; color: #2563EB; }
+        .ico-grn  { background: #D1FAE5; color: #059669; }
+
+        .sec-title { font-size: var(--text-base); font-weight: 800; color: var(--color-gray-900); letter-spacing: -.02em; }
+        .sec-sub   { font-size: var(--text-xs); color: var(--color-gray-400); margin-top: 2px; }
+
+        .st-sec-body { padding: var(--space-6); display: flex; flex-direction: column; gap: var(--space-5); }
+
+        /* Form grid */
+        .fg2     { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-5); }
+        .fg-full { grid-column: 1 / -1; }
+
+        /* ── Form fields ── */
+        .f-grp { display: flex; flex-direction: column; gap: 6px; }
+        .f-lbl { font-size: var(--text-xs); font-weight: 700; color: var(--color-gray-600); }
+        .f-req { color: var(--color-error); margin-left: 2px; }
+        .f-hint { font-size: .62rem; color: var(--color-gray-400); line-height: 1.5; }
+
+        .ico-wrap { position: relative; }
+        .ico-left {
+            position: absolute; left: var(--space-3);
+            top: 50%; transform: translateY(-50%);
+            font-size: .8rem; color: var(--color-gray-400); pointer-events: none; z-index: 1;
+        }
+        .ico-left-ta { top: .72rem; transform: none; }
+
+        .f-inp, .f-ta {
+            width: 100%; box-sizing: border-box;
+            border: 1.5px solid var(--color-gray-200); border-radius: var(--radius-lg);
+            font-family: var(--font-primary); font-size: var(--text-sm);
+            color: var(--color-gray-800); background: #fff; outline: none;
+            transition: border-color .2s, box-shadow .2s;
+        }
+        .f-inp         { padding: .58rem var(--space-4); }
+        .f-inp.ico     { padding-left: 2.5rem; }
+        .f-ta          { padding: .58rem var(--space-4); resize: vertical; min-height: 105px; line-height: 1.65; }
+        .f-ta.ico      { padding-left: 2.5rem; }
+
+        .f-inp::placeholder, .f-ta::placeholder { color: var(--color-gray-400); }
+        .f-inp:focus, .f-ta:focus {
+            border-color: var(--admin-primary);
+            box-shadow: 0 0 0 3px rgba(249,115,22,.1);
+        }
+        .f-inp:disabled, .f-ta:disabled {
+            background: var(--color-gray-50); color: var(--color-gray-400); cursor: not-allowed;
+        }
+
+        /* Skeleton loaders */
+        .sk { display: block; height: 40px; border-radius: var(--radius-lg);
+              background: linear-gradient(90deg,#f0f0f0 25%,#e4e4e4 50%,#f0f0f0 75%);
+              background-size: 600px 100%; animation: shimmer 1.4s ease infinite; }
+        .sk-ta { height: 105px; }
+
+        /* ── Unsaved changes bar ── */
+        .unsaved-bar {
+            display: none; align-items: center; justify-content: space-between;
+            padding: var(--space-3) var(--space-6);
+            background: #FFF7ED; border-top: 1px solid #FED7AA;
+            font-size: var(--text-xs); font-weight: 600; color: #92400E;
+        }
+        .unsaved-bar.show { display: flex; }
+
+        /* ── Footer save bar ── */
+        .st-footer {
+            background: var(--color-white);
+            border-radius: var(--radius-2xl);
+            border: 1.5px solid var(--color-gray-100);
+            box-shadow: 0 2px 8px rgba(0,0,0,.06);
+            padding: var(--space-5) var(--space-6);
+            display: flex; align-items: center; justify-content: space-between;
+            gap: var(--space-4);
+            animation: fadeUp .35s ease .2s both;
+        }
+        .footer-note {
+            font-size: var(--text-xs); color: var(--color-gray-400);
+            display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+        }
+        .footer-note strong { color: var(--color-gray-600); }
+        .footer-actions { display: flex; align-items: center; gap: var(--space-3); flex-shrink: 0; }
+
+        /* responsive */
+        @media (max-width: 900px) {
+            .st-grid    { grid-template-columns: 1fr; }
+            .st-sidebar { position: static; }
+        }
+        @media (max-width: 600px) {
+            .fg2           { grid-template-columns: 1fr; }
+            .st-sec-body   { padding: var(--space-4); }
+            .st-footer     { flex-direction: column; align-items: stretch; }
+            .footer-actions { justify-content: flex-end; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="admin-app" id="adminApp">
+    <div id="admin-sidebar-container"></div>
+
+    <main class="admin-main" id="adminMain">
+
+        <!-- ── Topbar ── -->
+        <header class="admin-topbar">
+            <div class="topbar-left">
+                <div class="topbar-title">Cài đặt</div>
+                <nav class="topbar-breadcrumb">
+                    <a href="/views/admin/index.html">Dashboard</a>
+                    <span class="separator">/</span>
+                    <span class="current">Hệ thống</span>
+                    <span class="separator">/</span>
+                    <span class="current">Cài đặt</span>
+                </nav>
+            </div>
+            <!-- Search hidden on settings page (no search needed) -->
+            <div class="topbar-search" style="visibility:hidden;pointer-events:none"></div>
+            <div class="topbar-actions">
+                <button class="topbar-action-btn" id="btnRefresh" title="Tải lại dữ liệu">
+                    <i class="fas fa-rotate-right"></i>
+                </button>
+                <button class="btn btn-primary-admin btn-sm" id="btnSaveTop">
+                    <i class="fas fa-floppy-disk"></i> Lưu cài đặt
+                </button>
+            </div>
+        </header>
+
+        <!-- ── Page body ── -->
+        <div class="admin-content" style="display:flex;flex-direction:column;gap:var(--space-5)">
+
+            <!-- Page heading -->
+            <div class="page-header">
+                <div class="page-header-left">
+                    <h1 class="page-heading">Cài đặt nhà hàng</h1>
+                    <p class="page-desc">Thông tin hiển thị trên toàn hệ thống: tên quán, liên hệ và giờ mở cửa</p>
+                </div>
+                <div class="page-header-actions">
+                    <span id="syncBadge"
+                          style="display:inline-flex;align-items:center;gap:6px;font-size:var(--text-xs);
+                                 color:#065F46;background:#ECFDF5;padding:5px 12px;
+                                 border-radius:var(--radius-full);border:1px solid #A7F3D0;">
+                        <i class="fas fa-circle-check"></i> Đã đồng bộ
+                    </span>
+                </div>
+            </div>
+
+            <!-- Two-column grid -->
+            <div class="st-grid">
+
+                <!-- ─── Left sidebar ─── -->
+                <aside class="st-sidebar">
+
+                    <!-- Section navigation -->
+                    <div class="sb-card">
+                        <div class="sb-hd"><i class="fas fa-list-ul"></i> Mục cài đặt</div>
+                        <a href="#sec-info"    class="sb-link active" data-sec="sec-info">
+                            <i class="fas fa-store"></i> Thông tin nhà hàng
+                        </a>
+                        <a href="#sec-contact" class="sb-link" data-sec="sec-contact">
+                            <i class="fas fa-address-card"></i> Liên hệ & Địa chỉ
+                        </a>
+                        <a href="#sec-hours"   class="sb-link" data-sec="sec-hours">
+                            <i class="fas fa-clock"></i> Giờ hoạt động
+                        </a>
+                    </div>
+
+                    <!-- API status panel -->
+                    <div class="sb-card">
+                        <div class="sb-hd"><i class="fas fa-database"></i> Trạng thái API</div>
+                        <div class="sb-body">
+                            <div class="sb-row">
+                                <span class="sb-row-lbl">Kết nối</span>
+                                <span class="sb-badge sb-load" id="apiBadge">
+                                    <span class="sb-dot"></span>
+                                    <span id="apiBadgeText">Đang tải...</span>
+                                </span>
+                            </div>
+                            <div class="sb-divider"></div>
+                            <div class="sb-row">
+                                <span class="sb-row-lbl">Record</span>
+                                <span class="sb-mono">#1 (duy nhất)</span>
+                            </div>
+                            <div class="sb-row">
+                                <span class="sb-row-lbl">GET</span>
+                                <span class="sb-mono">/api/admin/settings</span>
+                            </div>
+                            <div class="sb-row">
+                                <span class="sb-row-lbl">PUT</span>
+                                <span class="sb-mono">/api/admin/settings</span>
+                            </div>
+                            <div class="sb-divider"></div>
+                            <div class="sb-row">
+                                <span class="sb-row-lbl">Auth</span>
+                                <span style="font-size:.62rem;color:#059669;font-weight:700">
+                                    <i class="fas fa-shield-halved"></i> getAuthHeaders()
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                </aside>
+
+                <!-- ─── Main sections ─── -->
+                <div class="st-main">
+
+                    <!-- ① Thông tin nhà hàng -->
+                    <div class="st-section" id="sec-info">
+                        <div class="st-sec-hd">
+                            <div class="sec-ico ico-org"><i class="fas fa-store"></i></div>
+                            <div>
+                                <div class="sec-title">Thông tin nhà hàng</div>
+                                <div class="sec-sub">Tên xuất hiện trên sidebar, header và mọi tài liệu in</div>
+                            </div>
+                        </div>
+                        <div class="st-sec-body">
+                            <div class="f-grp">
+                                <label class="f-lbl" for="fName">
+                                    Tên nhà hàng <span class="f-req">*</span>
+                                </label>
+                                <div class="ico-wrap">
+                                    <i class="ico-left fas fa-utensils"></i>
+                                    <input type="text" class="f-inp ico" id="fName"
+                                           placeholder="VD: Smart Restaurant, GoMeal..." disabled>
+                                </div>
+                                <span class="f-hint">
+                                    Tên này đồng bộ tới class <code style="background:var(--color-gray-100);padding:1px 5px;border-radius:4px;font-size:.9em">.res-name</code> trên giao diện.
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Unsaved indicator (visible when form is dirty) -->
+                        <div class="unsaved-bar" id="unsavedBar">
+                            <div style="display:flex;align-items:center;gap:6px">
+                                <i class="fas fa-circle-dot" style="color:var(--admin-primary)"></i>
+                                Có thay đổi chưa được lưu
+                            </div>
+                            <button class="btn btn-primary-admin btn-sm" id="btnSaveMini">
+                                <i class="fas fa-floppy-disk"></i> Lưu ngay
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ② Liên hệ & Địa chỉ -->
+                    <div class="st-section" id="sec-contact" style="animation-delay:.07s">
+                        <div class="st-sec-hd">
+                            <div class="sec-ico ico-blue"><i class="fas fa-address-card"></i></div>
+                            <div>
+                                <div class="sec-title">Liên hệ & Địa chỉ</div>
+                                <div class="sec-sub">Số điện thoại, email và vị trí quán</div>
+                            </div>
+                        </div>
+                        <div class="st-sec-body">
+                            <div class="fg2">
+                                <div class="f-grp">
+                                    <label class="f-lbl" for="fPhone">Số điện thoại</label>
+                                    <div class="ico-wrap">
+                                        <i class="ico-left fas fa-phone"></i>
+                                        <input type="tel" class="f-inp ico" id="fPhone"
+                                               placeholder="0901 234 567" disabled>
+                                    </div>
+                                </div>
+                                <div class="f-grp">
+                                    <label class="f-lbl" for="fEmail">Email liên hệ</label>
+                                    <div class="ico-wrap">
+                                        <i class="ico-left fas fa-envelope"></i>
+                                        <input type="email" class="f-inp ico" id="fEmail"
+                                               placeholder="hello@restaurant.vn" disabled>
+                                    </div>
+                                </div>
+                                <div class="f-grp fg-full">
+                                    <label class="f-lbl" for="fAddress">Địa chỉ</label>
+                                    <div class="ico-wrap">
+                                        <i class="ico-left fas fa-location-dot"></i>
+                                        <input type="text" class="f-inp ico" id="fAddress"
+                                               placeholder="Số nhà, đường, quận, thành phố..." disabled>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ③ Giờ hoạt động -->
+                    <div class="st-section" id="sec-hours" style="animation-delay:.14s">
+                        <div class="st-sec-hd">
+                            <div class="sec-ico ico-grn"><i class="fas fa-clock"></i></div>
+                            <div>
+                                <div class="sec-title">Giờ hoạt động</div>
+                                <div class="sec-sub">Thông báo cho khách biết khi nào quán mở cửa</div>
+                            </div>
+                        </div>
+                        <div class="st-sec-body">
+                            <div class="f-grp">
+                                <label class="f-lbl" for="fHours">Mô tả giờ hoạt động</label>
+                                <div class="ico-wrap">
+                                    <i class="ico-left ico-left-ta fas fa-calendar-days"></i>
+                                    <textarea class="f-ta ico" id="fHours" rows="5"
+                                              placeholder="VD:&#10;Thứ 2 – Thứ 6: 07:00 – 22:00&#10;Thứ 7 – CN: 08:00 – 23:00&#10;&#10;Ngày lễ: vui lòng liên hệ trước" disabled></textarea>
+                                </div>
+                                <span class="f-hint">
+                                    Văn bản tự do, lưu vào trường
+                                    <code style="background:var(--color-gray-100);padding:1px 5px;border-radius:4px;font-size:.9em">opening_hours</code> trong DB.
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer save bar -->
+                    <div class="st-footer">
+                        <div class="footer-note">
+                            <i class="fas fa-shield-halved" style="color:var(--admin-primary)"></i>
+                            Tất cả thay đổi gửi qua
+                            <strong>PUT /api/admin/settings</strong>
+                            với Authorization header
+                        </div>
+                        <div class="footer-actions">
+                            <button class="btn btn-secondary" id="btnReset" disabled>
+                                <i class="fas fa-rotate-left"></i> Khôi phục
+                            </button>
+                            <button class="btn btn-primary-admin" id="btnSave" disabled>
+                                <i class="fas fa-floppy-disk"></i> Lưu cài đặt
+                            </button>
+                        </div>
+                    </div>
+
+                </div><!-- /st-main -->
+            </div><!-- /st-grid -->
+
+        </div><!-- /admin-content -->
+    </main>
+</div>
+
+<!-- Toast -->
+<div id="toastContainer"
+     style="position:fixed;top:var(--space-6);right:var(--space-6);z-index:9999;
+            display:flex;flex-direction:column;gap:var(--space-3);pointer-events:none"></div>
+
+<script src="/public/js/common.js"></script>
+<script src="/public/js/admin/layout.js"></script>
+<script src="/public/js/admin/settings.js"></script>
+</body>
+</html>

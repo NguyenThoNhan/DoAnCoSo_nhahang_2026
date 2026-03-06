@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cài đặt — GoMeal</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <link rel="stylesheet" href="/public/css/common.css">
+    <link rel="stylesheet" href="/public/css/user/layout.css">
+    <link rel="stylesheet" href="/public/css/user/components.css">
+    <link rel="stylesheet" href="/public/css/user/pages.css">
+
+    <style>
+    /* ================================================================
+       SETTINGS PAGE — prefix .st-
+       Không gọi API — xử lý hoàn toàn Client-side với localStorage
+       ================================================================ */
+
+    /* ── Page layout ─────────────────────────────────────────────── */
+    .st-layout {
+        display: grid;
+        grid-template-columns: 240px 1fr;
+        gap: 24px;
+        align-items: start;
+    }
+
+    /* ── Left nav ────────────────────────────────────────────────── */
+    .st-nav {
+        background: #fff;
+        border-radius: 20px;
+        border: 1px solid #EEE9E4;
+        overflow: hidden;
+        position: sticky;
+        top: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,.04);
+    }
+    .st-nav-hd {
+        padding: 18px 18px 10px;
+        font-size: .7rem;
+        font-weight: 800;
+        color: #C4BAB3;
+        text-transform: uppercase;
+        letter-spacing: .1em;
+        border-bottom: 1px solid #F3F4F6;
+    }
+    .st-nav-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 18px;
+        cursor: pointer;
+        transition: all .17s;
+        border-left: 3px solid transparent;
+        color: #6B7280;
+        font-size: .84rem;
+        font-weight: 600;
+        text-decoration: none;
+    }
+    .st-nav-item:hover {
+        background: #F9F7F5;
+        color: #FF6B35;
+    }
+    .st-nav-item.active {
+        background: #FFF3EE;
+        border-left-color: #FF6B35;
+        color: #FF6B35;
+        font-weight: 800;
+    }
+    .st-nav-item i {
+        width: 18px;
+        text-align: center;
+        font-size: .84rem;
+        flex-shrink: 0;
+    }
+    .st-nav-item.active i { color: #FF6B35; }
+    .st-nav-divider { height: 1px; background: #F3F4F6; margin: 4px 0; }
+
+    /* ── Right content ───────────────────────────────────────────── */
+    .st-right { display: flex; flex-direction: column; gap: 18px; }
+
+    /* ── Section card ────────────────────────────────────────────── */
+    .st-card {
+        background: #fff;
+        border-radius: 20px;
+        border: 1px solid #EEE9E4;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,.04);
+        scroll-margin-top: 20px;
+    }
+    .st-card-hd {
+        padding: 18px 24px 14px;
+        border-bottom: 1px solid #F3F4F6;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .st-card-hd-icon {
+        width: 38px; height: 38px;
+        border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: .9rem;
+        flex-shrink: 0;
+    }
+    .st-card-hd-icon.orange { background: #FFF3EE; color: #FF6B35; }
+    .st-card-hd-icon.violet { background: #F5F3FF; color: #7C3AED; }
+    .st-card-hd-icon.teal   { background: #ECFDF5; color: #059669; }
+    .st-card-hd-icon.amber  { background: #FFFBEB; color: #D97706; }
+    .st-card-hd-icon.rose   { background: #FFF1F2; color: #E11D48; }
+    .st-card-hd-icon.blue   { background: #EFF6FF; color: #2563EB; }
+
+    .st-card-hd-info { flex: 1; }
+    .st-card-hd-title { font-size: .96rem; font-weight: 800; color: #111827; }
+    .st-card-hd-sub   { font-size: .7rem; color: #9CA3AF; margin-top: 1px; }
+
+    .st-card-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 0; }
+
+    /* ── Setting row ─────────────────────────────────────────────── */
+    .st-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 16px 0;
+        border-bottom: 1px solid #F9F7F5;
+    }
+    .st-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .st-row:first-child { padding-top: 0; }
+
+    .st-row-info { flex: 1; min-width: 0; }
+    .st-row-label {
+        font-size: .88rem;
+        font-weight: 700;
+        color: #111827;
+        margin-bottom: 3px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .st-row-label .st-badge {
+        font-size: .56rem; font-weight: 800;
+        padding: 2px 7px; border-radius: 99px;
+        background: #FFF3EE; color: #FF6B35;
+        letter-spacing: .04em;
+    }
+    .st-row-desc { font-size: .72rem; color: #9CA3AF; line-height: 1.5; }
+
+    .st-row-ctrl { flex-shrink: 0; }
+
+    /* ── Toggle switch ───────────────────────────────────────────── */
+    .st-toggle {
+        position: relative;
+        width: 48px; height: 26px;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+    .st-toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .st-toggle-track {
+        position: absolute; inset: 0;
+        background: #E5E7EB;
+        border-radius: 99px;
+        transition: background .25s cubic-bezier(.34,1.56,.64,1);
+    }
+    .st-toggle-thumb {
+        position: absolute;
+        top: 3px; left: 3px;
+        width: 20px; height: 20px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 2px 6px rgba(0,0,0,.18);
+        transition: transform .25s cubic-bezier(.34,1.56,.64,1);
+    }
+    .st-toggle input:checked ~ .st-toggle-track { background: #FF6B35; }
+    .st-toggle input:checked ~ .st-toggle-thumb { transform: translateX(22px); }
+
+    /* ── Theme selector ──────────────────────────────────────────── */
+    .st-theme-options {
+        display: flex;
+        gap: 10px;
+    }
+    .st-theme-opt {
+        width: 80px;
+        border-radius: 14px;
+        border: 2.5px solid #EEE9E4;
+        overflow: hidden;
+        cursor: pointer;
+        transition: all .2s cubic-bezier(.34,1.56,.64,1);
+        position: relative;
+    }
+    .st-theme-opt:hover { border-color: #FFD4C2; transform: translateY(-2px); }
+    .st-theme-opt.selected {
+        border-color: #FF6B35;
+        box-shadow: 0 0 0 3px rgba(255,107,53,.15);
+        transform: translateY(-2px);
+    }
+    .st-theme-preview {
+        height: 52px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 8px;
+        position: relative;
+        overflow: hidden;
+    }
+    .st-theme-preview.light { background: #F9F7F5; }
+    .st-theme-preview.dark  { background: #1F2937; }
+    .st-theme-preview.system{ background: linear-gradient(135deg, #F9F7F5 50%, #1F2937 50%); }
+
+    .st-theme-line {
+        height: 5px; border-radius: 3px;
+        background: rgba(255,255,255,.6);
+    }
+    .st-theme-preview.light .st-theme-line { background: rgba(0,0,0,.12); }
+    .st-theme-preview.dark  .st-theme-line { background: rgba(255,255,255,.2); }
+
+    .st-theme-dot {
+        width: 12px; height: 12px; border-radius: 50%;
+        background: #FF6B35; align-self: flex-end;
+        position: absolute; bottom: 6px; right: 6px;
+    }
+    .st-theme-label-row {
+        padding: 6px 6px 8px;
+        text-align: center;
+    }
+    .st-theme-label {
+        font-size: .64rem;
+        font-weight: 800;
+        color: #6B7280;
+    }
+    .st-theme-opt.selected .st-theme-label { color: #FF6B35; }
+
+    .st-theme-check {
+        position: absolute;
+        top: 5px; right: 5px;
+        width: 18px; height: 18px;
+        border-radius: 50%;
+        background: #FF6B35;
+        color: #fff;
+        font-size: .58rem;
+        display: none;
+        align-items: center;
+        justify-content: center;
+    }
+    .st-theme-opt.selected .st-theme-check { display: flex; }
+
+    /* ── Language selector ───────────────────────────────────────── */
+    .st-lang-options {
+        display: flex;
+        gap: 8px;
+    }
+    .st-lang-opt {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 16px;
+        border-radius: 12px;
+        border: 2px solid #EEE9E4;
+        cursor: pointer;
+        font-size: .8rem;
+        font-weight: 700;
+        color: #6B7280;
+        transition: all .17s;
+        white-space: nowrap;
+    }
+    .st-lang-opt:hover { border-color: #FFD4C2; color: #FF6B35; }
+    .st-lang-opt.selected {
+        background: #FFF3EE;
+        border-color: #FF6B35;
+        color: #FF6B35;
+    }
+    .st-lang-flag { font-size: 1.1rem; }
+
+    /* ── Font size selector ──────────────────────────────────────── */
+    .st-fontsize-options {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+    }
+    .st-fontsize-opt {
+        padding: 7px 14px;
+        border-radius: 10px;
+        border: 2px solid #EEE9E4;
+        cursor: pointer;
+        color: #6B7280;
+        font-weight: 700;
+        transition: all .17s;
+        font-family: 'Outfit', sans-serif;
+        background: transparent;
+    }
+    .st-fontsize-opt.sm { font-size: .72rem; }
+    .st-fontsize-opt.md { font-size: .84rem; }
+    .st-fontsize-opt.lg { font-size: .96rem; }
+    .st-fontsize-opt:hover { border-color: #FFD4C2; color: #FF6B35; }
+    .st-fontsize-opt.selected { background: #FFF3EE; border-color: #FF6B35; color: #FF6B35; }
+
+    /* ── Accent color picker ─────────────────────────────────────── */
+    .st-accent-options {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    .st-accent-swatch {
+        width: 30px; height: 30px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 3px solid transparent;
+        transition: all .2s cubic-bezier(.34,1.56,.64,1);
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .st-accent-swatch:hover { transform: scale(1.15); }
+    .st-accent-swatch.selected {
+        border-color: #111827;
+        transform: scale(1.15);
+        box-shadow: 0 0 0 3px rgba(255,255,255,.8), 0 0 0 5px currentColor;
+    }
+    .st-accent-swatch i { font-size: .58rem; color: #fff; display: none; }
+    .st-accent-swatch.selected i { display: block; }
+
+    /* ── Sound test button ───────────────────────────────────────── */
+    .st-sound-test {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 8px 16px;
+        border-radius: 10px;
+        background: #F9F7F5;
+        border: 1.5px solid #EEE9E4;
+        color: #6B7280;
+        font-family: 'Outfit', sans-serif;
+        font-size: .76rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all .17s;
+    }
+    .st-sound-test:hover { background: #FFF3EE; border-color: #FFD4C2; color: #FF6B35; }
+    .st-sound-test.playing { color: #FF6B35; border-color: #FF6B35; background: #FFF3EE; }
+
+    /* ── About / Info card ───────────────────────────────────────── */
+    .st-about-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+    .st-about-item {
+        background: #F9F7F5;
+        border-radius: 12px;
+        padding: 12px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    .st-about-label { font-size: .62rem; font-weight: 800; color: #C4BAB3; text-transform: uppercase; letter-spacing: .08em; }
+    .st-about-val   { font-size: .82rem; font-weight: 700; color: #374151; }
+
+    /* ── Reset button ────────────────────────────────────────────── */
+    .st-reset-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        border-radius: 12px;
+        background: #FEF2F2;
+        border: 1.5px solid #FECACA;
+        color: #DC2626;
+        font-family: 'Outfit', sans-serif;
+        font-size: .82rem;
+        font-weight: 800;
+        cursor: pointer;
+        transition: all .17s;
+    }
+    .st-reset-btn:hover { background: #DC2626; color: #fff; border-color: transparent; }
+
+    /* ── Save indicator ──────────────────────────────────────────── */
+    .st-save-indicator {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: .72rem;
+        font-weight: 600;
+        color: #059669;
+        opacity: 0;
+        transition: opacity .3s;
+    }
+    .st-save-indicator.show { opacity: 1; }
+
+    /* ── Sticky bottom bar ───────────────────────────────────────── */
+    .st-bottom-bar {
+        position: sticky;
+        bottom: 0;
+        background: rgba(255,255,255,.92);
+        backdrop-filter: blur(12px);
+        border-top: 1px solid #EEE9E4;
+        padding: 12px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        border-radius: 0 0 20px 20px;
+        margin: 0 -24px -20px;
+        z-index: 10;
+    }
+
+    /* ── PREVIEW STRIP ───────────────────────────────────────────── */
+    .st-preview-strip {
+        background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+        border-radius: 16px;
+        padding: 16px 20px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        box-shadow: 0 6px 20px rgba(255,107,53,.32);
+        position: relative;
+        overflow: hidden;
+    }
+    .st-preview-strip::before {
+        content: '';
+        position: absolute;
+        width: 120px; height: 120px;
+        border-radius: 50%;
+        background: rgba(255,255,255,.08);
+        right: -20px; top: -30px;
+        pointer-events: none;
+    }
+    .st-ps-icon   { font-size: 1.8rem; flex-shrink: 0; position: relative; z-index: 1; }
+    .st-ps-info   { flex: 1; position: relative; z-index: 1; }
+    .st-ps-title  { font-size: .9rem; font-weight: 900; color: #fff; margin-bottom: 2px; }
+    .st-ps-sub    { font-size: .72rem; color: rgba(255,255,255,.75); }
+    .st-ps-badge  {
+        padding: 6px 14px; border-radius: 10px;
+        background: rgba(255,255,255,.2);
+        backdrop-filter: blur(6px);
+        border: 1.5px solid rgba(255,255,255,.3);
+        color: #fff;
+        font-size: .72rem; font-weight: 800;
+        position: relative; z-index: 1;
+        white-space: nowrap;
+    }
+
+    /* ── TOAST ─────────────────────────────────────────────────────── */
+    #stToastContainer {
+        position: fixed; top: 20px; right: 20px;
+        z-index: 9999;
+        display: flex; flex-direction: column; gap: 8px;
+        pointer-events: none;
+    }
+    .st-toast {
+        display: flex; align-items: center; gap: 10px;
+        padding: 11px 16px; border-radius: 14px;
+        background: #fff; border-left: 4px solid #FF6B35;
+        box-shadow: 0 8px 28px rgba(0,0,0,.14);
+        font-family: 'Outfit', sans-serif; font-size: .8rem;
+        color: #111827; max-width: 300px;
+        pointer-events: all;
+        animation: stToastIn .25s ease;
+        line-height: 1.45;
+    }
+    @keyframes stToastIn { from{opacity:0;transform:translateX(14px)} to{opacity:1;transform:translateX(0)} }
+    .st-toast.success { border-color: #10B981; }
+    .st-toast.error   { border-color: #EF4444; }
+    .st-toast.info    { border-color: #FF6B35; }
+    .st-toast i { flex-shrink: 0; }
+    .st-toast.success i { color: #10B981; }
+    .st-toast.error   i { color: #EF4444; }
+    .st-toast.info    i { color: #FF6B35; }
+
+    /* ── RESPONSIVE ──────────────────────────────────────────────── */
+    @media (max-width: 900px) {
+        .st-layout { grid-template-columns: 200px 1fr; gap: 16px; }
+    }
+    @media (max-width: 720px) {
+        .st-layout { grid-template-columns: 1fr; }
+        .st-nav { position: static; display: flex; flex-direction: row; overflow-x: auto; border-radius: 14px; }
+        .st-nav-hd { display: none; }
+        .st-nav-item { white-space: nowrap; border-left: none; border-bottom: 3px solid transparent; padding: 12px 14px; }
+        .st-nav-item.active { border-bottom-color: #FF6B35; border-left-color: transparent; }
+        .st-about-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 480px) {
+        .st-theme-options { flex-wrap: wrap; }
+        .st-lang-options  { flex-wrap: wrap; }
+        .st-card-body { padding: 16px; }
+        .st-card-hd   { padding: 14px 16px 10px; }
+    }
+    </style>
+</head>
+<body>
+
+<div class="user-app">
+
+    <!-- SIDEBAR -->
+    <div id="user-sidebar-container"></div>
+
+    <main class="user-main">
+
+        <!-- ── TOPBAR ──────────────────────────────────────────── -->
+        <header class="user-topbar">
+            <div class="topbar-left">
+                <div id="topbarMobileToggle"></div>
+                <p class="topbar-greeting" id="topbarGreetingText">Cá nhân hóa trải nghiệm ⚙️</p>
+                <h2 class="topbar-title" data-page-title>Cài đặt</h2>
+            </div>
+
+            <div class="topbar-search" style="visibility:hidden;pointer-events:none">
+                <i class="fas fa-magnifying-glass"></i>
+                <input type="text" class="topbar-search-input" placeholder="...">
+            </div>
+
+            <div class="topbar-actions">
+                <span class="topbar-username" id="topbarUserName" style="display:none"></span>
+                <div class="topbar-avatar" id="topbarAvatar"
+                    onclick="window.location.href='/views/user/profile.html'" title="Hồ sơ">
+                    <i class="fas fa-user"></i>
+                </div>
+            </div>
+        </header>
+
+        <!-- ── PAGE CONTENT ────────────────────────────────────── -->
+        <div class="user-content">
+
+            <!-- Preview strip -->
+            <div class="st-preview-strip" style="margin-bottom:24px">
+                <div class="st-ps-icon">⚙️</div>
+                <div class="st-ps-info">
+                    <p class="st-ps-title">Cài đặt được lưu tự động</p>
+                    <p class="st-ps-sub">Tất cả thay đổi có hiệu lực ngay lập tức và được áp dụng trên toàn bộ ứng dụng</p>
+                </div>
+                <div class="st-ps-badge" id="stSavedBadge">✅ Đã lưu</div>
+            </div>
+
+            <div class="st-layout">
+
+                <!-- ── LEFT NAV ─────────────────────────────────── -->
+                <nav class="st-nav" id="stNav">
+                    <div class="st-nav-hd">Danh mục</div>
+
+                    <a class="st-nav-item active" href="#stSecAppearance" onclick="return stScrollTo('stSecAppearance')">
+                        <i class="fas fa-palette"></i> Giao diện
+                    </a>
+                    <a class="st-nav-item" href="#stSecLanguage" onclick="return stScrollTo('stSecLanguage')">
+                        <i class="fas fa-language"></i> Ngôn ngữ
+                    </a>
+                    <a class="st-nav-item" href="#stSecNotification" onclick="return stScrollTo('stSecNotification')">
+                        <i class="fas fa-bell"></i> Thông báo
+                    </a>
+                    <a class="st-nav-item" href="#stSecPrivacy" onclick="return stScrollTo('stSecPrivacy')">
+                        <i class="fas fa-shield-halved"></i> Quyền riêng tư
+                    </a>
+
+                    <div class="st-nav-divider"></div>
+
+                    <a class="st-nav-item" href="#stSecAbout" onclick="return stScrollTo('stSecAbout')">
+                        <i class="fas fa-circle-info"></i> Về ứng dụng
+                    </a>
+                    <a class="st-nav-item" href="#stSecReset" onclick="return stScrollTo('stSecReset')">
+                        <i class="fas fa-rotate-left"></i> Đặt lại
+                    </a>
+                </nav>
+
+                <!-- ── RIGHT SECTIONS ─────────────────────────── -->
+                <div class="st-right">
+
+                    <!-- ┌── APPEARANCE ────────────────────────────┐ -->
+                    <div class="st-card" id="stSecAppearance">
+                        <div class="st-card-hd">
+                            <div class="st-card-hd-icon orange"><i class="fas fa-palette"></i></div>
+                            <div class="st-card-hd-info">
+                                <p class="st-card-hd-title">Giao diện</p>
+                                <p class="st-card-hd-sub">Tùy chỉnh màu sắc và kiểu hiển thị</p>
+                            </div>
+                        </div>
+                        <div class="st-card-body">
+
+                            <!-- Theme -->
+                            <div class="st-row" id="stRowTheme">
+                                <div class="st-row-info">
+                                    <div class="st-row-label">
+                                        <i class="fas fa-moon" style="color:#6366F1;font-size:.82rem"></i>
+                                        Chủ đề màu sắc
+                                    </div>
+                                    <div class="st-row-desc">Chọn chế độ sáng, tối hoặc theo hệ thống</div>
+                                </div>
+                                <div class="st-row-ctrl">
+                                    <div class="st-theme-options">
+                                        <div class="st-theme-opt" data-theme="light" id="stThemeLight" onclick="SettingsPage.setTheme('light')">
+                                            <div class="st-theme-preview light">
+                                                <div class="st-theme-line" style="width:70%"></div>
+                                                <div class="st-theme-line" style="width:50%"></div>
+                                                <div class="st-theme-dot"></div>
+                                            </div>
+                                            <div class="st-theme-check"><i class="fas fa-check"></i></div>
+                                            <div class="st-theme-label-row"><div class="st-theme-label">Sáng</div></div>
+                                        </div>
+                                        <div class="st-theme-opt" data-theme="dark" id="stThemeDark" onclick="SettingsPage.setTheme('dark')">
+                                            <div class="st-theme-preview dark">
+                                                <div class="st-theme-line" style="width:70%"></div>
+                                                <div class="st-theme-line" style="width:50%"></div>
+                                                <div class="st-theme-dot"></div>
+                                            </div>
+                                            <div class="st-theme-check"><i class="fas fa-check"></i></div>
+                                            <div class="st-theme-label-row"><div class="st-theme-label">Tối</div></div>
+                                        </div>
+                                        <div class="st-theme-opt" data-theme="system" id="stThemeSystem" onclick="SettingsPage.setTheme('system')">
+                                            <div class="st-theme-preview system">
+                                                <div class="st-theme-dot"></div>
+                                            </div>
+                                            <div class="st-theme-check"><i class="fas fa-check"></i></div>
+                                            <div class="st-theme-label-row"><div class="st-theme-label">Hệ thống</div></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Font size -->
+                            <div class="st-row">
+                                <div class="st-row-info">
+                                    <div class="st-row-label">
+                                        <i class="fas fa-text-height" style="color:#2563EB;font-size:.82rem"></i>
+                                        Cỡ chữ
+                                    </div>
+                                    <div class="st-row-desc">Điều chỉnh kích thước văn bản trong toàn ứng dụng</div>
+                                </div>
+                                <div class="st-row-ctrl">
+                                    <div class="st-fontsize-options">
+                                        <button class="st-fontsize-opt sm" data-size="sm" onclick="SettingsPage.setFontSize('sm')">A</button>
+                                        <button class="st-fontsize-opt md" data-size="md" onclick="SettingsPage.setFontSize('md')">A</button>
+                                        <button class="st-fontsize-opt lg" data-size="lg" onclick="SettingsPage.setFontSize('lg')">A</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Accent color -->
+                            <div class="st-row">
+                                <div class="st-row-info">
+                                    <div class="st-row-label">
+                                        <i class="fas fa-droplet" style="color:#FF6B35;font-size:.82rem"></i>
+                                        Màu nhấn
+                                        <span class="st-badge">MỚI</span>
+                                    </div>
+                                    <div class="st-row-desc">Màu chủ đạo cho nút bấm và điểm nhấn giao diện</div>
+                                </div>
+                                <div class="st-row-ctrl">
+                                    <div class="st-accent-options" id="stAccentOptions">
+                                        <div class="st-accent-swatch" data-accent="orange" onclick="SettingsPage.setAccent('orange')" style="background:#FF6B35" title="Cam (mặc định)"><i class="fas fa-check"></i></div>
+                                        <div class="st-accent-swatch" data-accent="teal"   onclick="SettingsPage.setAccent('teal')"   style="background:#0D9488" title="Xanh ngọc"><i class="fas fa-check"></i></div>
+                                        <div class="st-accent-swatch" data-accent="violet" onclick="SettingsPage.setAccent('violet')" style="background:#7C3AED" title="Tím"><i class="fas fa-check"></i></div>
+                                        <div class="st-accent-swatch" data-accent="rose"   onclick="SettingsPage.setAccent('rose')"   style="background:#E11D48" title="Hồng đỏ"><i class="fas fa-check"></i></div>
+                                        <div class="st-accent-swatch" data-accent="amber"  onclick="SettingsPage.setAccent('amber')"  style="background:#D97706" title="Hổ phách"><i class="fas fa-check"></i></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Reduce motion -->
+                            <div class="st-row">
+                                <div class="st-row-info">
+                                    <div class="st-row-label">
+                                        <i class="fas fa-wind" style="color:#059669;font-size:.82rem"></i>
+                                        Giảm hiệu ứng chuyển động
+                                    </div>
+                                    <div class="st-row-desc">Tắt các animation để cải thiện hiệu suất</div>
+                                </div>
+                                <div class="st-row-ctrl">
+                                    <label class="st-toggle">
+                                        <input type="checkbox" id="stReduceMotion" onchange="SettingsPage.setReduceMotion(this.checked)">
+                                        <div class="st-toggle-track"></div>
+                                        <div class="st-toggle-thumb"></div>
+                                    </label>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- ┌── LANGUAGE ───────────────────────────────┐ -->
+                    <div class="st-card" id="stSecLanguage">
+                        <div class="st-card-hd">
+                            <div class="st-card-hd-icon violet"><i class="fas fa-language"></i></div>
+                            <div class="st-card-hd-info">
+                                <p class="st-card-hd-title">Ngôn ngữ</p>
+                                <p class="st-card-hd-sub">Chọn ngôn ngữ hiển thị ứng dụng</p>
+                            </div>
+                        </div>
+                        <div class="st-card-body">
+                            <div class="st-row" style="border-bottom:none;padding-top:0">
+                                <div class="st-row-info">
+                                    <div class="st-row-label">
+                                        <i class="fas fa-globe" style="color:#7C3AED;font-size:.82rem"></i>
+                                        Ngôn ngữ hiển thị
+                                    </div>
+                                    <div class="st-row-desc">Thay đổi này sẽ được lưu và áp dụng toàn ứng dụng (giả lập)</div>
+                                </div>
+                                <div class="st-row-ctrl">
+                                    <div class="st-lang-options">
+                                        <div class="st-lang-opt" data-lang="vi" id="stLangVi" onclick="SettingsPage.setLang('vi')">
+                                            <span class="st-lang-flag">🇻🇳</span> Tiếng Việt
+                                        </div>
+                                        <div class="st-lang-opt" data-lang="en" id="stLangEn" onclick="SettingsPage.setLang('en')">
+                                            <span class="st-lang-flag">🇺🇸</span> English
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ┌── NOTIFICATIONS ──────────────────────────┐ -->
+                    <div class="st-card" id="stSecNotification">
+                        <div class="st-card-hd">
+                            <div class="st-card-hd-icon amber"><i class="fas fa-bell"></i></div>
+                            <div class="st-card-hd-info">
+                                <p class="st-card-hd-title">Thông báo</p>
+                                <p class="st-card-hd-sub">Quản lý âm thanh và thông báo đơn hàng</p>
+                            </div>
+                        </div>
+                        <div class="st-card-body">
+
+                            <!-- Sound notifications -->
+                            <div class="st-row">
+                                <div class="st-row-info">
+                                    <div class="st-row-label">
+                                        <i class="fas fa-volume-high" style="color:#D97706;font-size:.82rem"></i>
+                                        Âm thanh thông báo
+                                    </div>
+                                    <div class="st-row-desc">Phát âm khi có đơn hàng mới hoặc cập nhật trạng thái</div>
+                                </div>
+                                <div class="st-row-ctrl" style="display:flex;align-items:center;gap:12px">
+                                    <button class="st-sound-test" id="stSoundTest" onclick="SettingsPage.testSound()">
+                                        <i class="fas fa-play" id="stSoundTestIcon"></i>
+                                        Thử âm thanh
+                                    </button>
+                                    <label class="st-toggle">
+                                        <input type="checkbox" id="stSoundNotify" onchange="SettingsPage.setSoundNotify(this.checked)">
+                                        <div class="st-toggle-track"></div>
+                                        <div class="st-toggle-thumb"></div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Order status notifications -->
+                            <div class="st-row">
+                                <div class="st-row-info">
+                                    <div class="st-row-label">
+                                        <i class="fas fa-receipt" style="color:#D97706;font-size:.82rem"></i>
+                                        Thông báo trạng thái đơn hàng
+                                    </div>
+                                    <div class="st-row-desc">Hiện banner khi đơn hàng được xác nhận hoặc hoàn thành</div>
+                                </div>
+                                <div class="st-row-ctrl">
+                                    <label class="st-toggle">
+                                        <input type="checkbox" id="stOrderNotify" onchange="SettingsPage.setOrderNotify(this.checked)">
+                                        <div class="st-toggle-track"></div>
+                                        <div class="st-toggle-thumb"></div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Promo notifications -->
+                            <div class="st-row">
+                                <div class="st-row-info">
+                                    <div class="st-row-label">
+                                        <i class="fas fa-tag" style="color:#D97706;font-size:.82rem"></i>
+                                        Thông báo khuyến mãi
+                                    </div>
+                                    <div class="st-row-desc">Nhận thông báo khi có voucher hoặc ưu đãi mới</div>
+                                </div>
+                                <div class="st-row-ctrl">
+                                    <label class="st-toggle">
+                                        <input type="checkbox" id="stPromoNotify" onchange="SettingsPage.setPromoNotify(this.checked)">
+                                        <div class="st-toggle-track"></div>
+                                        <div class="st-toggle-thumb"></div>
+                                    </label>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- ┌── PRIVACY ────────────────────────────────┐ -->
+                    <div class="st-card" id="stSecPrivacy">
+                        <div class="st-card-hd">
+                            <div class="st-card-hd-icon teal"><i class="fas fa-shield-halved"></i></div>
+                            <div class="st-card-hd-info">
+                                <p class="st-card-hd-title">Quyền riêng tư</p>
+                                <p class="st-card-hd-sub">Kiểm soát dữ liệu và lịch sử của bạn</p>
+                            </div>
+                        </div>
+                        <div class="st-card-body">
+
+                            <div class="st-row">
+                                <div class="st-row-info">
+                                    <div class="st-row-label">
+                                        <i class="fas fa-chart-bar" style="color:#059669;font-size:.82rem"></i>
+                                        Ghi lại lịch sử tìm kiếm
+                                    </div>
+                                    <div class="st-row-desc">Lưu lịch sử tìm kiếm để gợi ý tốt hơn</div>
+                                </div>
+                                <div class="st-row-ctrl">
+                                    <label class="st-toggle">
+                                        <input type="checkbox" id="stSaveSearch" onchange="SettingsPage.setSaveSearch(this.checked)">
+                                        <div class="st-toggle-track"></div>
+                                        <div class="st-toggle-thumb"></div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="st-row">
+                                <div class="st-row-info">
+                                    <div class="st-row-label">
+                                        <i class="fas fa-robot" style="color:#059669;font-size:.82rem"></i>
+                                        Lưu lịch sử chat với AI
+                                    </div>
+                                    <div class="st-row-desc">Giữ lịch sử trò chuyện trong phiên làm việc</div>
+                                </div>
+                                <div class="st-row-ctrl">
+                                    <label class="st-toggle">
+                                        <input type="checkbox" id="stSaveChat" onchange="SettingsPage.setSaveChat(this.checked)">
+                                        <div class="st-toggle-track"></div>
+                                        <div class="st-toggle-thumb"></div>
+                                    </label>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- ┌── ABOUT ──────────────────────────────────┐ -->
+                    <div class="st-card" id="stSecAbout">
+                        <div class="st-card-hd">
+                            <div class="st-card-hd-icon blue"><i class="fas fa-circle-info"></i></div>
+                            <div class="st-card-hd-info">
+                                <p class="st-card-hd-title">Về ứng dụng</p>
+                                <p class="st-card-hd-sub">Thông tin phiên bản và hệ thống</p>
+                            </div>
+                        </div>
+                        <div class="st-card-body">
+                            <div class="st-about-grid">
+                                <div class="st-about-item">
+                                    <span class="st-about-label">Ứng dụng</span>
+                                    <span class="st-about-val">GoMeal v1.0.0</span>
+                                </div>
+                                <div class="st-about-item">
+                                    <span class="st-about-label">Môi trường</span>
+                                    <span class="st-about-val">Production</span>
+                                </div>
+                                <div class="st-about-item">
+                                    <span class="st-about-label">Trình duyệt</span>
+                                    <span class="st-about-val" id="stBrowserName">—</span>
+                                </div>
+                                <div class="st-about-item">
+                                    <span class="st-about-label">Màn hình</span>
+                                    <span class="st-about-val" id="stScreenSize">—</span>
+                                </div>
+                                <div class="st-about-item">
+                                    <span class="st-about-label">Chế độ màu</span>
+                                    <span class="st-about-val" id="stSystemTheme">—</span>
+                                </div>
+                                <div class="st-about-item">
+                                    <span class="st-about-label">Build</span>
+                                    <span class="st-about-val">2025.06.01</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ┌── RESET ──────────────────────────────────┐ -->
+                    <div class="st-card" id="stSecReset">
+                        <div class="st-card-hd">
+                            <div class="st-card-hd-icon rose"><i class="fas fa-rotate-left"></i></div>
+                            <div class="st-card-hd-info">
+                                <p class="st-card-hd-title">Đặt lại cài đặt</p>
+                                <p class="st-card-hd-sub">Khôi phục toàn bộ cài đặt về mặc định</p>
+                            </div>
+                        </div>
+                        <div class="st-card-body">
+                            <div class="st-row" style="border-bottom:none;padding-top:0">
+                                <div class="st-row-info">
+                                    <div class="st-row-label">
+                                        <i class="fas fa-triangle-exclamation" style="color:#EF4444;font-size:.82rem"></i>
+                                        Đặt lại tất cả cài đặt
+                                    </div>
+                                    <div class="st-row-desc">Hành động này không thể hoàn tác. Tất cả cài đặt cá nhân sẽ bị xoá.</div>
+                                </div>
+                                <div class="st-row-ctrl">
+                                    <button class="st-reset-btn" onclick="SettingsPage.resetAll()">
+                                        <i class="fas fa-trash-can"></i>
+                                        Đặt lại
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div><!-- /st-right -->
+            </div><!-- /st-layout -->
+        </div><!-- /user-content -->
+
+    </main>
+
+    <div id="chatbotBubble"></div>
+
+</div><!-- /user-app -->
+
+<!-- Toast -->
+<div id="stToastContainer"></div>
+
+<script src="/public/js/common.js"></script>
+<script src="/public/js/user/layout.js"></script>
+<script src="/public/js/user/settings.js"></script>
+
+</body>
+</html>

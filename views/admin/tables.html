@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Bàn — Smart Restaurant</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <link rel="stylesheet" href="/public/css/common.css">
+    <link rel="stylesheet" href="/public/css/admin/layout.css">
+    <link rel="stylesheet" href="/public/css/admin/components.css">
+    <link rel="stylesheet" href="/public/css/admin/pages.css">
+
+    <style>
+        /* ═══════════════════════════════════════════════════
+           TABLES PAGE — Extra Styles
+        ═══════════════════════════════════════════════════ */
+
+        /* ── Stats row ── */
+        .tbl-stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--space-4);
+        }
+        .tbl-stat-card {
+            background: var(--color-white);
+            border-radius: var(--radius-xl);
+            padding: var(--space-4) var(--space-5);
+            border: 1.5px solid var(--color-gray-100);
+            box-shadow: var(--shadow-card);
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            cursor: pointer;
+            transition: all var(--transition-base);
+        }
+        .tbl-stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+        .tbl-stat-card.tsc-active {
+            border-color: var(--admin-primary);
+            background: var(--admin-primary-subtle);
+        }
+        .tsc-ico {
+            width: 42px; height: 42px;
+            border-radius: var(--radius-lg);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; flex-shrink: 0;
+        }
+        .tsc-ico-all      { background: #F3F4F6; color: var(--color-gray-600); }
+        .tsc-ico-avail    { background: var(--color-success-light); color: var(--color-success-dark); }
+        .tsc-ico-occupied { background: var(--color-error-light);   color: var(--color-error); }
+        .tsc-ico-other    { background: #EDE9FE; color: #5B21B6; }
+        .tsc-val   { font-size: var(--text-2xl); font-weight: var(--font-extrabold); color: var(--color-gray-900); letter-spacing: -0.03em; line-height: 1; }
+        .tsc-label { font-size: 0.65rem; color: var(--color-gray-400); font-weight: var(--font-medium); margin-top: 2px; }
+
+        /* ── Main layout ── */
+        .tables-layout {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: var(--space-6);
+            align-items: start;
+        }
+
+        /* ── Toolbar ── */
+        .tbl-toolbar {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            background: var(--color-white);
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--color-gray-100);
+            box-shadow: var(--shadow-card);
+            padding: var(--space-3) var(--space-5);
+            margin-bottom: var(--space-4);
+            flex-wrap: wrap;
+        }
+        .tbl-search {
+            flex: 1; min-width: 180px;
+            display: flex; align-items: center; gap: var(--space-2);
+            padding: 0.45rem var(--space-3);
+            background: var(--color-gray-50);
+            border: 1.5px solid var(--color-gray-200);
+            border-radius: var(--radius-md);
+            transition: all var(--transition-fast);
+        }
+        .tbl-search:focus-within {
+            border-color: var(--admin-primary);
+            background: var(--color-white);
+            box-shadow: 0 0 0 3px rgba(249,115,22,0.10);
+        }
+        .tbl-search-ico { color: var(--color-gray-400); font-size: 0.85rem; }
+        .tbl-search-inp {
+            flex: 1; border: none; background: transparent; outline: none;
+            font-family: var(--font-primary); font-size: var(--text-sm);
+            color: var(--color-gray-800);
+        }
+        .tbl-search-inp::placeholder { color: var(--color-gray-400); }
+
+        /* ── Legend ── */
+        .tbl-legend {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+            flex-wrap: wrap;
+            padding: var(--space-3) var(--space-4);
+            background: var(--color-white);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--color-gray-100);
+            box-shadow: var(--shadow-xs);
+            margin-bottom: var(--space-4);
+            font-size: var(--text-xs);
+        }
+        .leg-item { display: flex; align-items: center; gap: 6px; color: var(--color-gray-500); font-weight: var(--font-medium); }
+        .leg-dot  { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
+        .leg-avail    { background: var(--color-success); }
+        .leg-occupied { background: var(--color-error); }
+        .leg-reserved { background: #F59E0B; }
+        .leg-maintenance { background: #6B7280; }
+
+        /* ── Table floor grid ── */
+        .floor-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+            gap: var(--space-4);
+        }
+
+        /* ── Table Card ── */
+        .table-card {
+            background: var(--color-white);
+            border-radius: var(--radius-xl);
+            border: 2px solid var(--color-gray-150);
+            padding: var(--space-4);
+            cursor: pointer;
+            transition: all var(--transition-base);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--space-2);
+            position: relative;
+            text-align: center;
+            user-select: none;
+        }
+        .table-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.10);
+        }
+        .table-card.tc-selected {
+            border-color: var(--admin-primary);
+            background: var(--admin-primary-subtle);
+            box-shadow: 0 0 0 3px rgba(249,115,22,0.15);
+        }
+
+        /* Status border colours */
+        .tc-available   { border-color: var(--color-success); }
+        .tc-occupied    { border-color: var(--color-error); background: #FFF5F5; }
+        .tc-reserved    { border-color: #F59E0B; background: #FFFBEB; }
+        .tc-maintenance { border-color: var(--color-gray-300); background: var(--color-gray-50); }
+
+        /* Table icon */
+        .tc-icon {
+            width: 58px; height: 58px;
+            border-radius: var(--radius-xl);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.6rem;
+            transition: transform var(--transition-bounce);
+            flex-shrink: 0;
+            position: relative;
+        }
+        .table-card:hover .tc-icon { transform: scale(1.08) rotate(-4deg); }
+        .tc-icon-available   { background: var(--color-success-light); }
+        .tc-icon-occupied    { background: var(--color-error-light); }
+        .tc-icon-reserved    { background: #FEF3C7; }
+        .tc-icon-maintenance { background: var(--color-gray-100); }
+
+        /* Status dot on icon */
+        .tc-status-dot {
+            position: absolute;
+            bottom: 2px; right: 2px;
+            width: 14px; height: 14px;
+            border-radius: 50%;
+            border: 2.5px solid var(--color-white);
+        }
+        .tsd-available   { background: var(--color-success); }
+        .tsd-occupied    { background: var(--color-error); }
+        .tsd-reserved    { background: #F59E0B; }
+        .tsd-maintenance { background: var(--color-gray-400); }
+
+        /* Table number */
+        .tc-number {
+            font-size: var(--text-lg);
+            font-weight: var(--font-extrabold);
+            color: var(--color-gray-900);
+            letter-spacing: -0.02em;
+            line-height: 1;
+        }
+        .tc-capacity {
+            font-size: 0.65rem;
+            color: var(--color-gray-400);
+            font-weight: var(--font-medium);
+            display: flex; align-items: center; gap: 3px;
+        }
+        .tc-status-badge {
+            font-size: 0.6rem;
+            font-weight: var(--font-extrabold);
+            padding: 2px 8px;
+            border-radius: var(--radius-full);
+        }
+        .tsb-available   { background: var(--color-success-light); color: var(--color-success-dark); }
+        .tsb-occupied    { background: var(--color-error-light);   color: var(--color-error); }
+        .tsb-reserved    { background: #FEF3C7; color: #92400E; }
+        .tsb-maintenance { background: var(--color-gray-100);     color: var(--color-gray-500); }
+
+        /* Hover action row */
+        .tc-actions {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-1);
+            opacity: 0;
+            transform: translateY(4px);
+            transition: all var(--transition-fast);
+            margin-top: 2px;
+            width: 100%;
+        }
+        .table-card:hover .tc-actions,
+        .table-card.tc-selected .tc-actions { opacity: 1; transform: translateY(0); }
+
+        /* ── Info panel (right column) ── */
+        .tbl-info-panel {
+            background: var(--color-white);
+            border-radius: var(--radius-2xl);
+            border: 1px solid var(--color-gray-100);
+            box-shadow: var(--shadow-card);
+            overflow: hidden;
+            position: sticky;
+            top: calc(var(--topbar-height, 68px) + var(--space-4));
+        }
+
+        .tip-head {
+            padding: var(--space-5) var(--space-6);
+            border-bottom: 1px solid var(--color-gray-100);
+            background: var(--admin-primary-subtle);
+        }
+        .tip-head-number {
+            font-size: var(--text-3xl);
+            font-weight: var(--font-extrabold);
+            color: var(--color-gray-900);
+            letter-spacing: -0.04em;
+            line-height: 1;
+        }
+        .tip-head-sub {
+            font-size: var(--text-xs);
+            color: var(--color-gray-500);
+            margin-top: 3px;
+        }
+        .tip-body {
+            padding: var(--space-4) var(--space-6);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+        }
+        .tip-info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-2) 0;
+            border-bottom: 1px solid var(--color-gray-100);
+            font-size: var(--text-sm);
+        }
+        .tip-info-row:last-child { border-bottom: none; }
+        .tip-info-label { color: var(--color-gray-500); }
+        .tip-info-val   { color: var(--color-gray-900); font-weight: var(--font-bold); }
+
+        /* QR preview section */
+        .tip-qr-section {
+            padding: var(--space-4) var(--space-6);
+            border-top: 1px solid var(--color-gray-100);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--space-3);
+            background: var(--color-gray-50);
+        }
+        .tip-qr-label {
+            font-size: 0.68rem;
+            font-weight: var(--font-extrabold);
+            color: var(--color-gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            align-self: flex-start;
+        }
+        .tip-qr-frame {
+            width: 130px; height: 130px;
+            border-radius: var(--radius-xl);
+            border: 3px solid var(--color-white);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+            background: var(--color-gray-100);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .tip-qr-frame img {
+            width: 100%; height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+        .tip-qr-hint {
+            font-size: 0.62rem;
+            color: var(--color-gray-400);
+            text-align: center;
+            line-height: var(--leading-relaxed);
+        }
+
+        /* Info panel foot */
+        .tip-foot {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+            padding: var(--space-4) var(--space-6);
+            background: var(--color-gray-50);
+            border-top: 1px solid var(--color-gray-100);
+        }
+
+        /* Empty info panel */
+        .tip-empty {
+            padding: var(--space-10) var(--space-6);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--space-3);
+            color: var(--color-gray-400);
+        }
+        .tip-empty i { font-size: 2.5rem; color: var(--color-gray-200); }
+        .tip-empty p { font-size: var(--text-sm); line-height: var(--leading-relaxed); }
+
+        /* ── Create panel (right column when no selection) ── */
+        .tbl-create-panel {
+            background: var(--color-white);
+            border-radius: var(--radius-2xl);
+            border: 1px solid var(--color-gray-100);
+            box-shadow: var(--shadow-card);
+            overflow: hidden;
+            position: sticky;
+            top: calc(var(--topbar-height, 68px) + var(--space-4));
+        }
+        .tcp-head {
+            display: flex; align-items: center; gap: var(--space-3);
+            padding: var(--space-5) var(--space-6);
+            border-bottom: 1px solid var(--color-gray-100);
+            background: var(--admin-primary-subtle);
+        }
+        .tcp-head-ico {
+            width: 38px; height: 38px;
+            border-radius: var(--radius-md);
+            background: var(--admin-primary-light);
+            color: var(--admin-primary);
+            display: flex; align-items: center; justify-content: center;
+            font-size: var(--text-sm); flex-shrink: 0;
+        }
+        .tcp-head-title { font-size: var(--text-sm); font-weight: var(--font-extrabold); color: var(--color-gray-900); }
+        .tcp-head-sub   { font-size: var(--text-xs); color: var(--color-gray-400); margin-top: 1px; }
+        .tcp-body { padding: var(--space-5) var(--space-6); display: flex; flex-direction: column; gap: var(--space-4); }
+        .tcp-foot {
+            padding: var(--space-4) var(--space-6);
+            background: var(--color-gray-50);
+            border-top: 1px solid var(--color-gray-100);
+        }
+
+        /* QR note box */
+        .qr-note-box {
+            display: flex; align-items: flex-start; gap: var(--space-2);
+            padding: var(--space-3) var(--space-4);
+            background: #EFF6FF;
+            border: 1px solid #DBEAFE;
+            border-radius: var(--radius-md);
+            font-size: var(--text-xs);
+            color: #1E40AF;
+            line-height: var(--leading-relaxed);
+        }
+        .qr-note-box i { color: #3B82F6; flex-shrink: 0; margin-top: 1px; }
+
+        /* ── Empty & skeleton ── */
+        .floor-empty {
+            grid-column: 1 / -1;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: var(--space-16) var(--space-8);
+            text-align: center; gap: var(--space-4);
+        }
+        .fe-ico   { font-size: 3rem; opacity: 0.15; }
+        .fe-title { font-size: var(--text-xl); font-weight: var(--font-extrabold); color: var(--color-gray-400); }
+        .fe-desc  { font-size: var(--text-sm); color: var(--color-gray-400); }
+
+        .skeleton { animation: sk-pulse 1.5s ease infinite; }
+        .sk-block  { background: var(--color-gray-100); border-radius: var(--radius-md); }
+        @keyframes sk-pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
+
+        /* ── Delete confirm modal ── */
+        .del-modal-body {
+            padding: var(--space-8) var(--space-6);
+            display: flex; flex-direction: column;
+            align-items: center; text-align: center; gap: var(--space-4);
+        }
+        .del-ico {
+            width: 68px; height: 68px; border-radius: 50%;
+            background: var(--color-error-light);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.7rem; color: var(--color-error);
+        }
+        .del-title { font-size: var(--text-xl); font-weight: var(--font-extrabold); color: var(--color-gray-900); letter-spacing: -0.02em; }
+        .del-sub   { font-size: var(--text-sm); color: var(--color-gray-500); max-width: 300px; line-height: var(--leading-relaxed); }
+
+        /* ── QR enlarge modal ── */
+        .qr-modal-body {
+            padding: var(--space-6);
+            display: flex; flex-direction: column;
+            align-items: center; gap: var(--space-5);
+        }
+        .qr-large-frame {
+            width: 240px; height: 240px;
+            border-radius: var(--radius-xl);
+            border: 4px solid var(--color-white);
+            box-shadow: var(--shadow-xl);
+            overflow: hidden;
+            background: var(--color-white);
+        }
+        .qr-large-frame img { width: 100%; height: 100%; object-fit: contain; }
+        .qr-url-box {
+            width: 100%;
+            background: var(--color-gray-50);
+            border: 1px solid var(--color-gray-200);
+            border-radius: var(--radius-md);
+            padding: var(--space-3) var(--space-4);
+            font-size: var(--text-xs);
+            color: var(--color-gray-600);
+            word-break: break-all;
+            line-height: var(--leading-relaxed);
+            font-family: 'Courier New', monospace;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 1100px) {
+            .tables-layout { grid-template-columns: 1fr; }
+            .tbl-info-panel, .tbl-create-panel { position: static; }
+        }
+        @media (max-width: 640px) {
+            .tbl-stats-row { grid-template-columns: repeat(2, 1fr); }
+            .floor-grid    { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="admin-app" id="adminApp">
+
+    <div id="admin-sidebar-container"></div>
+
+    <main class="admin-main" id="adminMain">
+
+        <!-- ── Topbar ── -->
+        <header class="admin-topbar">
+            <div class="topbar-left">
+                <div class="topbar-title">Quản lý Bàn</div>
+                <nav class="topbar-breadcrumb">
+                    <a href="/views/admin/index.html">Dashboard</a>
+                    <span class="separator">/</span>
+                    <span class="current">Vận hành</span>
+                    <span class="separator">/</span>
+                    <span class="current">Bàn</span>
+                </nav>
+            </div>
+            <div class="topbar-search">
+                <i class="fas fa-search topbar-search-icon"></i>
+                <input type="text" id="topbarSearch" placeholder="Tìm số bàn...">
+            </div>
+            <div class="topbar-actions">
+                <button class="topbar-action-btn" id="btnRefresh" title="Làm mới">
+                    <i class="fas fa-rotate-right"></i>
+                </button>
+                <button class="btn btn-primary-admin btn-sm" id="btnAddTable">
+                    <i class="fas fa-plus"></i> Thêm bàn
+                </button>
+            </div>
+        </header>
+
+        <!-- ── Content ── -->
+        <div class="admin-content">
+
+            <!-- Page header -->
+            <div class="page-header">
+                <div class="page-header-left">
+                    <h1 class="page-heading">Sơ đồ bàn <span id="headCount"></span></h1>
+                    <p class="page-desc">Quản lý bàn, QR code tự động và trạng thái phục vụ thời gian thực</p>
+                </div>
+                <div class="page-header-actions">
+                    <a href="/views/admin/orders.html" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-receipt"></i> Xem đơn hàng
+                    </a>
+                </div>
+            </div>
+
+            <!-- Stats row -->
+            <div class="tbl-stats-row" id="statsRow">
+                <div class="tbl-stat-card" data-filter="all" id="statAll">
+                    <div class="tsc-ico tsc-ico-all"><i class="fas fa-border-all"></i></div>
+                    <div>
+                        <div class="tsc-val" id="statTotalVal">--</div>
+                        <div class="tsc-label">Tổng số bàn</div>
+                    </div>
+                </div>
+                <div class="tbl-stat-card" data-filter="available" id="statAvail">
+                    <div class="tsc-ico tsc-ico-avail"><i class="fas fa-circle-check"></i></div>
+                    <div>
+                        <div class="tsc-val" id="statAvailVal">--</div>
+                        <div class="tsc-label">Sẵn sàng</div>
+                    </div>
+                </div>
+                <div class="tbl-stat-card" data-filter="occupied" id="statOccupied">
+                    <div class="tsc-ico tsc-ico-occupied"><i class="fas fa-users"></i></div>
+                    <div>
+                        <div class="tsc-val" id="statOccupiedVal">--</div>
+                        <div class="tsc-label">Đang có khách</div>
+                    </div>
+                </div>
+                <div class="tbl-stat-card" data-filter="other" id="statOther">
+                    <div class="tsc-ico tsc-ico-other"><i class="fas fa-wrench"></i></div>
+                    <div>
+                        <div class="tsc-val" id="statOtherVal">--</div>
+                        <div class="tsc-label">Đặt trước / Bảo trì</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2-col layout -->
+            <div class="tables-layout">
+
+                <!-- Left: floor map -->
+                <div>
+
+                    <!-- Toolbar -->
+                    <div class="tbl-toolbar">
+                        <div class="tbl-search">
+                            <i class="fas fa-search tbl-search-ico"></i>
+                            <input type="text" class="tbl-search-inp" id="searchInput"
+                                   placeholder="Tìm theo số bàn...">
+                        </div>
+
+                        <!-- Status filter buttons -->
+                        <div style="display:flex;align-items:center;gap:2px;background:var(--color-gray-100);border-radius:var(--radius-md);padding:3px;flex-shrink:0">
+                            <button class="ct-status-btn ctsb-on" data-sf="all"
+                                    style="padding:0.35rem 0.85rem;border-radius:var(--radius-sm);border:none;background:transparent;font-family:var(--font-primary);font-size:var(--text-xs);font-weight:700;color:var(--color-gray-500);cursor:pointer;white-space:nowrap">
+                                Tất cả
+                            </button>
+                            <button class="ct-status-btn" data-sf="available"
+                                    style="padding:0.35rem 0.85rem;border-radius:var(--radius-sm);border:none;background:transparent;font-family:var(--font-primary);font-size:var(--text-xs);font-weight:700;color:var(--color-gray-500);cursor:pointer;white-space:nowrap">
+                                ✅ Trống
+                            </button>
+                            <button class="ct-status-btn" data-sf="occupied"
+                                    style="padding:0.35rem 0.85rem;border-radius:var(--radius-sm);border:none;background:transparent;font-family:var(--font-primary);font-size:var(--text-xs);font-weight:700;color:var(--color-gray-500);cursor:pointer;white-space:nowrap">
+                                🔴 Có khách
+                            </button>
+                        </div>
+
+                        <span style="margin-left:auto;font-size:var(--text-xs);color:var(--color-gray-400)">
+                            <strong id="resultCount">0</strong> bàn
+                        </span>
+                    </div>
+
+                    <!-- Legend -->
+                    <div class="tbl-legend">
+                        <span style="font-size:0.65rem;font-weight:700;color:var(--color-gray-400);text-transform:uppercase;letter-spacing:0.04em">Chú thích:</span>
+                        <div class="leg-item"><div class="leg-dot leg-avail"></div> Sẵn sàng</div>
+                        <div class="leg-item"><div class="leg-dot leg-occupied"></div> Đang có khách</div>
+                        <div class="leg-item"><div class="leg-dot leg-reserved"></div> Đặt trước</div>
+                        <div class="leg-item"><div class="leg-dot leg-maintenance"></div> Bảo trì</div>
+                    </div>
+
+                    <!-- Floor grid -->
+                    <div class="floor-grid" id="floorGrid">
+                        <!-- JS render -->
+                    </div>
+
+                </div>
+
+                <!-- Right: panel (create / table detail) -->
+                <div id="rightPanel">
+                    <!-- JS renders: create panel or info panel -->
+                </div>
+
+            </div><!-- /tables-layout -->
+
+        </div><!-- /admin-content -->
+    </main>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MODAL: Delete Confirm
+══════════════════════════════════════════ -->
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal" style="max-width:420px">
+        <div class="modal-header">
+            <div class="modal-title" style="font-size:var(--text-base)">Xác nhận xoá bàn</div>
+            <button class="modal-close" id="deleteModalClose"><i class="fas fa-xmark"></i></button>
+        </div>
+        <div class="del-modal-body">
+            <div class="del-ico"><i class="fas fa-trash-can"></i></div>
+            <div class="del-title">Xoá bàn này?</div>
+            <div class="del-sub">
+                Bàn số <strong id="deleteTargetNum"></strong> sẽ bị xoá vĩnh viễn cùng với ảnh QR code.
+                Hành động này <strong>không thể hoàn tác</strong>.
+            </div>
+            <div style="display:flex;gap:var(--space-3);width:100%;justify-content:center">
+                <button class="btn btn-secondary" id="btnDeleteCancel" style="flex:1">Huỷ bỏ</button>
+                <button class="btn btn-danger" id="btnDeleteConfirm" style="flex:1">
+                    <i class="fas fa-trash"></i> Xoá vĩnh viễn
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MODAL: QR Enlarge
+══════════════════════════════════════════ -->
+<div class="modal-overlay" id="qrModal">
+    <div class="modal" style="max-width:380px">
+        <div class="modal-header">
+            <div class="modal-title" style="font-size:var(--text-base)">
+                <i class="fas fa-qrcode" style="color:var(--admin-primary);margin-right:6px"></i>
+                QR Code — <span id="qrModalTitle">Bàn</span>
+            </div>
+            <button class="modal-close" id="qrModalClose"><i class="fas fa-xmark"></i></button>
+        </div>
+        <div class="qr-modal-body">
+            <div class="qr-large-frame">
+                <img id="qrModalImg" src="" alt="QR Code">
+            </div>
+            <div>
+                <div style="font-size:0.65rem;color:var(--color-gray-400);font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px">
+                    <i class="fas fa-link" style="margin-right:4px"></i>URL khách truy cập
+                </div>
+                <div class="qr-url-box" id="qrUrlBox">--</div>
+            </div>
+            <div style="display:flex;gap:var(--space-3);width:100%">
+                <a class="btn btn-primary-admin" id="btnQrDownload" download
+                   style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;text-decoration:none">
+                    <i class="fas fa-download"></i> Tải về
+                </a>
+                <button class="btn btn-secondary" id="btnQrPrint" style="flex:1">
+                    <i class="fas fa-print"></i> In QR
+                </button>
+            </div>
+            <div style="font-size:0.68rem;color:var(--color-gray-400);text-align:center;line-height:var(--leading-relaxed)">
+                <i class="fas fa-wifi" style="color:#3B82F6;margin-right:4px"></i>
+                Khách dùng điện thoại (cùng WiFi) quét mã này để vào menu
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="toastContainer"
+     style="position:fixed;top:var(--space-6);right:var(--space-6);z-index:9999;display:flex;flex-direction:column;gap:var(--space-3);pointer-events:none">
+</div>
+
+<script src="/public/js/common.js"></script>
+<script src="/public/js/admin/layout.js"></script>
+<script src="/public/js/admin/tables.js"></script>
+
+</body>
+</html>

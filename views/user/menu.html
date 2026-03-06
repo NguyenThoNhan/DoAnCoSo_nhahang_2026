@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đặt món — GoMeal</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <!-- CSS — thứ tự chuẩn -->
+    <link rel="stylesheet" href="/public/css/common.css">
+    <link rel="stylesheet" href="/public/css/user/layout.css">
+    <link rel="stylesheet" href="/public/css/user/components.css">
+    <link rel="stylesheet" href="/public/css/user/pages.css">
+
+    <style>
+    /* ================================================================
+       MENU PAGE — Page-level styles
+       Dùng class prefix .mp- để không xung đột với layout / components
+       ================================================================ */
+
+    /* ── Layout: 3 cột (filter | food grid | cart) ─────────────── */
+    .mp-layout {
+        display: grid;
+        grid-template-columns: 220px 1fr 340px;
+        gap: var(--space-5, 20px);
+        align-items: start;
+        min-height: calc(100vh - var(--topbar-height,68px) - 48px);
+    }
+
+    /* ── LEFT: Category filter ────────────────────────────────── */
+    .mp-filter-col {
+        position: sticky;
+        top: calc(var(--topbar-height,68px) + 24px);
+    }
+
+    .mp-filter-card {
+        background: #fff;
+        border-radius: 20px;
+        border: 1px solid #EEE9E4;
+        overflow: hidden;
+        box-shadow: 0 2px 12px rgba(0,0,0,.05);
+    }
+
+    .mp-filter-header {
+        padding: 16px 18px 12px;
+        border-bottom: 1px solid #F3F4F6;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .mp-filter-header-icon {
+        width: 32px; height: 32px; border-radius: 9px;
+        background: #FFF3EE;
+        display: flex; align-items: center; justify-content: center;
+        color: #FF6B35; font-size: .82rem; flex-shrink: 0;
+    }
+    .mp-filter-header-title {
+        font-size: .88rem; font-weight: 800; color: #111827;
+        letter-spacing: -.01em;
+    }
+
+    .mp-cat-list { padding: 8px 0 10px; }
+
+    .mp-cat-btn {
+        width: 100%; display: flex; align-items: center; gap: 10px;
+        padding: 10px 18px;
+        background: none; border: none; cursor: pointer;
+        font-family: 'Outfit',sans-serif;
+        font-size: .82rem; font-weight: 600; color: #6B7280;
+        transition: all .15s; text-align: left;
+        position: relative;
+    }
+    .mp-cat-btn::before {
+        content: ''; position: absolute; left: 0; top: 6px; bottom: 6px;
+        width: 3px; border-radius: 0 3px 3px 0;
+        background: #FF6B35; opacity: 0; transition: opacity .15s;
+    }
+    .mp-cat-btn:hover { background: #F9F7F5; color: #374151; }
+    .mp-cat-btn.active { background: #FFF3EE; color: #FF6B35; font-weight: 800; }
+    .mp-cat-btn.active::before { opacity: 1; }
+
+    .mp-cat-icon {
+        width: 32px; height: 32px; border-radius: 9px;
+        background: #F3F4F6; flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center;
+        font-size: .9rem; transition: background .15s;
+    }
+    .mp-cat-btn.active .mp-cat-icon { background: rgba(255,107,53,.15); }
+    .mp-cat-btn:hover:not(.active) .mp-cat-icon { background: #EEE9E4; }
+
+    .mp-cat-label { flex: 1; }
+    .mp-cat-count {
+        font-size: .65rem; font-weight: 700;
+        color: #9CA3AF; background: #F3F4F6;
+        padding: 2px 7px; border-radius: 99px;
+        flex-shrink: 0;
+    }
+    .mp-cat-btn.active .mp-cat-count { background: rgba(255,107,53,.15); color: #FF6B35; }
+
+    /* ── CENTER: Food grid ────────────────────────────────────── */
+
+    /* Toolbar: search + sort */
+    .mp-toolbar {
+        display: flex; align-items: center; gap: 12px;
+        background: #fff; border-radius: 16px;
+        border: 1px solid #EEE9E4;
+        padding: 12px 16px;
+        margin-bottom: var(--space-4, 16px);
+        box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    }
+    .mp-search-wrap {
+        flex: 1; display: flex; align-items: center; gap: 8px;
+    }
+    .mp-search-icon { color: #C4BAB3; font-size: .88rem; flex-shrink: 0; }
+    .mp-search-inp {
+        flex: 1; border: none; outline: none;
+        font-family: 'Outfit',sans-serif;
+        font-size: .84rem; color: #111827; background: transparent;
+    }
+    .mp-search-inp::placeholder { color: #C4BAB3; }
+    .mp-search-clear {
+        background: none; border: none; cursor: pointer;
+        color: #C4BAB3; font-size: .78rem; padding: 4px;
+        border-radius: 6px; display: none; transition: color .15s;
+    }
+    .mp-search-clear:hover { color: #EF4444; }
+    .mp-search-clear.show { display: block; }
+
+    .mp-toolbar-divider { width: 1px; height: 22px; background: #EEE9E4; flex-shrink: 0; }
+
+    .mp-sort-select {
+        border: none; outline: none; background: transparent;
+        font-family: 'Outfit',sans-serif; font-size: .78rem;
+        font-weight: 700; color: #6B7280; cursor: pointer;
+        padding: 4px 2px;
+    }
+
+    /* Result header */
+    .mp-result-header {
+        display: flex; align-items: center; justify-content: space-between;
+        margin-bottom: 14px;
+    }
+    .mp-result-title {
+        font-size: .88rem; font-weight: 800; color: #111827;
+    }
+    .mp-result-count {
+        font-size: .72rem; color: #9CA3AF; font-weight: 500;
+    }
+
+    /* Food grid */
+    .mp-food-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+    }
+
+    /* Food card */
+    .mp-food-card {
+        background: #fff; border-radius: 18px;
+        border: 1px solid #EEE9E4;
+        overflow: hidden; transition: all .22s ease;
+        display: flex; flex-direction: column;
+        cursor: pointer; position: relative;
+    }
+    .mp-food-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 14px 36px rgba(0,0,0,.10);
+        border-color: #FFD4C2;
+    }
+
+    .mp-food-img-wrap { position: relative; overflow: hidden; }
+    .mp-food-img {
+        width: 100%; aspect-ratio: 4/3;
+        object-fit: cover; display: block;
+        background: #F6F4F2;
+        transition: transform .35s ease;
+    }
+    .mp-food-card:hover .mp-food-img { transform: scale(1.07); }
+
+    .mp-food-img-overlay {
+        position: absolute; inset: 0;
+        background: linear-gradient(to top,rgba(0,0,0,.16) 0%,transparent 55%);
+        opacity: 0; transition: opacity .22s;
+    }
+    .mp-food-card:hover .mp-food-img-overlay { opacity: 1; }
+
+    .mp-food-img-placeholder {
+        width: 100%; aspect-ratio: 4/3;
+        background: linear-gradient(135deg,#FFF3EE,#F9F7F5);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 2.8rem;
+    }
+
+    /* Badges */
+    .mp-badge {
+        position: absolute; top: 9px; left: 9px; z-index: 2;
+        font-size: .58rem; font-weight: 800; color: #fff;
+        padding: 3px 9px; border-radius: 99px;
+        line-height: 1.4;
+    }
+    .mp-badge.featured { background: linear-gradient(135deg,#FF6B35,#F7931E); }
+    .mp-badge.new      { background: linear-gradient(135deg,#8B5CF6,#6366F1); }
+
+    .mp-food-wish {
+        position: absolute; top: 9px; right: 9px; z-index: 2;
+        width: 30px; height: 30px; border-radius: 50%;
+        background: rgba(255,255,255,.92); border: none;
+        display: flex; align-items: center; justify-content: center;
+        color: #D1D5DB; font-size: .78rem; cursor: pointer;
+        transition: all .18s; backdrop-filter: blur(4px);
+    }
+    .mp-food-wish:hover, .mp-food-wish.active { color: #EF4444; }
+
+    .mp-food-body {
+        padding: 12px 14px 14px;
+        flex: 1; display: flex; flex-direction: column; gap: 4px;
+    }
+    .mp-food-cat {
+        font-size: .6rem; font-weight: 700; color: #C4BAB3;
+        text-transform: uppercase; letter-spacing: .08em;
+    }
+    .mp-food-name {
+        font-size: .88rem; font-weight: 800; color: #111827;
+        line-height: 1.3;
+        display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2;
+        -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .mp-food-desc {
+        font-size: .68rem; color: #9CA3AF; line-height: 1.45;
+        display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2;
+        -webkit-box-orient: vertical; overflow: hidden;
+        margin-top: 2px;
+    }
+    .mp-food-footer {
+        display: flex; align-items: center; justify-content: space-between;
+        margin-top: auto; padding-top: 8px;
+    }
+    .mp-food-price {
+        font-size: .96rem; font-weight: 900;
+        color: #FF6B35; letter-spacing: -.03em;
+    }
+    .mp-food-add {
+        width: 32px; height: 32px; border-radius: 50%;
+        background: linear-gradient(135deg,#FF6B35,#F7931E);
+        border: none; color: #fff; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        font-size: .84rem;
+        box-shadow: 0 4px 14px rgba(255,107,53,.38);
+        transition: transform .18s, box-shadow .18s;
+        flex-shrink: 0;
+    }
+    .mp-food-add:hover { transform: scale(1.14); box-shadow: 0 6px 20px rgba(255,107,53,.52); }
+    .mp-food-add.in-cart {
+        background: linear-gradient(135deg,#10B981,#059669);
+        box-shadow: 0 4px 14px rgba(16,185,129,.35);
+    }
+
+    /* In-cart quantity badge */
+    .mp-food-qty-badge {
+        position: absolute; bottom: 12px; left: 12px;
+        background: #FF6B35; color: #fff;
+        font-size: .6rem; font-weight: 900;
+        width: 20px; height: 20px; border-radius: 50%;
+        display: none; align-items: center; justify-content: center;
+        border: 2px solid #fff;
+        box-shadow: 0 2px 8px rgba(0,0,0,.2);
+        z-index: 2;
+    }
+    .mp-food-qty-badge.show { display: flex; }
+
+    /* Loading skeletons */
+    .mp-sk-card {
+        border-radius: 18px; overflow: hidden;
+        background: #fff; border: 1px solid #EEE9E4;
+    }
+    .mp-sk { background: linear-gradient(90deg,#F6F4F2 25%,#EEE9E4 50%,#F6F4F2 75%); background-size: 600px 100%; animation: mpSk 1.4s ease infinite; border-radius: 6px; display: block; }
+    @keyframes mpSk { 0%{background-position:-600px 0} 100%{background-position:600px 0} }
+    .mp-sk-img  { aspect-ratio:4/3; border-radius:0; }
+    .mp-sk-body { padding:12px 14px; display:flex; flex-direction:column; gap:8px; }
+    .mp-sk-l1   { height:12px; }
+    .mp-sk-l2   { height:10px; width:65%; }
+    .mp-sk-l3   { height:20px; width:45%; margin-top:4px; }
+
+    /* Empty state */
+    .mp-empty {
+        grid-column: 1/-1; text-align: center;
+        padding: 60px 24px;
+        display: flex; flex-direction: column; align-items: center; gap: 10px;
+    }
+    .mp-empty-icon {
+        width: 72px; height: 72px; border-radius: 50%;
+        background: #F9F7F5;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 2rem; color: #D1D5DB; margin-bottom: 4px;
+    }
+    .mp-empty-title { font-size: .96rem; font-weight: 800; color: #6B7280; }
+    .mp-empty-sub   { font-size: .78rem; color: #9CA3AF; line-height: 1.55; }
+
+    /* Load more */
+    .mp-load-more-wrap { text-align: center; margin-top: 20px; }
+    .mp-load-more-btn {
+        display: inline-flex; align-items: center; gap: 8px;
+        padding: 10px 28px; border-radius: 12px;
+        background: #F9F7F5; border: 1.5px solid #EEE9E4;
+        color: #6B7280; font-family: 'Outfit',sans-serif;
+        font-size: .82rem; font-weight: 700; cursor: pointer;
+        transition: all .17s;
+    }
+    .mp-load-more-btn:hover { border-color: #FF6B35; color: #FF6B35; background: #FFF3EE; }
+
+    /* ── RIGHT: Cart panel ────────────────────────────────────── */
+    .mp-cart-col {
+        position: sticky;
+        top: calc(var(--topbar-height,68px) + 24px);
+        display: flex; flex-direction: column; gap: 12px;
+    }
+
+    /* Cart card */
+    .mp-cart-card {
+        background: #fff; border-radius: 20px;
+        border: 1px solid #EEE9E4;
+        overflow: hidden;
+        box-shadow: 0 2px 12px rgba(0,0,0,.05);
+        display: flex; flex-direction: column;
+        max-height: calc(100vh - var(--topbar-height,68px) - 320px);
+    }
+
+    .mp-cart-hd {
+        padding: 16px 18px;
+        border-bottom: 1px solid #F3F4F6;
+        display: flex; align-items: center; justify-content: space-between;
+        flex-shrink: 0;
+    }
+    .mp-cart-hd-left { display: flex; align-items: center; gap: 10px; }
+    .mp-cart-hd-icon {
+        width: 34px; height: 34px; border-radius: 10px;
+        background: linear-gradient(135deg,#FF6B35,#F7931E);
+        display: flex; align-items: center; justify-content: center;
+        color: #fff; font-size: .82rem;
+    }
+    .mp-cart-hd-title { font-size: .92rem; font-weight: 800; color: #111827; }
+    .mp-cart-hd-count {
+        font-size: .62rem; font-weight: 900; color: #fff;
+        background: #FF6B35; padding: 2px 8px; border-radius: 99px;
+    }
+    .mp-cart-clear-btn {
+        font-size: .7rem; color: #C4BAB3; background: none;
+        border: none; cursor: pointer; font-family: 'Outfit',sans-serif;
+        font-weight: 600; transition: color .15s;
+    }
+    .mp-cart-clear-btn:hover { color: #EF4444; }
+
+    /* Cart items scroll */
+    .mp-cart-items {
+        flex: 1; overflow-y: auto; padding: 10px 14px;
+        scrollbar-width: thin; scrollbar-color: #EEE9E4 transparent;
+    }
+    .mp-cart-items::-webkit-scrollbar { width: 4px; }
+    .mp-cart-items::-webkit-scrollbar-thumb { background: #EEE9E4; border-radius: 4px; }
+
+    /* Empty cart */
+    .mp-cart-empty {
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        padding: 32px 20px; gap: 10px; text-align: center;
+    }
+    .mp-cart-empty-emoji { font-size: 2.4rem; }
+    .mp-cart-empty-title { font-size: .84rem; font-weight: 700; color: #D1D5DB; }
+    .mp-cart-empty-sub   { font-size: .7rem; color: #9CA3AF; }
+
+    /* Cart item row */
+    .mp-cart-item {
+        display: flex; align-items: center; gap: 10px;
+        padding: 10px 0; border-bottom: 1px solid #F9F7F5;
+        animation: mpItemSlide .2s ease;
+    }
+    @keyframes mpItemSlide { from{opacity:0;transform:translateX(10px)} to{opacity:1;transform:translateX(0)} }
+    .mp-cart-item:last-child { border-bottom: none; }
+
+    .mp-ci-img {
+        width: 46px; height: 46px; border-radius: 10px;
+        object-fit: cover; background: #F6F4F2; flex-shrink: 0;
+    }
+    .mp-ci-img-placeholder {
+        width: 46px; height: 46px; border-radius: 10px;
+        background: #F9F7F5; flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.4rem;
+    }
+    .mp-ci-info { flex: 1; min-width: 0; }
+    .mp-ci-name {
+        font-size: .78rem; font-weight: 700; color: #111827;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        margin-bottom: 2px;
+    }
+    .mp-ci-price { font-size: .68rem; color: #FF6B35; font-weight: 700; }
+
+    /* Quantity stepper */
+    .mp-ci-stepper {
+        display: flex; align-items: center; gap: 6px;
+        background: #F6F4F2; border-radius: 99px; padding: 3px;
+        flex-shrink: 0;
+    }
+    .mp-ci-step-btn {
+        width: 24px; height: 24px; border-radius: 50%;
+        border: none; background: #fff; color: #FF6B35;
+        display: flex; align-items: center; justify-content: center;
+        font-size: .72rem; font-weight: 800; cursor: pointer;
+        box-shadow: 0 1px 4px rgba(0,0,0,.09);
+        transition: background .15s; flex-shrink: 0;
+    }
+    .mp-ci-step-btn:hover { background: #FFF3EE; }
+    .mp-ci-qty {
+        font-size: .78rem; font-weight: 800; color: #111827;
+        min-width: 18px; text-align: center;
+    }
+
+    /* Cart summary */
+    .mp-cart-summary {
+        padding: 14px 18px;
+        border-top: 1px solid #F3F4F6;
+        flex-shrink: 0;
+    }
+
+    .mp-cart-sumrow {
+        display: flex; justify-content: space-between;
+        font-size: .78rem; color: #6B7280;
+        margin-bottom: 6px;
+    }
+    .mp-cart-sumrow.discount { color: #10B981; }
+    .mp-cart-sumrow.total {
+        font-size: .96rem; font-weight: 900; color: #111827;
+        border-top: 1px dashed #EEE9E4;
+        padding-top: 10px; margin-top: 6px; margin-bottom: 0;
+    }
+    .mp-cart-sumrow.total .mp-sum-val { color: #FF6B35; }
+
+    /* Coupon input */
+    .mp-coupon-wrap {
+        display: flex; gap: 7px; margin-bottom: 12px;
+    }
+    .mp-coupon-inp {
+        flex: 1; border: 1.5px solid #EEE9E4;
+        border-radius: 10px; padding: 8px 12px;
+        font-family: 'Outfit',sans-serif; font-size: .78rem;
+        color: #111827; outline: none;
+        transition: border-color .17s;
+        text-transform: uppercase; letter-spacing: .06em;
+    }
+    .mp-coupon-inp:focus { border-color: #FF6B35; box-shadow: 0 0 0 3px rgba(255,107,53,.10); }
+    .mp-coupon-btn {
+        padding: 8px 14px; border-radius: 10px;
+        background: #FFF3EE; border: 1.5px solid #FFD4C2;
+        color: #FF6B35; font-family: 'Outfit',sans-serif;
+        font-size: .76rem; font-weight: 800; cursor: pointer;
+        white-space: nowrap; transition: all .17s;
+    }
+    .mp-coupon-btn:hover { background: #FF6B35; color: #fff; border-color: transparent; }
+    .mp-coupon-status {
+        font-size: .68rem; margin-bottom: 10px;
+        display: none; align-items: center; gap: 6px;
+        padding: 6px 10px; border-radius: 8px;
+        font-weight: 600;
+    }
+    .mp-coupon-status.show { display: flex; }
+    .mp-coupon-status.ok  { background: #ECFDF5; color: #059669; }
+    .mp-coupon-status.err { background: #FEF2F2; color: #DC2626; }
+
+    /* Checkout button */
+    .mp-checkout-btn {
+        width: 100%; padding: 13px;
+        background: linear-gradient(135deg,#FF6B35,#F7931E);
+        color: #fff; border: none; border-radius: 14px;
+        font-family: 'Outfit',sans-serif;
+        font-size: .92rem; font-weight: 900; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; gap: 10px;
+        box-shadow: 0 6px 24px rgba(255,107,53,.42);
+        transition: all .22s cubic-bezier(.34,1.56,.64,1);
+        position: relative; overflow: hidden; margin-top: 12px;
+    }
+    .mp-checkout-btn::after {
+        content: ''; position: absolute; inset: 0;
+        background: linear-gradient(135deg,rgba(255,255,255,.18) 0%,transparent 55%);
+        pointer-events: none;
+    }
+    .mp-checkout-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 32px rgba(255,107,53,.55);
+    }
+    .mp-checkout-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
+    .mp-checkout-btn .mp-btn-spin {
+        width: 18px; height: 18px; border-radius: 50%;
+        border: 2.5px solid rgba(255,255,255,.3);
+        border-top-color: #fff; animation: mpSpin .7s linear infinite;
+        display: none; flex-shrink: 0;
+    }
+    .mp-checkout-btn.loading .mp-btn-spin { display: block; }
+    .mp-checkout-btn.loading .mp-btn-label { display: none; }
+    .mp-checkout-btn.loading .mp-btn-arrow { display: none; }
+    @keyframes mpSpin { to { transform: rotate(360deg); } }
+
+    /* Request checkout button (gọi thanh toán) */
+    .mp-req-checkout-btn {
+        width: 100%; padding: 10px;
+        background: #F9F7F5; border: 1.5px solid #EEE9E4;
+        border-radius: 12px; color: #6B7280;
+        font-family: 'Outfit',sans-serif;
+        font-size: .8rem; font-weight: 700; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        transition: all .17s; margin-top: 8px;
+    }
+    .mp-req-checkout-btn:hover { border-color: #10B981; color: #059669; background: #ECFDF5; }
+
+    /* Table info chip (inside cart) */
+    .mp-table-chip {
+        display: flex; align-items: center; gap: 8px;
+        background: #FFF3EE; border: 1.5px solid #FFD4C2;
+        border-radius: 12px; padding: 10px 14px;
+        font-size: .78rem; font-weight: 700; color: #FF6B35;
+    }
+    .mp-table-chip i { font-size: .8rem; flex-shrink: 0; }
+    .mp-table-chip-label { flex: 1; }
+    .mp-table-chip-name { font-size: .62rem; color: #9CA3AF; font-weight: 500; }
+
+    /* ── FOOD DETAIL MODAL ─────────────────────────────────────── */
+    .mp-modal-overlay {
+        position: fixed; inset: 0;
+        background: rgba(0,0,0,.5);
+        backdrop-filter: blur(6px);
+        z-index: 500; display: none;
+        align-items: center; justify-content: center; padding: 20px;
+    }
+    .mp-modal-overlay.show { display: flex; }
+
+    .mp-modal {
+        background: #fff; border-radius: 24px;
+        max-width: 520px; width: 100%;
+        box-shadow: 0 40px 100px rgba(0,0,0,.28);
+        overflow: hidden;
+        animation: mpModalIn .28s cubic-bezier(.34,1.56,.64,1);
+        max-height: 90vh; display: flex; flex-direction: column;
+    }
+    @keyframes mpModalIn {
+        from { opacity:0; transform:scale(.88) translateY(24px); }
+        to   { opacity:1; transform:scale(1) translateY(0); }
+    }
+
+    .mp-modal-img {
+        width: 100%; max-height: 240px; object-fit: cover; display: block;
+        background: linear-gradient(135deg,#FFF3EE,#F9F7F5);
+        flex-shrink: 0;
+    }
+    .mp-modal-img-placeholder {
+        height: 200px; background: linear-gradient(135deg,#FFF3EE,#F9F7F5);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 4rem; flex-shrink: 0;
+    }
+
+    .mp-modal-body {
+        padding: 22px 24px; overflow-y: auto;
+        flex: 1;
+    }
+    .mp-modal-close {
+        position: absolute; top: 14px; right: 14px; z-index: 2;
+        width: 34px; height: 34px; border-radius: 10px;
+        background: rgba(255,255,255,.9); border: none;
+        display: flex; align-items: center; justify-content: center;
+        color: #374151; font-size: .88rem; cursor: pointer;
+        box-shadow: 0 2px 10px rgba(0,0,0,.15);
+        transition: all .15s; backdrop-filter: blur(4px);
+    }
+    .mp-modal-close:hover { background: #fff; transform: scale(1.08); }
+
+    .mp-modal-cat  { font-size: .62rem; font-weight: 700; color: #C4BAB3; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 5px; }
+    .mp-modal-name { font-size: 1.4rem; font-weight: 900; color: #111827; letter-spacing: -.03em; line-height: 1.2; margin-bottom: 8px; }
+    .mp-modal-desc { font-size: .84rem; color: #6B7280; line-height: 1.65; margin-bottom: 16px; }
+    .mp-modal-price { font-size: 1.6rem; font-weight: 900; color: #FF6B35; letter-spacing: -.04em; margin-bottom: 20px; }
+
+    .mp-modal-footer {
+        display: flex; align-items: center; gap: 14px;
+        padding: 16px 24px; border-top: 1px solid #F3F4F6;
+        flex-shrink: 0;
+    }
+    .mp-modal-stepper {
+        display: flex; align-items: center; gap: 10px;
+        background: #F6F4F2; border-radius: 99px; padding: 5px;
+    }
+    .mp-modal-step-btn {
+        width: 32px; height: 32px; border-radius: 50%;
+        border: none; background: #fff; color: #FF6B35;
+        display: flex; align-items: center; justify-content: center;
+        font-size: .88rem; font-weight: 800; cursor: pointer;
+        box-shadow: 0 2px 6px rgba(0,0,0,.09);
+        transition: background .15s;
+    }
+    .mp-modal-step-btn:hover { background: #FFF3EE; }
+    .mp-modal-qty { font-size: 1rem; font-weight: 900; color: #111827; min-width: 28px; text-align: center; }
+
+    .mp-modal-add-btn {
+        flex: 1; padding: 12px;
+        background: linear-gradient(135deg,#FF6B35,#F7931E);
+        color: #fff; border: none; border-radius: 14px;
+        font-family: 'Outfit',sans-serif; font-size: .9rem; font-weight: 800;
+        cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+        box-shadow: 0 4px 16px rgba(255,107,53,.40);
+        transition: opacity .17s;
+    }
+    .mp-modal-add-btn:hover { opacity: .9; }
+
+    /* ── TOAST ─────────────────────────────────────────────────── */
+    #mpToastContainer {
+        position: fixed; top: 20px; right: 20px; z-index: 999;
+        display: flex; flex-direction: column; gap: 8px;
+        pointer-events: none;
+    }
+    .mp-toast {
+        display: flex; align-items: center; gap: 10px;
+        padding: 11px 16px; border-radius: 14px;
+        background: #fff; border-left: 4px solid;
+        box-shadow: 0 8px 28px rgba(0,0,0,.14);
+        font-family: 'Outfit',sans-serif; font-size: .8rem; color: #1A1A1A;
+        max-width: 320px; pointer-events: all;
+        animation: mpToastIn .28s ease;
+    }
+    @keyframes mpToastIn { from{opacity:0;transform:translateX(14px)} to{opacity:1;transform:translateX(0)} }
+    .mp-toast.success { border-color: #10B981; }
+    .mp-toast.error   { border-color: #EF4444; }
+    .mp-toast.info    { border-color: #FF6B35; }
+    .mp-toast.warning { border-color: #F59E0B; }
+    .mp-toast i { flex-shrink: 0; }
+    .mp-toast.success i { color: #10B981; }
+    .mp-toast.error   i { color: #EF4444; }
+    .mp-toast.info    i { color: #FF6B35; }
+    .mp-toast.warning i { color: #F59E0B; }
+
+    /* ── REDIRECT OVERLAY ──────────────────────────────────────── */
+    .mp-redirect-overlay {
+        position: fixed; inset: 0; z-index: 700;
+        background: rgba(255,255,255,.95); backdrop-filter: blur(10px);
+        display: none; flex-direction: column;
+        align-items: center; justify-content: center; gap: 14px;
+        text-align: center; animation: mpFadeIn .4s ease;
+    }
+    .mp-redirect-overlay.show { display: flex; }
+    @keyframes mpFadeIn { from{opacity:0} to{opacity:1} }
+    .mp-redirect-spin {
+        width: 48px; height: 48px; border-radius: 50%;
+        border: 4px solid #EEE9E4; border-top-color: #FF6B35;
+        animation: mpSpin .8s linear infinite;
+    }
+    .mp-redirect-text { font-size: 1rem; font-weight: 800; color: #111827; }
+    .mp-redirect-sub  { font-size: .82rem; color: #9CA3AF; }
+
+    /* ── Guest guard overlay (khi chưa có guestToken) ─────────── */
+    .mp-guard-overlay {
+        position: fixed; inset: 0; z-index: 600;
+        background: rgba(255,255,255,.98); backdrop-filter: blur(8px);
+        display: none; flex-direction: column;
+        align-items: center; justify-content: center; gap: 14px;
+        text-align: center; padding: 24px;
+    }
+    .mp-guard-overlay.show { display: flex; }
+    .mp-guard-icon {
+        width: 80px; height: 80px; border-radius: 50%;
+        background: linear-gradient(135deg,#FF6B35,#F7931E);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 2rem; color: #fff;
+        box-shadow: 0 12px 36px rgba(255,107,53,.40);
+    }
+    .mp-guard-title { font-size: 1.3rem; font-weight: 900; color: #111827; letter-spacing: -.03em; }
+    .mp-guard-sub   { font-size: .88rem; color: #9CA3AF; max-width: 300px; line-height: 1.55; }
+    .mp-guard-btn {
+        display: inline-flex; align-items: center; gap: 10px;
+        background: linear-gradient(135deg,#FF6B35,#F7931E);
+        color: #fff; padding: 13px 32px; border-radius: 14px;
+        font-family: 'Outfit',sans-serif; font-size: .92rem; font-weight: 900;
+        text-decoration: none; margin-top: 8px;
+        box-shadow: 0 6px 22px rgba(255,107,53,.42);
+        transition: all .2s; border: none; cursor: pointer;
+    }
+    .mp-guard-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(255,107,53,.55); }
+    .mp-guard-countdown {
+        font-size: .78rem; color: #C4BAB3;
+        margin-top: 4px;
+    }
+
+    /* ── Responsive ────────────────────────────────────────────── */
+    @media (max-width: 1280px) {
+        .mp-layout { grid-template-columns: 200px 1fr 300px; gap: 14px; }
+    }
+    @media (max-width: 1100px) {
+        .mp-layout { grid-template-columns: 1fr; }
+        .mp-filter-col { position: static; display: none; } /* collapsible on mobile */
+        .mp-cart-col   { position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+                         top: auto; max-height: 70vh; transform: translateY(calc(100% - 72px));
+                         transition: transform .3s ease; border-radius: 22px 22px 0 0;
+                         border: 1px solid #EEE9E4; box-shadow: 0 -8px 40px rgba(0,0,0,.14); }
+        .mp-cart-col.open { transform: translateY(0); }
+        .mp-food-grid { grid-template-columns: repeat(2,1fr); }
+    }
+    @media (max-width: 540px) {
+        .mp-food-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    }
+    @media (max-width: 420px) {
+        .mp-food-grid { grid-template-columns: 1fr; }
+    }
+    </style>
+</head>
+<body>
+
+<!-- ================================================================
+     APP SHELL
+     ================================================================ -->
+<div class="user-app">
+
+    <!-- SIDEBAR -->
+    <div id="user-sidebar-container"></div>
+
+    <!-- MAIN -->
+    <main class="user-main">
+
+        <!-- ── TOPBAR ──────────────────────────────────────────── -->
+        <header class="user-topbar">
+            <div class="topbar-left">
+                <div id="topbarMobileToggle"></div>
+                <p class="topbar-greeting" id="topbarGreetingText">Gọi món ngay</p>
+                <h2 class="topbar-title" data-page-title>Thực đơn</h2>
+            </div>
+
+            <!-- Search -->
+            <div class="topbar-search">
+                <i class="fas fa-magnifying-glass"></i>
+                <input type="text" class="topbar-search-input" id="topbarSearchProxy"
+                    placeholder="Tìm món ăn..." autocomplete="off">
+            </div>
+
+            <div class="topbar-actions">
+                <!-- Table chip -->
+                <div class="topbar-table-chip" id="topbarTableChip" style="display:none">
+                    <i class="fas fa-chair"></i>
+                    <span id="topbarTableName">—</span>
+                </div>
+                <!-- Nút hủy bàn -->
+                <button class="topbar-action-btn topbar-cancel-table-btn" id="btnCancelTable"
+                    title="Hủy bàn" style="display:none; color:#EF4444">
+                    <i class="fas fa-door-open"></i>
+                </button>
+                <!-- Cart toggle (mobile) -->
+                <button class="topbar-action-btn" id="cartToggleBtn" title="Giỏ hàng" style="position:relative">
+                    <i class="fas fa-shopping-basket"></i>
+                    <span class="topbar-badge" id="cartCountBadge" style="display:none">0</span>
+                </button>
+                <a href="/views/user/settings.html" class="topbar-action-btn" title="Cài đặt">
+                    <i class="fas fa-gear"></i>
+                </a>
+                <div class="topbar-avatar" id="topbarAvatar" onclick="window.location.href='/views/user/profile.html'">
+                    <i class="fas fa-user"></i>
+                </div>
+            </div>
+        </header>
+
+        <!-- ── CONTENT ────────────────────────────────────────── -->
+        <div class="user-content">
+            <div class="mp-layout">
+
+                <!-- ┌── LEFT: Categories ──────────────────────────┐ -->
+                <aside class="mp-filter-col">
+                    <div class="mp-filter-card">
+                        <div class="mp-filter-header">
+                            <div class="mp-filter-header-icon">
+                                <i class="fas fa-layer-group"></i>
+                            </div>
+                            <span class="mp-filter-header-title">Danh mục</span>
+                        </div>
+                        <div class="mp-cat-list" id="catList">
+                            <!-- Skeleton -->
+                            <div style="padding:8px 18px;display:flex;flex-direction:column;gap:8px">
+                                <div class="mp-sk" style="height:38px;border-radius:10px"></div>
+                                <div class="mp-sk" style="height:38px;border-radius:10px"></div>
+                                <div class="mp-sk" style="height:38px;border-radius:10px"></div>
+                                <div class="mp-sk" style="height:38px;border-radius:10px"></div>
+                                <div class="mp-sk" style="height:38px;border-radius:10px"></div>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- ┌── CENTER: Food grid ─────────────────────────┐ -->
+                <section class="mp-main-col">
+
+                    <!-- Toolbar -->
+                    <div class="mp-toolbar">
+                        <div class="mp-search-wrap">
+                            <i class="fas fa-magnifying-glass mp-search-icon"></i>
+                            <input type="text" class="mp-search-inp" id="mpSearchInp"
+                                placeholder="Tìm món ăn, danh mục..." autocomplete="off">
+                            <button class="mp-search-clear" id="mpSearchClear">
+                                <i class="fas fa-xmark"></i>
+                            </button>
+                        </div>
+                        <div class="mp-toolbar-divider"></div>
+                        <select class="mp-sort-select" id="mpSortSelect">
+                            <option value="default">Mặc định</option>
+                            <option value="price-asc">Giá tăng dần</option>
+                            <option value="price-desc">Giá giảm dần</option>
+                            <option value="featured">Nổi bật trước</option>
+                            <option value="name">Theo tên A-Z</option>
+                        </select>
+                    </div>
+
+                    <!-- Result header -->
+                    <div class="mp-result-header">
+                        <span class="mp-result-title" id="mpResultTitle">Tất cả món ăn</span>
+                        <span class="mp-result-count" id="mpResultCount">...</span>
+                    </div>
+
+                    <!-- Food grid -->
+                    <div class="mp-food-grid" id="mpFoodGrid">
+                        <!-- 9 skeleton cards -->
+                        <div class="mp-sk-card"><div class="mp-sk mp-sk-img"></div><div class="mp-sk-body"><div class="mp-sk mp-sk-l1"></div><div class="mp-sk mp-sk-l2"></div><div class="mp-sk mp-sk-l3"></div></div></div>
+                        <div class="mp-sk-card"><div class="mp-sk mp-sk-img"></div><div class="mp-sk-body"><div class="mp-sk mp-sk-l1"></div><div class="mp-sk mp-sk-l2"></div><div class="mp-sk mp-sk-l3"></div></div></div>
+                        <div class="mp-sk-card"><div class="mp-sk mp-sk-img"></div><div class="mp-sk-body"><div class="mp-sk mp-sk-l1"></div><div class="mp-sk mp-sk-l2"></div><div class="mp-sk mp-sk-l3"></div></div></div>
+                        <div class="mp-sk-card"><div class="mp-sk mp-sk-img"></div><div class="mp-sk-body"><div class="mp-sk mp-sk-l1"></div><div class="mp-sk mp-sk-l2"></div><div class="mp-sk mp-sk-l3"></div></div></div>
+                        <div class="mp-sk-card"><div class="mp-sk mp-sk-img"></div><div class="mp-sk-body"><div class="mp-sk mp-sk-l1"></div><div class="mp-sk mp-sk-l2"></div><div class="mp-sk mp-sk-l3"></div></div></div>
+                        <div class="mp-sk-card"><div class="mp-sk mp-sk-img"></div><div class="mp-sk-body"><div class="mp-sk mp-sk-l1"></div><div class="mp-sk mp-sk-l2"></div><div class="mp-sk mp-sk-l3"></div></div></div>
+                    </div>
+
+                    <!-- Load more -->
+                    <div class="mp-load-more-wrap" id="mpLoadMoreWrap" style="display:none">
+                        <button class="mp-load-more-btn" id="mpLoadMoreBtn">
+                            <i class="fas fa-chevron-down"></i>
+                            Xem thêm món
+                        </button>
+                    </div>
+
+                </section>
+
+                <!-- ┌── RIGHT: Cart ───────────────────────────────┐ -->
+                <aside class="mp-cart-col" id="mpCartCol">
+
+                    <!-- Table info -->
+                    <div class="mp-table-chip" id="mpTableChip" style="display:none">
+                        <i class="fas fa-chair"></i>
+                        <div style="flex:1">
+                            <div class="mp-table-chip-label" id="mpTableChipName">—</div>
+                            <div class="mp-table-chip-name">Đang phục vụ</div>
+                        </div>
+                        <i class="fas fa-circle" style="font-size:.5rem;color:#10B981"></i>
+                    </div>
+
+                    <!-- Cart card -->
+                    <div class="mp-cart-card" id="mpCartCard">
+                        <div class="mp-cart-hd">
+                            <div class="mp-cart-hd-left">
+                                <div class="mp-cart-hd-icon"><i class="fas fa-shopping-basket"></i></div>
+                                <span class="mp-cart-hd-title">Giỏ hàng</span>
+                                <span class="mp-cart-hd-count" id="mpCartCount">0</span>
+                            </div>
+                            <button class="mp-cart-clear-btn" id="mpCartClearBtn">Xoá tất cả</button>
+                        </div>
+
+                        <div class="mp-cart-items" id="mpCartItems">
+                            <!-- Render by JS -->
+                        </div>
+
+                        <div class="mp-cart-summary" id="mpCartSummary">
+                            <!-- Coupon -->
+                            <div class="mp-coupon-wrap">
+                                <input type="text" class="mp-coupon-inp" id="mpCouponInp"
+                                    placeholder="NHẬP MÃ GIẢM GIÁ" maxlength="20">
+                                <button class="mp-coupon-btn" id="mpCouponBtn">Áp dụng</button>
+                            </div>
+                            <div class="mp-coupon-status" id="mpCouponStatus">
+                                <i class="fas fa-circle-check"></i>
+                                <span id="mpCouponStatusMsg"></span>
+                            </div>
+
+                            <!-- Summary rows -->
+                            <div class="mp-cart-sumrow">
+                                <span>Tạm tính</span>
+                                <span id="mpSumSubtotal">0₫</span>
+                            </div>
+                            <div class="mp-cart-sumrow discount" id="mpSumDiscountRow" style="display:none">
+                                <span>Giảm giá</span>
+                                <span id="mpSumDiscount">-0₫</span>
+                            </div>
+                            <div class="mp-cart-sumrow total">
+                                <span>Tổng cộng</span>
+                                <span class="mp-sum-val" id="mpSumTotal">0₫</span>
+                            </div>
+
+                            <!-- Checkout -->
+                            <button class="mp-checkout-btn" id="mpCheckoutBtn" disabled>
+                                <div class="mp-btn-spin"></div>
+                                <span class="mp-btn-label">Đặt món ngay</span>
+                                <div class="mp-btn-arrow" style="width:28px;height:28px;border-radius:8px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:.8rem">
+                                    <i class="fas fa-arrow-right"></i>
+                                </div>
+                            </button>
+
+                            <!-- Request checkout -->
+                            <button class="mp-req-checkout-btn" id="mpReqCheckoutBtn" style="display:none">
+                                <i class="fas fa-credit-card"></i>
+                                Gọi thanh toán
+                            </button>
+                        </div>
+                    </div>
+
+                </aside>
+
+            </div>
+        </div><!-- /user-content -->
+
+    </main><!-- /user-main -->
+
+    <!-- CHATBOT -->
+    <div id="chatbotBubble"></div>
+
+</div><!-- /user-app -->
+
+
+<!-- ================================================================
+     FOOD DETAIL MODAL
+     ================================================================ -->
+<div class="mp-modal-overlay" id="mpModalOverlay">
+    <div class="mp-modal" id="mpModal">
+        <button class="mp-modal-close" id="mpModalClose" style="position:absolute;top:12px;right:12px">
+            <i class="fas fa-xmark"></i>
+        </button>
+        <div id="mpModalImgWrap">
+            <!-- img or placeholder injected by JS -->
+        </div>
+        <div class="mp-modal-body">
+            <p class="mp-modal-cat" id="mpModalCat"></p>
+            <h2 class="mp-modal-name" id="mpModalName"></h2>
+            <p class="mp-modal-desc" id="mpModalDesc"></p>
+            <p class="mp-modal-price" id="mpModalPrice"></p>
+        </div>
+        <div class="mp-modal-footer">
+            <div class="mp-modal-stepper">
+                <button class="mp-modal-step-btn" id="mpModalMinus"><i class="fas fa-minus"></i></button>
+                <span class="mp-modal-qty" id="mpModalQty">1</span>
+                <button class="mp-modal-step-btn" id="mpModalPlus"><i class="fas fa-plus"></i></button>
+            </div>
+            <button class="mp-modal-add-btn" id="mpModalAddBtn">
+                <i class="fas fa-cart-plus"></i>
+                Thêm vào giỏ
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ================================================================
+     TOAST CONTAINER
+     ================================================================ -->
+<div id="mpToastContainer"></div>
+
+<!-- ================================================================
+     REDIRECT OVERLAY (after order success)
+     ================================================================ -->
+<div class="mp-redirect-overlay" id="mpRedirectOverlay">
+    <div class="mp-redirect-spin"></div>
+    <p class="mp-redirect-text">Đặt món thành công! 🎉</p>
+    <p class="mp-redirect-sub">Đang chuyển đến lịch sử đơn hàng...</p>
+</div>
+
+<!-- ================================================================
+     GUEST GUARD OVERLAY
+     ================================================================ -->
+<div class="mp-guard-overlay" id="mpGuardOverlay">
+    <div class="mp-guard-icon"><i class="fas fa-chair"></i></div>
+    <h2 class="mp-guard-title">Bạn chưa chọn bàn</h2>
+    <p class="mp-guard-sub">Để đặt món, bạn cần chọn bàn và quét mã QR xác thực trước.</p>
+    <button class="mp-guard-btn" onclick="window.location.href='/views/user/table-select.html'">
+        <i class="fas fa-chair"></i>
+        Chọn bàn ngay
+    </button>
+    <p class="mp-guard-countdown" id="mpGuardCountdown">Tự động chuyển hướng sau <span id="mpGuardSec">5</span>s</p>
+</div>
+
+<!-- ================================================================
+     CANCEL TABLE MODAL — Xác nhận hủy bàn
+     ================================================================ -->
+<div class="mp-cancel-overlay" id="mpCancelOverlay" style="display:none">
+    <div class="mp-cancel-modal">
+        <div class="mp-cancel-icon"><i class="fas fa-door-open"></i></div>
+        <h2 class="mp-cancel-title">Hủy bàn?</h2>
+        <p class="mp-cancel-desc">
+            Bạn sẽ thoát khỏi bàn này và cần quét lại mã QR để vào lại.<br>
+            <strong>Giỏ hàng hiện tại sẽ bị xóa.</strong>
+        </p>
+        <div class="mp-cancel-actions">
+            <button class="mp-cancel-btn-back" id="mpCancelBack">
+                <i class="fas fa-arrow-left"></i> Ở lại
+            </button>
+            <button class="mp-cancel-btn-confirm" id="mpCancelConfirm">
+                <i class="fas fa-door-open"></i> Xác nhận hủy
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+.mp-cancel-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.6);
+    z-index: 900;
+    display: none; align-items: center; justify-content: center; padding: 24px;
+    backdrop-filter: blur(6px);
+}
+.mp-cancel-overlay.show { display: flex !important; }
+.mp-cancel-modal {
+    background: #fff;
+    border-radius: 24px;
+    max-width: 380px; width: 100%;
+    padding: 36px 28px 28px;
+    text-align: center;
+    box-shadow: 0 32px 80px rgba(0,0,0,.25);
+    animation: cancelIn .26s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes cancelIn { from{opacity:0;transform:scale(.88)} to{opacity:1;transform:scale(1)} }
+.mp-cancel-icon {
+    width: 68px; height: 68px; border-radius: 50%;
+    background: #FEE2E2; display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem; color: #EF4444; margin: 0 auto 18px;
+}
+.mp-cancel-title { font-size: 1.3rem; font-weight: 900; color: #111827; margin: 0 0 10px; }
+.mp-cancel-desc { font-size: .88rem; color: #6B7280; line-height: 1.6; margin: 0 0 28px; }
+.mp-cancel-desc strong { color: #EF4444; }
+.mp-cancel-actions { display: flex; gap: 10px; }
+.mp-cancel-btn-back {
+    flex: 1; padding: 13px; border-radius: 12px;
+    border: 1.5px solid #E5E7EB; background: #fff;
+    color: #374151; font-weight: 700; font-size: .9rem; cursor: pointer;
+    transition: all .15s; display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.mp-cancel-btn-back:hover { background: #F9FAFB; }
+.mp-cancel-btn-confirm {
+    flex: 1; padding: 13px; border-radius: 12px;
+    border: none; background: #EF4444;
+    color: #fff; font-weight: 800; font-size: .9rem; cursor: pointer;
+    transition: all .15s; display: flex; align-items: center; justify-content: center; gap: 6px;
+    box-shadow: 0 4px 14px rgba(239,68,68,.3);
+}
+.mp-cancel-btn-confirm:hover { background: #DC2626; transform: translateY(-1px); }
+.mp-cancel-btn-confirm:disabled { opacity: .65; transform: none; cursor: not-allowed; }
+</style>
+
+<!-- ================================================================
+     CONFIRM INFO MODAL — Xác nhận thông tin trước khi đặt món
+     ================================================================ -->
+<div class="mp-confirm-overlay" id="mpConfirmOverlay" style="display:none">
+    <div class="mp-confirm-modal">
+        <div class="mp-confirm-header">
+            <div class="mp-confirm-icon"><i class="fas fa-clipboard-check"></i></div>
+            <h2 class="mp-confirm-title">Xác nhận thông tin</h2>
+            <p class="mp-confirm-sub">Vui lòng kiểm tra lại đơn hàng trước khi gửi</p>
+        </div>
+
+        <div class="mp-confirm-body">
+            <!-- Thông tin đơn -->
+            <div class="mp-confirm-section">
+                <div class="mp-confirm-section-title"><i class="fas fa-utensils"></i> Món đã chọn</div>
+                <div id="mpConfirmItems" class="mp-confirm-items"></div>
+                <div class="mp-confirm-total-row">
+                    <span>Tổng cộng</span>
+                    <span id="mpConfirmTotal" class="mp-confirm-total-val"></span>
+                </div>
+            </div>
+
+            <!-- Thông tin bàn -->
+            <div class="mp-confirm-section">
+                <div class="mp-confirm-section-title"><i class="fas fa-chair"></i> Thông tin bàn</div>
+                <div class="mp-confirm-table-info" id="mpConfirmTableInfo">—</div>
+            </div>
+        </div>
+
+        <div class="mp-confirm-footer">
+            <button class="mp-confirm-btn-cancel" id="mpConfirmCancel">
+                <i class="fas fa-arrow-left"></i> Quay lại
+            </button>
+            <button class="mp-confirm-btn-submit" id="mpConfirmSubmit">
+                <i class="fas fa-paper-plane"></i> Xác nhận đặt món
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Confirm Modal Styles -->
+<style>
+.mp-confirm-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.55);
+    z-index: 800;
+    display: none; align-items: center; justify-content: center; padding: 20px;
+    backdrop-filter: blur(6px);
+}
+.mp-confirm-overlay.show { display: flex !important; }
+.mp-confirm-modal {
+    background: #fff;
+    border-radius: 24px;
+    max-width: 480px; width: 100%;
+    box-shadow: 0 32px 80px rgba(0,0,0,.22);
+    animation: confirmIn .28s cubic-bezier(.34,1.56,.64,1);
+    overflow: hidden;
+}
+@keyframes confirmIn { from{opacity:0;transform:scale(.9) translateY(20px)} to{opacity:1;transform:scale(1) translateY(0)} }
+.mp-confirm-header {
+    background: linear-gradient(135deg,#FF6B35,#F7931E);
+    padding: 28px 24px 22px; text-align: center; color: #fff;
+}
+.mp-confirm-icon { font-size: 2.2rem; margin-bottom: 10px; }
+.mp-confirm-title { font-size: 1.25rem; font-weight: 900; margin: 0 0 4px; letter-spacing: -.02em; }
+.mp-confirm-sub { font-size: .82rem; opacity: .88; margin: 0; }
+.mp-confirm-body { padding: 20px 24px 4px; max-height: 50vh; overflow-y: auto; }
+.mp-confirm-section { margin-bottom: 18px; }
+.mp-confirm-section-title {
+    font-size: .72rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: .08em; color: #9CA3AF; margin-bottom: 10px;
+    display: flex; align-items: center; gap: 6px;
+}
+.mp-confirm-items { display: flex; flex-direction: column; gap: 6px; }
+.mp-confirm-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 12px; background: #F9FAFB; border-radius: 10px;
+    font-size: .85rem;
+}
+.mp-confirm-item-name { color: #111827; font-weight: 600; }
+.mp-confirm-item-qty { color: #6B7280; font-size: .78rem; margin-top: 1px; }
+.mp-confirm-item-price { color: #FF6B35; font-weight: 700; white-space: nowrap; }
+.mp-confirm-total-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 12px 0; border-top: 1px solid #F3F4F6; margin-top: 8px;
+    font-weight: 700;
+}
+.mp-confirm-total-val { color: #FF6B35; font-size: 1.1rem; }
+.mp-confirm-table-info {
+    padding: 10px 12px; background: #FFF3EE; border-radius: 10px;
+    color: #FF6B35; font-weight: 700; font-size: .9rem;
+    display: flex; align-items: center; gap: 8px;
+}
+.mp-confirm-footer {
+    padding: 16px 24px 20px;
+    display: flex; gap: 10px;
+}
+.mp-confirm-btn-cancel {
+    flex: 1; padding: 12px; border-radius: 12px; border: 1.5px solid #E5E7EB;
+    background: #fff; color: #6B7280; font-weight: 700; font-size: .9rem;
+    cursor: pointer; transition: all .15s; display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.mp-confirm-btn-cancel:hover { background: #F9FAFB; border-color: #D1D5DB; }
+.mp-confirm-btn-submit {
+    flex: 2; padding: 12px; border-radius: 12px; border: none;
+    background: linear-gradient(135deg,#FF6B35,#F7931E);
+    color: #fff; font-weight: 800; font-size: .9rem;
+    cursor: pointer; transition: all .15s;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    box-shadow: 0 4px 16px rgba(255,107,53,.35);
+}
+.mp-confirm-btn-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(255,107,53,.45); }
+.mp-confirm-btn-submit:disabled { opacity: .65; transform: none; cursor: not-allowed; }
+</style>
+
+<!-- Scripts -->
+<script src="/public/js/common.js"></script>
+<script src="/public/js/user/layout.js"></script>
+<script src="/public/js/user/menu.js"></script>
+
+</body>
+</html>

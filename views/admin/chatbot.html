@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot AI — Smart Restaurant</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/public/css/common.css">
+    <link rel="stylesheet" href="/public/css/admin/layout.css">
+    <link rel="stylesheet" href="/public/css/admin/components.css">
+    <link rel="stylesheet" href="/public/css/admin/pages.css">
+
+    <style>
+        /* ─── Animations ─── */
+        @keyframes fadeUp  { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes rowIn   { from{opacity:0;transform:translateX(-6px)} to{opacity:1;transform:translateX(0)} }
+        @keyframes shimmer { 0%{background-position:-600px 0} 100%{background-position:600px 0} }
+        @keyframes scaleIn { from{opacity:0;transform:scale(.93)} to{opacity:1;transform:scale(1)} }
+        @keyframes blink   { 0%,100%{opacity:1} 50%{opacity:.4} }
+        @keyframes bounce  { 0%,80%,100%{transform:scale(0)} 40%{transform:scale(1)} }
+        @keyframes toastIn { from{opacity:0;transform:translateX(18px)} to{opacity:1;transform:translateX(0)} }
+
+        /* ════════════════════════════════════════
+           LAYOUT: sidebar 240px + main content
+        ════════════════════════════════════════ */
+        .cb-grid {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            gap: var(--space-5);
+            align-items: start;
+            animation: fadeUp .35s ease both;
+        }
+
+        /* ─── Sidebar ─── */
+        .cb-sidebar {
+            display: flex; flex-direction: column; gap: var(--space-4);
+            position: sticky; top: var(--space-4);
+        }
+
+        /* Add button */
+        .cb-add-btn {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: 100%; padding: .7rem var(--space-4);
+            background: var(--admin-primary); color: #fff;
+            border: none; border-radius: var(--radius-xl);
+            font-family: var(--font-primary); font-size: var(--text-sm); font-weight: 700;
+            cursor: pointer; transition: all .2s ease;
+        }
+        .cb-add-btn:hover {
+            background: var(--admin-primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(249,115,22,.3);
+        }
+
+        /* Sidebar panel card */
+        .sb-card {
+            background: var(--color-white); border-radius: var(--radius-2xl);
+            border: 1px solid var(--color-gray-100); box-shadow: 0 1px 4px rgba(0,0,0,.05);
+            overflow: hidden;
+        }
+        .sb-card-hd {
+            padding: var(--space-3) var(--space-4);
+            font-size: .61rem; font-weight: 800; color: var(--color-gray-400);
+            text-transform: uppercase; letter-spacing: .09em;
+            border-bottom: 1px solid var(--color-gray-100);
+            display: flex; align-items: center; gap: 6px;
+        }
+        .sb-card-hd i { color: var(--admin-primary); font-size: .76rem; }
+
+        /* Filter rows */
+        .sb-frow {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: var(--space-3) var(--space-4);
+            cursor: pointer; transition: background .13s;
+            border-bottom: 1px solid var(--color-gray-50);
+        }
+        .sb-frow:last-child { border-bottom: none; }
+        .sb-frow:hover { background: var(--color-gray-50); }
+        .sb-frow.f-on  { background: var(--admin-primary-subtle); }
+        .sb-frow-lbl {
+            display: flex; align-items: center; gap: 8px;
+            font-size: var(--text-xs); font-weight: 600; color: var(--color-gray-600);
+        }
+        .f-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .fd-all    { background: var(--admin-primary); }
+        .fd-active { background: #10B981; }
+        .fd-off    { background: var(--color-gray-400); }
+        .sb-frow-n { font-size: var(--text-sm); font-weight: 800; color: var(--color-gray-800); }
+
+        /* Search */
+        .sb-sbox-wrap { padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-2); }
+        .sb-sbox-title { font-size: .61rem; font-weight: 800; color: var(--color-gray-400); text-transform: uppercase; letter-spacing: .09em; }
+        .sb-sbox {
+            display: flex; align-items: center; gap: 8px;
+            padding: .42rem var(--space-3);
+            background: var(--color-gray-50);
+            border: 1.5px solid var(--color-gray-200); border-radius: var(--radius-lg);
+            transition: all .2s;
+        }
+        .sb-sbox:focus-within { border-color: var(--admin-primary); background: #fff; box-shadow: 0 0 0 3px rgba(249,115,22,.1); }
+        .sb-sbox i { font-size: .78rem; color: var(--color-gray-400); }
+        .sb-sbox-inp { flex: 1; border: none; background: transparent; outline: none; font-family: var(--font-primary); font-size: var(--text-xs); color: var(--color-gray-800); }
+        .sb-sbox-inp::placeholder { color: var(--color-gray-400); }
+        .sb-cnt { font-size: .62rem; color: var(--color-gray-400); text-align: center; }
+
+        /* Bot preview card in sidebar */
+        .sb-bot-wrap { padding: var(--space-4); }
+        .sb-bot-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: var(--radius-xl); padding: var(--space-4);
+            color: #fff; display: flex; flex-direction: column; gap: var(--space-3);
+        }
+        .sb-bot-hd { display: flex; align-items: center; gap: 10px; }
+        .sb-bot-ico {
+            width: 36px; height: 36px; border-radius: var(--radius-lg);
+            background: rgba(255,255,255,.2); display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; flex-shrink: 0;
+        }
+        .sb-bot-name { font-size: var(--text-sm); font-weight: 800; }
+        .sb-bot-status { font-size: .62rem; opacity: .8; display: flex; align-items: center; gap: 4px; }
+        .sb-bot-status::before {
+            content: ''; width: 6px; height: 6px; border-radius: 50%;
+            background: #4ade80; display: inline-block;
+            animation: blink 1.5s ease infinite;
+        }
+        .sb-bot-note { font-size: .65rem; opacity: .75; line-height: 1.5; }
+        .sb-bot-stat { font-size: .68rem; font-weight: 700; opacity: .9;
+                       background: rgba(255,255,255,.15); padding: 4px 10px; border-radius: 99px;
+                       display: inline-flex; align-items: center; gap: 5px; }
+
+        /* ─── Main content ─── */
+        .cb-content { display: flex; flex-direction: column; gap: var(--space-4); }
+        .cb-content-hd { display: flex; align-items: center; justify-content: space-between; }
+        .cb-content-title { font-size: var(--text-base); font-weight: 800; color: var(--color-gray-900); }
+        .cb-content-sub   { font-size: var(--text-xs); color: var(--color-gray-400); margin-top: 2px; }
+
+        /* ════════════════════════════════════════
+           RULES TABLE
+        ════════════════════════════════════════ */
+        .cb-table-wrap {
+            background: var(--color-white);
+            border-radius: var(--radius-2xl);
+            border: 1px solid var(--color-gray-100);
+            box-shadow: 0 2px 6px rgba(0,0,0,.05);
+            overflow: hidden;
+        }
+
+        .cb-table { width: 100%; border-collapse: collapse; }
+
+        .cb-table thead th {
+            padding: var(--space-3) var(--space-4);
+            background: var(--color-gray-50);
+            font-size: .62rem; font-weight: 800; color: var(--color-gray-400);
+            text-transform: uppercase; letter-spacing: .08em;
+            text-align: left; border-bottom: 1px solid var(--color-gray-100);
+            white-space: nowrap;
+        }
+        .cb-table thead th:last-child { text-align: center; }
+
+        .cb-table tbody tr {
+            border-bottom: 1px solid var(--color-gray-50);
+            transition: background .12s;
+            animation: rowIn .25s ease both;
+        }
+        .cb-table tbody tr:last-child { border-bottom: none; }
+        .cb-table tbody tr:hover { background: var(--color-gray-50); }
+        .cb-table tbody tr.row-off { opacity: .5; }
+
+        .cb-table td { padding: var(--space-3) var(--space-4); vertical-align: top; }
+
+        /* ─── Keyword tags ─── */
+        .kw-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+        .kw-tag {
+            display: inline-flex; align-items: center; gap: 3px;
+            font-size: .6rem; font-weight: 700; color: #5B21B6;
+            background: #F5F3FF; padding: 2px 8px;
+            border-radius: var(--radius-full); border: 1px solid #DDD6FE;
+        }
+        .kw-tag i { font-size: .5rem; }
+
+        /* ─── Response preview ─── */
+        .resp-cell {
+            font-size: var(--text-xs); color: var(--color-gray-600); line-height: 1.5;
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            line-clamp: 3;
+            overflow: hidden; max-width: 360px;
+        }
+
+        /* ─── Status badge ─── */
+        .status-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: .62rem; font-weight: 700; padding: 3px 9px;
+            border-radius: var(--radius-full); border: 1px solid transparent;
+        }
+        .sb-on  { background: #ECFDF5; color: #065F46; border-color: #A7F3D0; }
+        .sb-off { background: var(--color-gray-100); color: var(--color-gray-400); border-color: var(--color-gray-200); }
+
+        /* ─── Action buttons ─── */
+        .act-btns { display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .act-btn {
+            width: 30px; height: 30px; border-radius: var(--radius-lg);
+            border: 1.5px solid var(--color-gray-200); background: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: .72rem; cursor: pointer; transition: all .15s ease;
+            color: var(--color-gray-500);
+        }
+        .act-btn:hover { transform: scale(1.1); }
+        .act-btn-edit:hover  { border-color: #3B82F6; color: #3B82F6; background: #EFF6FF; }
+        .act-btn-tog:hover   { border-color: #10B981; color: #10B981; background: #ECFDF5; }
+        .act-btn-del:hover   { border-color: #EF4444; color: #EF4444; background: #FFF5F5; }
+
+        /* ─── ID cell ─── */
+        .id-cell { font-size: .68rem; font-weight: 800; color: var(--color-gray-300); }
+
+        /* Skeleton */
+        .sk { border-radius: var(--radius-md); background: linear-gradient(90deg,#f0f0f0 25%,#e4e4e4 50%,#f0f0f0 75%); background-size: 600px 100%; animation: shimmer 1.4s ease infinite; }
+
+        /* Empty */
+        .cb-empty { padding: var(--space-16) var(--space-6); display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--space-4); }
+        .cb-empty-ico { width: 76px; height: 76px; border-radius: var(--radius-2xl); background: var(--color-gray-50); border: 1.5px dashed var(--color-gray-200); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; color: var(--color-gray-200); }
+        .cb-empty-t { font-size: var(--text-xl); font-weight: 800; color: var(--color-gray-300); }
+        .cb-empty-d { font-size: var(--text-sm); color: var(--color-gray-400); max-width: 280px; line-height: 1.6; }
+
+        /* ════════════════════════════════════════
+           ADD / EDIT MODAL
+        ════════════════════════════════════════ */
+        .m-body { padding: var(--space-6); display: flex; flex-direction: column; gap: var(--space-5); }
+        .m-lbl { display: block; font-size: var(--text-xs); font-weight: 700; color: var(--color-gray-600); margin-bottom: var(--space-2); }
+        .m-req { color: var(--color-error); margin-left: 2px; }
+        .m-inp, .m-ta {
+            width: 100%; padding: .54rem var(--space-4);
+            border: 1.5px solid var(--color-gray-200); border-radius: var(--radius-lg);
+            font-family: var(--font-primary); font-size: var(--text-sm); color: var(--color-gray-800);
+            background: #fff; outline: none; transition: all .2s ease; box-sizing: border-box;
+        }
+        .m-inp::placeholder, .m-ta::placeholder { color: var(--color-gray-400); }
+        .m-inp:focus, .m-ta:focus { border-color: var(--admin-primary); box-shadow: 0 0 0 3px rgba(249,115,22,.1); }
+        .m-inp.inp-err, .m-ta.inp-err { border-color: var(--color-error); }
+        .m-inp.inp-err:focus, .m-ta.inp-err:focus { box-shadow: 0 0 0 3px rgba(239,68,68,.1); }
+        .m-ta { resize: vertical; min-height: 110px; line-height: 1.6; }
+        .m-err { font-size: .66rem; color: var(--color-error); margin-top: 4px; display: none; }
+        .m-err.show { display: block; }
+        .m-hint { font-size: .62rem; color: var(--color-gray-400); margin-top: 3px; line-height: 1.5; }
+
+        /* Keyword preview chips */
+        .kw-preview { display: flex; flex-wrap: wrap; gap: 5px; min-height: 24px; }
+        .kw-preview-chip {
+            display: inline-flex; align-items: center; gap: 3px;
+            font-size: .6rem; font-weight: 700; color: #5B21B6;
+            background: #F5F3FF; padding: 2px 8px;
+            border-radius: var(--radius-full); border: 1px solid #DDD6FE;
+        }
+        .kw-preview-empty { font-size: .65rem; color: var(--color-gray-300); font-style: italic; }
+
+        /* Toggle is_active in edit mode */
+        .m-toggle-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: var(--space-3) var(--space-4);
+            background: var(--color-gray-50); border-radius: var(--radius-lg);
+            border: 1px solid var(--color-gray-200);
+        }
+        .m-toggle-lbl { font-size: var(--text-xs); font-weight: 600; color: var(--color-gray-700); }
+        .m-toggle-desc { font-size: .62rem; color: var(--color-gray-400); margin-top: 2px; }
+        .toggle-switch { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider {
+            position: absolute; inset: 0; background: var(--color-gray-200);
+            border-radius: 99px; cursor: pointer; transition: .25s ease;
+        }
+        .toggle-slider::before {
+            content: ''; position: absolute;
+            width: 16px; height: 16px; border-radius: 50%; background: #fff;
+            left: 3px; top: 3px; transition: .25s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,.2);
+        }
+        input:checked + .toggle-slider { background: var(--admin-primary); }
+        input:checked + .toggle-slider::before { transform: translateX(18px); }
+
+        /* Info box */
+        .m-info {
+            background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: var(--radius-lg);
+            padding: var(--space-3) var(--space-4);
+            font-size: .7rem; color: #1E40AF; line-height: 1.55;
+            display: flex; align-items: flex-start; gap: 8px;
+        }
+        .m-info i { flex-shrink: 0; margin-top: 1px; }
+
+        /* Modal footer */
+        .m-foot {
+            display: flex; align-items: center; justify-content: flex-end;
+            gap: var(--space-3); padding: var(--space-4) var(--space-6);
+            border-top: 1px solid var(--color-gray-100); background: var(--color-gray-50);
+        }
+
+        /* ════════════════════════════════════════
+           DELETE MODAL
+        ════════════════════════════════════════ */
+        .del-body { padding: var(--space-6); display: flex; flex-direction: column; align-items: center; gap: var(--space-4); text-align: center; }
+        .del-ico { width: 64px; height: 64px; border-radius: var(--radius-2xl); background: #FFF5F5; border: 2px solid #FECACA; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; color: #EF4444; }
+        .del-title { font-size: var(--text-lg); font-weight: 800; color: var(--color-gray-900); }
+        .del-rule-name { font-size: var(--text-sm); font-weight: 700; color: var(--admin-primary); background: var(--admin-primary-subtle); padding: 4px 14px; border-radius: var(--radius-full); }
+        .del-warn { font-size: var(--text-xs); color: var(--color-gray-400); line-height: 1.6; max-width: 280px; }
+        .del-foot { display: flex; gap: var(--space-3); width: 100%; }
+        .del-foot .btn { flex: 1; justify-content: center; }
+
+        /* Responsive */
+        @media(max-width: 960px) { .cb-grid { grid-template-columns: 1fr; } .cb-sidebar { position: static; } }
+        @media(max-width: 640px)  { .cb-table { font-size: var(--text-xs); } }
+    </style>
+</head>
+<body>
+
+<div class="admin-app" id="adminApp">
+    <div id="admin-sidebar-container"></div>
+
+    <main class="admin-main" id="adminMain">
+
+        <!-- ── Topbar ── -->
+        <header class="admin-topbar">
+            <div class="topbar-left">
+                <div class="topbar-title">Chatbot AI</div>
+                <nav class="topbar-breadcrumb">
+                    <a href="/views/admin/index.html">Dashboard</a>
+                    <span class="separator">/</span>
+                    <span class="current">Hệ thống</span>
+                    <span class="separator">/</span>
+                    <span class="current">Chatbot AI</span>
+                </nav>
+            </div>
+            <div class="topbar-search">
+                <i class="fas fa-search topbar-search-icon"></i>
+                <input type="text" id="topbarSearch" placeholder="Tìm từ khoá, câu trả lời...">
+            </div>
+            <div class="topbar-actions">
+                <button class="topbar-action-btn" id="btnRefresh" title="Làm mới">
+                    <i class="fas fa-rotate-right"></i>
+                </button>
+                <button class="btn btn-primary-admin btn-sm" id="btnAddTop">
+                    <i class="fas fa-plus"></i> Thêm quy tắc
+                </button>
+            </div>
+        </header>
+
+        <!-- ── Content ── -->
+        <div class="admin-content" style="display:flex;flex-direction:column;gap:var(--space-5)">
+
+            <div class="page-header">
+                <div class="page-header-left">
+                    <h1 class="page-heading">
+                        Quản lý tri thức Chatbot
+                        <span id="headCount"
+                              style="font-size:var(--text-xl);font-weight:500;color:var(--color-gray-400)"></span>
+                    </h1>
+                    <p class="page-desc">Dạy Bot nhận diện từ khoá và trả lời tự động cho khách hàng</p>
+                </div>
+                <div class="page-header-actions">
+                    <span style="display:inline-flex;align-items:center;gap:6px;font-size:var(--text-xs);
+                                 color:#5B21B6;background:#F5F3FF;padding:5px 12px;border-radius:var(--radius-full)">
+                        <i class="fas fa-circle-info"></i>
+                        keywords lưu dạng chuỗi CSV, phân cách bằng dấu phẩy
+                    </span>
+                </div>
+            </div>
+
+            <!-- Two-column grid -->
+            <div class="cb-grid">
+
+                <!-- ─── Sidebar ─── -->
+                <aside class="cb-sidebar">
+
+                    <button class="cb-add-btn" id="btnAddSide">
+                        <i class="fas fa-robot"></i>
+                        Thêm quy tắc mới
+                    </button>
+
+                    <!-- Status filter -->
+                    <div class="sb-card">
+                        <div class="sb-card-hd"><i class="fas fa-signal"></i> Trạng thái</div>
+                        <div class="sb-frow f-on" data-sf="all">
+                            <div class="sb-frow-lbl"><div class="f-dot fd-all"></div>Tất cả</div>
+                            <div class="sb-frow-n" id="fsAllN">--</div>
+                        </div>
+                        <div class="sb-frow" data-sf="active">
+                            <div class="sb-frow-lbl"><div class="f-dot fd-active"></div>Đang hoạt động</div>
+                            <div class="sb-frow-n" id="fsActiveN">--</div>
+                        </div>
+                        <div class="sb-frow" data-sf="off">
+                            <div class="sb-frow-lbl"><div class="f-dot fd-off"></div>Đã tắt</div>
+                            <div class="sb-frow-n" id="fsOffN">--</div>
+                        </div>
+                    </div>
+
+                    <!-- Search -->
+                    <div class="sb-card">
+                        <div class="sb-sbox-wrap">
+                            <div class="sb-sbox-title">Tìm kiếm</div>
+                            <div class="sb-sbox">
+                                <i class="fas fa-search"></i>
+                                <input type="text" class="sb-sbox-inp" id="searchInput"
+                                       placeholder="Từ khoá hoặc câu trả lời...">
+                            </div>
+                            <div class="sb-cnt"><span id="resultCount">0</span> kết quả</div>
+                        </div>
+                    </div>
+
+                    <!-- Bot card -->
+                    <div class="sb-card">
+                        <div class="sb-bot-wrap">
+                            <div class="sb-bot-card">
+                                <div class="sb-bot-hd">
+                                    <div class="sb-bot-ico"><i class="fas fa-robot"></i></div>
+                                    <div>
+                                        <div class="sb-bot-name">GoMeal Bot</div>
+                                        <div class="sb-bot-status">Đang hoạt động</div>
+                                    </div>
+                                </div>
+                                <div class="sb-bot-note">
+                                    Bot đối chiếu tin nhắn của khách với
+                                    <strong>keywords</strong> của từng quy tắc.
+                                    Kết quả khớp → Bot trả lời tự động.
+                                </div>
+                                <span class="sb-bot-stat">
+                                    <i class="fas fa-bolt"></i>
+                                    <span id="botRuleCount">0</span> quy tắc đang chạy
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                </aside>
+
+                <!-- ─── Main content ─── -->
+                <div class="cb-content">
+
+                    <div class="cb-content-hd">
+                        <div>
+                            <div class="cb-content-title">Danh sách quy tắc</div>
+                            <div class="cb-content-sub">Mới nhất trước • Keywords là chuỗi CSV, tách bằng dấu phẩy</div>
+                        </div>
+                        <button class="topbar-action-btn" id="btnRefresh2" title="Làm mới" style="opacity:.65">
+                            <i class="fas fa-rotate-right"></i>
+                        </button>
+                    </div>
+
+                    <!-- Table wrapper -->
+                    <div class="cb-table-wrap">
+                        <table class="cb-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:44px">#</th>
+                                    <th>Keywords</th>
+                                    <th>Câu trả lời của Bot</th>
+                                    <th style="width:110px">Trạng thái</th>
+                                    <th style="width:110px">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ruleBody">
+                                <!-- Injected by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </div><!-- /cb-grid -->
+
+        </div><!-- /admin-content -->
+    </main>
+</div>
+
+<!-- ════════════════════════════════════════
+     MODAL — Thêm / Sửa quy tắc
+════════════════════════════════════════ -->
+<div class="modal-overlay" id="ruleModal">
+    <div class="modal" style="max-width:520px;animation:scaleIn .22s ease">
+
+        <div class="modal-header">
+            <div style="display:flex;align-items:center;gap:var(--space-3)">
+                <div style="width:40px;height:40px;border-radius:var(--radius-lg);
+                            background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;
+                            display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                    <i id="modalIcon" class="fas fa-robot"></i>
+                </div>
+                <div class="modal-title" id="modalTitle">Thêm quy tắc mới</div>
+            </div>
+            <button class="modal-close" id="ruleModalClose"><i class="fas fa-xmark"></i></button>
+        </div>
+
+        <div class="m-body">
+
+            <!-- Keywords -->
+            <div>
+                <label class="m-lbl" for="mKeywords">
+                    Từ khoá (Keywords) <span class="m-req">*</span>
+                </label>
+                <input type="text" class="m-inp" id="mKeywords"
+                       placeholder="VD: giá, tiền, bao nhiêu, rẻ">
+                <div class="m-err" id="errKeywords">Vui lòng nhập ít nhất 1 từ khoá.</div>
+                <div class="m-hint">
+                    <i class="fas fa-circle-info" style="color:#3B82F6"></i>
+                    Nhập nhiều từ khoá, phân cách bằng <strong>dấu phẩy</strong>. Lưu dưới dạng chuỗi CSV vào DB.
+                </div>
+
+                <!-- Live keyword preview -->
+                <div style="margin-top:var(--space-2)">
+                    <div style="font-size:.6rem;font-weight:700;color:var(--color-gray-400);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px">
+                        Xem trước từ khoá
+                    </div>
+                    <div class="kw-preview" id="kwPreview">
+                        <span class="kw-preview-empty">Nhập từ khoá để xem trước...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Response -->
+            <div>
+                <label class="m-lbl" for="mResponse">
+                    Câu trả lời của Bot <span class="m-req">*</span>
+                </label>
+                <textarea class="m-ta" id="mResponse"
+                          placeholder="VD: Giá các món tại nhà hàng dao động từ 30.000đ đến 250.000đ. Bạn có thể xem đầy đủ thực đơn ngay trên ứng dụng nhé!&#10;&#10;Bạn cần tôi tư vấn món gì không? 😊"></textarea>
+                <div class="m-err" id="errResponse">Vui lòng nhập câu trả lời.</div>
+                <div class="m-hint">Bot sẽ gửi chính xác nội dung này khi khách hỏi đúng từ khoá.</div>
+            </div>
+
+            <!-- is_active toggle (chỉ hiện khi EDIT) -->
+            <div id="toggleRow" style="display:none">
+                <div class="m-toggle-row">
+                    <div>
+                        <div class="m-toggle-lbl">Trạng thái quy tắc</div>
+                        <div class="m-toggle-desc">Tắt để Bot tạm bỏ qua quy tắc này</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="mIsActive" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="m-info">
+                <i class="fas fa-lightbulb" style="color:#F59E0B"></i>
+                <span>
+                    <strong>Mẹo:</strong> Đặt keywords ngắn gọn, bao gồm cả từ viết tắt và biến thể thường dùng.
+                    VD: <em>"giá, tiền, bao nhiêu, cost, price, rẻ"</em>
+                </span>
+            </div>
+
+        </div><!-- /m-body -->
+
+        <div class="m-foot">
+            <button class="btn btn-secondary" id="ruleModalCancel">Huỷ bỏ</button>
+            <button class="btn btn-primary-admin" id="btnRuleSubmit">
+                <i class="fas fa-floppy-disk"></i>
+                <span id="submitLabel">Thêm quy tắc</span>
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     MODAL — Xoá quy tắc
+════════════════════════════════════════ -->
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal" style="max-width:400px;animation:scaleIn .22s ease">
+
+        <div class="modal-header">
+            <div class="modal-title">Xác nhận xoá</div>
+            <button class="modal-close" id="delModalClose"><i class="fas fa-xmark"></i></button>
+        </div>
+
+        <div class="del-body">
+            <div class="del-ico"><i class="fas fa-trash-can"></i></div>
+            <div class="del-title">Xoá quy tắc này?</div>
+            <div class="del-rule-name" id="delRulePreview">...</div>
+            <div class="del-warn">
+                Sau khi xoá, Bot sẽ không còn nhận diện nhóm từ khoá này nữa.
+                Hành động <strong>không thể hoàn tác</strong>.
+            </div>
+            <div class="del-foot">
+                <button class="btn btn-secondary" id="delCancel">Giữ lại</button>
+                <button class="btn btn-danger" id="delConfirm">
+                    <i class="fas fa-trash"></i> Xoá quy tắc
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Toast container -->
+<div id="toastContainer"
+     style="position:fixed;top:var(--space-6);right:var(--space-6);z-index:9999;
+            display:flex;flex-direction:column;gap:var(--space-3);pointer-events:none"></div>
+
+<script src="/public/js/common.js"></script>
+<script src="/public/js/admin/layout.js"></script>
+<script src="/public/js/admin/chatbot.js"></script>
+</body>
+</html>

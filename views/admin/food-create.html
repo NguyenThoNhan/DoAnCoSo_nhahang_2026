@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thêm món ăn mới — Smart Restaurant</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <!-- Chỉ giữ common.css (vars + btn) và admin/layout.css (sidebar/topbar/content) -->
+    <link rel="stylesheet" href="/public/css/common.css">
+    <link rel="stylesheet" href="/public/css/admin/layout.css">
+
+    <style>
+        /* ================================================================
+           FOOD-CREATE — Fully self-contained styles
+           Không phụ thuộc admin/components.css hay admin/pages.css
+           để tránh xung đột class chưa được định nghĩa
+        ================================================================ */
+
+        /* ── Page wrapper ── */
+        .fc-wrapper {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* ── Card ── */
+        .fc-card {
+            background: #fff;
+            border-radius: 20px;
+            border: 1px solid #F3F4F6;
+            box-shadow: 0 2px 12px rgba(0,0,0,.06), 0 1px 4px rgba(0,0,0,.04);
+            overflow: hidden;
+        }
+
+        /* ── Card header ── */
+        .fc-head {
+            padding: 20px 24px;
+            border-bottom: 1px solid #F3F4F6;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(135deg, #FFF8F3 0%, #fff 100%);
+        }
+        .fc-head-icon {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            background: #FEF3C7;
+            color: #F97316;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        .fc-head-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: #111827;
+            letter-spacing: -.02em;
+        }
+        .fc-head-sub {
+            font-size: .75rem;
+            color: #9CA3AF;
+            margin-top: 2px;
+        }
+
+        /* ── Card body ── */
+        .fc-body { padding: 28px 24px; }
+
+        /* ── Card footer ── */
+        .fc-foot {
+            padding: 16px 24px;
+            border-top: 1px solid #F3F4F6;
+            background: #F9FAFB;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        /* ── Form grid ── */
+        .fc-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px 24px;
+        }
+        .fc-full  { grid-column: 1 / -1; }
+        .fc-left  { grid-column: 1; }
+        .fc-right { grid-column: 2; }
+
+        @media (max-width: 640px) {
+            .fc-grid { grid-template-columns: 1fr; }
+            .fc-left, .fc-right { grid-column: auto; }
+        }
+
+        /* ── Form field ── */
+        .fc-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .fc-label {
+            font-size: .8125rem;
+            font-weight: 600;
+            color: #374151;
+        }
+        .fc-req {
+            color: #EF4444;
+            margin-left: 2px;
+        }
+
+        /* ── Input / Select / Textarea ── */
+        .fc-input {
+            width: 100%;
+            padding: 10px 14px;
+            font-family: inherit;
+            font-size: .875rem;
+            color: #111827;
+            background: #fff;
+            border: 1.5px solid #E5E7EB;
+            border-radius: 10px;
+            outline: none;
+            transition: border-color .15s, box-shadow .15s;
+            box-sizing: border-box;
+        }
+        .fc-input:focus {
+            border-color: #F97316;
+            box-shadow: 0 0 0 3px rgba(249,115,22,.12);
+        }
+        .fc-input::placeholder { color: #D1D5DB; }
+        textarea.fc-input {
+            resize: vertical;
+            min-height: 88px;
+            line-height: 1.5;
+        }
+        select.fc-input {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            padding-right: 36px;
+            cursor: pointer;
+        }
+
+        /* ── Price wrapper ── */
+        .fc-price-wrap {
+            position: relative;
+        }
+        .fc-price-wrap .fc-input {
+            padding-right: 40px;
+        }
+        .fc-price-symbol {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: .7rem;
+            font-weight: 700;
+            color: #9CA3AF;
+            pointer-events: none;
+        }
+
+        /* ── Hint & Error ── */
+        .fc-hint {
+            font-size: .7rem;
+            color: #F97316;
+            min-height: 1em;
+        }
+        .fc-error {
+            font-size: .72rem;
+            color: #EF4444;
+            display: none;
+        }
+        .fc-error.show { display: flex; align-items: center; gap: 4px; }
+
+        /* ── Image dropzone ── */
+        .fc-dropzone {
+            border: 2px dashed #D1D5DB;
+            border-radius: 14px;
+            padding: 28px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color .15s, background .15s;
+            background: #F9FAFB;
+            user-select: none;
+        }
+        .fc-dropzone:hover,
+        .fc-dropzone.dz-over {
+            border-color: #F97316;
+            background: #FFF8F3;
+        }
+        /* Input hoàn toàn ẩn — JS dùng fileInput.click() để mở dialog */
+        .fc-dropzone input[type="file"] {
+            display: none;
+        }
+        .fc-dz-icon {
+            font-size: 2rem;
+            color: #D1D5DB;
+            margin-bottom: 8px;
+            transition: color .15s;
+        }
+        .fc-dropzone:hover .fc-dz-icon,
+        .fc-dropzone.dz-over .fc-dz-icon {
+            color: #F97316;
+        }
+        .fc-dz-text {
+            font-size: .875rem;
+            font-weight: 600;
+            color: #4B5563;
+        }
+        .fc-dz-hint {
+            font-size: .75rem;
+            color: #9CA3AF;
+            margin-top: 4px;
+        }
+
+        /* ── Preview strip ── */
+        .fc-preview {
+            display: none;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 16px;
+            background: #F9FAFB;
+            border: 1.5px solid #E5E7EB;
+            border-radius: 14px;
+            margin-top: 10px;
+        }
+        .fc-preview.show { display: flex; }
+        .fc-prev-img {
+            width: 56px; height: 56px;
+            border-radius: 10px;
+            object-fit: cover;
+            flex-shrink: 0;
+            border: 1px solid #E5E7EB;
+        }
+        .fc-prev-info { flex: 1; min-width: 0; }
+        .fc-prev-name {
+            font-size: .8125rem;
+            font-weight: 600;
+            color: #111827;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .fc-prev-size {
+            font-size: .72rem;
+            color: #9CA3AF;
+            margin-top: 2px;
+        }
+        .fc-prev-rm {
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            background: #FEE2E2;
+            color: #EF4444;
+            border: none;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: .8rem;
+            flex-shrink: 0;
+            transition: background .15s;
+        }
+        .fc-prev-rm:hover { background: #EF4444; color: #fff; }
+
+        /* ── Toggle rows ── */
+        .fc-toggles {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        @media (max-width: 540px) {
+            .fc-toggles { grid-template-columns: 1fr; }
+        }
+        .fc-toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 14px 16px;
+            background: #F9FAFB;
+            border: 1.5px solid #EAECF0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background .15s, border-color .15s;
+            user-select: none;
+        }
+        .fc-toggle-row:hover {
+            background: #FFF8F3;
+            border-color: #F97316;
+        }
+        .fc-tgl-label {
+            font-size: .8125rem;
+            font-weight: 600;
+            color: #1F2937;
+        }
+        .fc-tgl-hint {
+            font-size: .72rem;
+            color: #9CA3AF;
+            margin-top: 2px;
+        }
+
+        /* ── Toggle switch ── */
+        .fc-sw {
+            position: relative;
+            width: 44px; height: 24px;
+            flex-shrink: 0;
+            display: inline-block;
+        }
+        /* Ẩn native checkbox */
+        .fc-sw input {
+            display: none;
+        }
+        .fc-sw-track {
+            position: absolute;
+            inset: 0;
+            background: #D1D5DB;
+            border-radius: 9999px;
+            cursor: pointer;
+            transition: background .2s;
+        }
+        .fc-sw-track::before {
+            content: '';
+            position: absolute;
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            background: #fff;
+            top: 3px; left: 3px;
+            box-shadow: 0 1px 4px rgba(0,0,0,.15);
+            transition: transform .2s;
+        }
+        .fc-sw input:checked + .fc-sw-track {
+            background: #10B981;
+        }
+        .fc-sw input:checked + .fc-sw-track::before {
+            transform: translateX(20px);
+        }
+
+        /* ── Buttons (dùng .btn từ common.css, override nếu cần) ── */
+        .fc-btn-cancel {
+            background: #fff;
+            color: #374151;
+            border: 1.5px solid #E5E7EB;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-size: .875rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all .15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .fc-btn-cancel:hover {
+            background: #F9FAFB;
+            border-color: #D1D5DB;
+        }
+        .fc-btn-save {
+            background: #F97316;
+            color: #fff;
+            border: 1.5px solid #F97316;
+            border-radius: 10px;
+            padding: 10px 24px;
+            font-size: .875rem;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            min-width: 130px;
+            transition: all .15s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 2px 8px rgba(249,115,22,.35);
+        }
+        .fc-btn-save:hover:not(:disabled) {
+            background: #EA6C0A;
+            border-color: #EA6C0A;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(249,115,22,.4);
+        }
+        .fc-btn-save:disabled {
+            opacity: .65;
+            cursor: not-allowed;
+        }
+
+        /* Topbar back button sử dụng btn + btn-secondary từ common.css */
+        .btn-sm {
+            padding: .45rem var(--space-4);
+            font-size: var(--text-xs);
+        }
+    </style>
+</head>
+<body>
+
+<div class="admin-app" id="adminApp">
+
+    <!-- Sidebar (inject bởi layout.js) -->
+    <div id="admin-sidebar-container"></div>
+
+    <main class="admin-main" id="adminMain">
+
+        <!-- Topbar -->
+        <header class="admin-topbar">
+            <div class="topbar-left">
+                <div class="topbar-title">Thêm món ăn mới</div>
+                <nav class="topbar-breadcrumb">
+                    <a href="/views/admin/index.html">Dashboard</a>
+                    <span class="separator">/</span>
+                    <a href="/views/admin/foods.html">Thực đơn</a>
+                    <span class="separator">/</span>
+                    <span class="current">Thêm món</span>
+                </nav>
+            </div>
+            <div class="topbar-actions">
+                <a href="/views/admin/foods.html" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-arrow-left"></i> Quay lại
+                </a>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="admin-content">
+            <div class="fc-wrapper">
+                <div class="fc-card">
+
+                    <!-- Header -->
+                    <div class="fc-head">
+                        <div class="fc-head-icon">
+                            <i class="fas fa-utensils"></i>
+                        </div>
+                        <div>
+                            <div class="fc-head-title">Thông tin món ăn</div>
+                            <div class="fc-head-sub">Điền các trường bắt buộc bên dưới để tạo món mới trong thực đơn</div>
+                        </div>
+                    </div>
+
+                    <!-- Body -->
+                    <div class="fc-body">
+                        <form id="foodForm" novalidate>
+                            <input type="hidden" id="foodId">
+
+                            <div class="fc-grid">
+
+                                <!-- Tên món -->
+                                <div class="fc-field fc-full">
+                                    <label class="fc-label" for="fName">
+                                        Tên món <span class="fc-req">*</span>
+                                    </label>
+                                    <input type="text" class="fc-input" id="fName"
+                                           placeholder="VD: Bò bít tết sốt nấm..." maxlength="120" autocomplete="off">
+                                    <div class="fc-error" id="errName">
+                                        <i class="fas fa-circle-exclamation"></i>
+                                        <span>Vui lòng nhập tên món ăn</span>
+                                    </div>
+                                </div>
+
+                                <!-- Danh mục -->
+                                <div class="fc-field fc-left">
+                                    <label class="fc-label" for="fCategory">
+                                        Danh mục <span class="fc-req">*</span>
+                                    </label>
+                                    <select class="fc-input" id="fCategory">
+                                        <option value="">-- Đang tải... --</option>
+                                    </select>
+                                    <div class="fc-error" id="errCategory">
+                                        <i class="fas fa-circle-exclamation"></i>
+                                        <span>Vui lòng chọn danh mục</span>
+                                    </div>
+                                </div>
+
+                                <!-- Giá bán -->
+                                <div class="fc-field fc-right">
+                                    <label class="fc-label" for="fPrice">
+                                        Giá bán (VNĐ) <span class="fc-req">*</span>
+                                    </label>
+                                    <div class="fc-price-wrap">
+                                        <input type="number" class="fc-input" id="fPrice"
+                                               placeholder="0" min="0" step="1000" autocomplete="off">
+                                        <span class="fc-price-symbol">₫</span>
+                                    </div>
+                                    <div class="fc-hint" id="priceDisplay"></div>
+                                    <div class="fc-error" id="errPrice">
+                                        <i class="fas fa-circle-exclamation"></i>
+                                        <span>Giá bán phải lớn hơn 0</span>
+                                    </div>
+                                </div>
+
+                                <!-- Mô tả -->
+                                <div class="fc-field fc-full">
+                                    <label class="fc-label" for="fDesc">Mô tả</label>
+                                    <textarea class="fc-input" id="fDesc" rows="3"
+                                              placeholder="Mô tả ngắn về món ăn, nguyên liệu chính..."></textarea>
+                                </div>
+
+                                <!-- Ảnh món ăn -->
+                                <div class="fc-field fc-full">
+                                    <label class="fc-label">Ảnh món ăn</label>
+
+                                    <div class="fc-dropzone" id="uploadDropzone">
+                                        <!-- display:none → không render native UI -->
+                                        <input type="file" id="fImage"
+                                               accept="image/jpeg,image/png,image/webp,image/gif">
+                                        <div class="fc-dz-icon">
+                                            <i class="fas fa-cloud-arrow-up"></i>
+                                        </div>
+                                        <div class="fc-dz-text">Kéo thả ảnh vào đây hoặc click để chọn</div>
+                                        <div class="fc-dz-hint">JPG, PNG, WebP, GIF — tối đa 5 MB</div>
+                                    </div>
+
+                                    <!-- Preview -->
+                                    <div class="fc-preview" id="previewStrip">
+                                        <img class="fc-prev-img" id="previewImg" src="" alt="preview">
+                                        <div class="fc-prev-info">
+                                            <div class="fc-prev-name" id="previewName"></div>
+                                            <div class="fc-prev-size" id="previewSize"></div>
+                                        </div>
+                                        <button type="button" class="fc-prev-rm" id="btnRemoveImg" title="Xoá ảnh">
+                                            <i class="fas fa-xmark"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Toggles -->
+                                <div class="fc-full">
+                                    <div class="fc-toggles">
+
+                                        <!-- Đang phục vụ -->
+                                        <label class="fc-toggle-row" for="fAvailable">
+                                            <div>
+                                                <div class="fc-tgl-label">
+                                                    <i class="fas fa-circle-check"
+                                                       style="color:#10B981;margin-right:5px"></i>
+                                                    Đang phục vụ
+                                                </div>
+                                                <div class="fc-tgl-hint">Bật → món hiển thị trên menu</div>
+                                            </div>
+                                            <div class="fc-sw">
+                                                <input type="checkbox" id="fAvailable" checked>
+                                                <span class="fc-sw-track"></span>
+                                            </div>
+                                        </label>
+
+                                        <!-- Món nổi bật -->
+                                        <label class="fc-toggle-row" for="fFeatured">
+                                            <div>
+                                                <div class="fc-tgl-label">
+                                                    <i class="fas fa-star"
+                                                       style="color:#F59E0B;margin-right:5px"></i>
+                                                    Món nổi bật
+                                                </div>
+                                                <div class="fc-tgl-hint">Hiển thị ưu tiên trên trang chủ</div>
+                                            </div>
+                                            <div class="fc-sw">
+                                                <input type="checkbox" id="fFeatured">
+                                                <span class="fc-sw-track"></span>
+                                            </div>
+                                        </label>
+
+                                    </div>
+                                </div>
+
+                            </div><!-- /fc-grid -->
+                        </form>
+                    </div><!-- /fc-body -->
+
+                    <!-- Footer -->
+                    <div class="fc-foot">
+                        <button type="button" class="fc-btn-cancel" id="btnCancel">
+                            <i class="fas fa-xmark"></i> Huỷ
+                        </button>
+                        <button type="button" class="fc-btn-save" id="btnSave">
+                            <i class="fas fa-check"></i> Thêm món
+                        </button>
+                    </div>
+
+                </div><!-- /fc-card -->
+            </div><!-- /fc-wrapper -->
+        </div><!-- /admin-content -->
+
+    </main>
+</div>
+
+<!-- Toast -->
+<div id="toastContainer"
+     style="position:fixed;top:24px;right:24px;z-index:9999;
+            display:flex;flex-direction:column;gap:10px;pointer-events:none">
+</div>
+
+<script src="/public/js/common.js"></script>
+<script src="/public/js/admin/layout.js"></script>
+<script src="/public/js/admin/food-create.js"></script>
+
+</body>
+</html>
