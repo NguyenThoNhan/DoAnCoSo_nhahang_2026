@@ -26,6 +26,7 @@ publicRouter.get('/table/check-session/:tableNumber', userController.checkTableS
 
 // Lấy Menu và Danh mục công khai
 publicRouter.get('/menu', userController.getMenu);          
+publicRouter.get('/menu/:id/recipe', userController.getFoodRecipePublic); 
 publicRouter.get('/categories', userController.getMenuCategories); 
 
 // Tích hợp Public Router vào Router chính

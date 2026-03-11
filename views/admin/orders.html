@@ -805,6 +805,20 @@
                 <i class="fas fa-circle-info" style="color:var(--color-info);margin-right:5px"></i>
                 Hành động này sẽ: đánh dấu đơn <strong>Hoàn thành</strong>, giải phóng bàn sang <strong>Sẵn sàng</strong>, cộng điểm thành viên và trừ tồn kho.
             </div>
+            <div style="width:100%;text-align:left;display:flex;flex-direction:column;gap:8px;font-size:var(--text-sm);color:var(--color-gray-700)">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-3)">
+                    <span style="font-weight:600">Phương thức thanh toán</span>
+                    <select id="payMethodSelect"
+                            style="flex:1;max-width:190px;padding:6px 10px;border-radius:8px;border:1px solid var(--color-gray-200);font-family:var(--font-primary);font-size:var(--text-sm);color:var(--color-gray-800);outline:none">
+                        <option value="cash">Tiền mặt (giả lập)</option>
+                        <option value="card">Thẻ / POS (giả lập)</option>
+                        <option value="e-wallet">Ví điện tử (giả lập)</option>
+                    </select>
+                </div>
+                <div style="font-size:var(--text-xs);color:var(--color-gray-500)">
+                    Nhân viên thu ngân: <strong id="payCashierName">Admin hiện tại</strong>
+                </div>
+            </div>
             <div style="display:flex;gap:var(--space-3);width:100%">
                 <button class="btn btn-secondary" id="btnPayReleaseCancel" style="flex:1">Huỷ</button>
                 <button class="btn-pay-release" id="btnPayReleaseConfirm" style="flex:1.5">

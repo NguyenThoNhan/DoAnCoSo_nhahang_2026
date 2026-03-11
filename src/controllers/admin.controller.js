@@ -19,6 +19,7 @@ const Customer   = require('../models/Customer');
 const Combo      = require('../models/Combo');
 const Ingredient = require('../models/Ingredient');
 const FoodRecipe = require('../models/FoodRecipe');
+const Inventory  = require('../models/Inventory');
 const { pool }   = require('../../config/database');
 
 // =============================================================
@@ -69,8 +70,10 @@ const addMemberPoints = async (connection, userId, totalAmount) => {
 };
 
 /**
- * Trừ tồn kho nguyên liệu sau khi đơn hàng hoàn tất.
- * @param {object} connection
+ * Trừ tồn kho nguyên liệu sau khi đơn hàng hoàn tất
+ * và tự động ẩn các món liên quan nếu nguyên liệu về 0.
+ * Sử dụng chung logic trong Inventory model để đảm bảo nhất quán.
+ * @param {object} connection - MySQL connection (trong transaction)
  * @param {number} orderId
  */
 const deductInventory = async (connection, orderId) => {
@@ -79,18 +82,8 @@ const deductInventory = async (connection, orderId) => {
         [orderId]
     );
     for (const item of items) {
-        const [recipe] = await connection.execute(
-            'SELECT ingredient_id, quantity_required FROM food_recipes WHERE food_id = ?',
-            [item.food_id]
-        );
-        for (const ing of recipe) {
-            await connection.execute(
-                `UPDATE ingredients
-                 SET stock_quantity = GREATEST(0, stock_quantity - ?)
-                 WHERE id = ?`,
-                [ing.quantity_required * item.quantity, ing.ingredient_id]
-            );
-        }
+        // Giao cho Inventory xử lý trừ kho + auto-disable món khi nguyên liệu hết
+        await Inventory.deductStock(item.food_id, item.quantity, connection);
     }
 };
 
@@ -242,6 +235,8 @@ const ORDER_SELECT = `
         o.total_amount,
         COALESCE(o.discount_amount, 0)  AS discount_amount,
         o.status,
+        o.payment_method,
+        o.cashier_id,
         t.table_number,
         t.status                        AS table_status,
         u.name                          AS customer_name,
@@ -345,6 +340,8 @@ exports.updateOrderStatus = async (req, res) => {
 
 exports.completeOrderAndReleaseTable = async (req, res) => {
     const { id } = req.params;
+    const paymentMethod = (req.body && req.body.payment_method) ? String(req.body.payment_method) : 'cash';
+    const cashierId     = req.user && req.user.id ? req.user.id : null;
     let connection;
     try {
         connection = await pool.getConnection();
@@ -365,10 +362,24 @@ exports.completeOrderAndReleaseTable = async (req, res) => {
 
         const { table_id, total_amount, user_id } = orderRows[0];
 
-        await connection.execute(
-            `UPDATE orders SET status = 'completed' WHERE id = ?`,
-            [id]
-        );
+        // Cập nhật trạng thái + lưu phương thức thanh toán (giả lập) + nhân viên thu ngân nếu DB hỗ trợ
+        try {
+            await connection.execute(
+                `UPDATE orders 
+                 SET status = 'completed',
+                     payment_method = ?,
+                     cashier_id     = ?
+                 WHERE id = ?`,
+                [paymentMethod, cashierId, id]
+            );
+        } catch (e) {
+            // Nếu cột payment_method / cashier_id không tồn tại trong DB (môi trường demo),
+            // fallback chỉ cập nhật status để tránh gãy hệ thống.
+            await connection.execute(
+                `UPDATE orders SET status = 'completed' WHERE id = ?`,
+                [id]
+            );
+        }
 
         await addMemberPoints(connection, user_id, total_amount);
         await deductInventory(connection, id);

@@ -720,6 +720,37 @@ function _foodCardHTML(food) {
     `;
 }
 
+// Load recipe (nguyên liệu) cho modal món ăn
+async function loadFoodRecipeForModal(foodId) {
+    const section = document.getElementById('mpModalRecipeSection');
+    const listEl  = document.getElementById('mpModalRecipeList');
+    if (!section || !listEl) return;
+
+    section.style.display = 'none';
+    listEl.innerHTML      = '';
+
+    try {
+        const res  = await fetch(`/api/user/public/menu/${foodId}/recipe`);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        if (!Array.isArray(data) || data.length === 0) {
+            return; // không có công thức → ẩn section
+        }
+        const itemsHtml = data.map(r => {
+            const name = _esc(r.ingredient_name || 'Nguyên liệu');
+            const unit = _esc(r.unit || '');
+            const qty  = r.quantity_required;
+            const qtyStr = (qty != null) ? `${qty} ${unit}`.trim() : unit;
+            return `<li>- ${name}${qtyStr ? ` (${qtyStr} / 1 phần)` : ''}</li>`;
+        }).join('');
+        listEl.innerHTML = itemsHtml;
+        section.style.display = 'block';
+    } catch (_) {
+        // lỗi API không làm hỏng modal, chỉ ẩn phần nguyên liệu
+        section.style.display = 'none';
+    }
+}
+
 function _bindFoodCardEvents(grid) {
     try {
         // Card click → open modal
@@ -757,11 +788,28 @@ function _bindFoodCardEvents(grid) {
             });
         });
 
-        // Wish btn
+        // Wish btn — lưu sở thích đơn giản vào localStorage (phục vụ gợi ý giả lập)
         grid.querySelectorAll('.mp-food-wish').forEach(function (btn) {
             btn.addEventListener('click', function (e) {
                 e.stopPropagation();
                 this.classList.toggle('active');
+                try {
+                    const foodId = parseInt(this.getAttribute('data-id') || this.getAttribute('data-food-id'), 10);
+                    if (!foodId) return;
+                    let liked = [];
+                    try {
+                        const raw = localStorage.getItem('likedFoods');
+                        liked = raw ? JSON.parse(raw) : [];
+                        if (!Array.isArray(liked)) liked = [];
+                    } catch (_) { liked = []; }
+                    const idx = liked.indexOf(foodId);
+                    if (this.classList.contains('active')) {
+                        if (idx === -1) liked.push(foodId);
+                    } else {
+                        if (idx !== -1) liked.splice(idx, 1);
+                    }
+                    localStorage.setItem('likedFoods', JSON.stringify(liked));
+                } catch (_) {}
             });
         });
 
@@ -876,6 +924,9 @@ function openFoodModal(food) {
         _setText('mpModalName',  food.name || '');
         _setText('mpModalDesc',  food.description || 'Món ăn đặc biệt của nhà hàng.');
         _setText('mpModalPrice', _fmtPrice(food.price));
+
+        // Recipe (ingredients)
+        loadFoodRecipeForModal(food.id);
 
         // Qty
         _updateModalQty();

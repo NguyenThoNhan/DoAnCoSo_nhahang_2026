@@ -3,15 +3,16 @@
 // Đã bổ sung: Customer name, phone, note trong order creation
 // ===============================================================
 
-const Food = require('../models/Food');
-const Category = require('../models/Category');
-const Table = require('../models/Table');
-const Order = require('../models/Order');
-const OrderDetail = require('../models/OrderDetail');
-const Customer = require('../models/Customer');
-const Combo = require('../models/Combo');
-const jwt = require('jsonwebtoken');
-const { pool } = require('../../config/database');
+const Food       = require('../models/Food');
+const Category   = require('../models/Category');
+const Table      = require('../models/Table');
+const Order      = require('../models/Order');
+const OrderDetail= require('../models/OrderDetail');
+const Customer   = require('../models/Customer');
+const Combo      = require('../models/Combo');
+const FoodRecipe = require('../models/FoodRecipe');
+const jwt        = require('jsonwebtoken');
+const { pool }   = require('../../config/database');
 
 // =======================================================
 // 1. SMART QR & TABLE SELECTION
@@ -153,6 +154,29 @@ exports.getMenu = async (req, res) => {
         res.status(200).json(availableMenu);
     } catch (error) {
         res.status(500).json({ message: 'Lỗi server khi tải menu.' });
+    }
+};
+
+// [GET] /api/user/public/menu/:id/recipe
+// Trả về danh sách nguyên liệu của 1 món (chỉ đọc, không cần đăng nhập)
+exports.getFoodRecipePublic = async (req, res) => {
+    const foodId = parseInt(req.params.id, 10);
+    if (!foodId) {
+        return res.status(400).json({ message: 'ID món ăn không hợp lệ.' });
+    }
+    try {
+        const recipe = await FoodRecipe.findByFoodId(foodId);
+        // Chỉ trả về các trường cần cho UI phía user
+        const safe = recipe.map(r => ({
+            ingredient_id:   r.ingredient_id,
+            ingredient_name: r.ingredient_name,
+            unit:            r.unit,
+            quantity_required: r.quantity_required,
+        }));
+        res.status(200).json(safe);
+    } catch (error) {
+        console.error('getFoodRecipePublic error:', error);
+        res.status(500).json({ message: 'Lỗi tải nguyên liệu của món ăn.' });
     }
 };
 

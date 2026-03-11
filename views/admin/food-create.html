@@ -559,6 +559,41 @@
                                     </div>
                                 </div>
 
+                                <!-- Công thức món (nguyên liệu) -->
+                                <div class="fc-full">
+                                    <div style="margin-top:18px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;">
+                                        <div>
+                                            <div style="font-size:.8rem;font-weight:700;color:#374151;letter-spacing:.06em;text-transform:uppercase;">
+                                                Công thức món ăn
+                                            </div>
+                                            <div style="font-size:.75rem;color:#9CA3AF;margin-top:2px;">
+                                                Tuỳ chọn nhưng khuyến khích: dùng để trừ kho & tự ẩn món khi hết nguyên liệu.
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Hàng thêm nguyên liệu -->
+                                    <div style="display:grid;grid-template-columns:2.2fr 1fr auto;gap:10px;align-items:center;margin-bottom:10px;">
+                                        <select id="rcIngredient" class="fc-input">
+                                            <option value="">-- Chọn nguyên liệu --</option>
+                                        </select>
+                                        <input type="number" id="rcQuantity" class="fc-input"
+                                               placeholder="Định lượng / 1 phần" min="0" step="0.01">
+                                        <button type="button" id="btnAddIngredient" class="fc-btn-save" style="min-width:auto;padding:9px 14px;box-shadow:none;">
+                                            <i class="fas fa-plus"></i> Thêm
+                                        </button>
+                                    </div>
+                                    <div id="rcError" class="fc-error" style="margin-bottom:4px;">
+                                        <i class="fas fa-circle-exclamation"></i>
+                                        <span>Vui lòng chọn nguyên liệu và định lượng > 0</span>
+                                    </div>
+
+                                    <!-- Danh sách nguyên liệu đã thêm -->
+                                    <div id="rcList" style="border:1px solid #E5E7EB;border-radius:12px;padding:10px 4px;max-height:220px;overflow-y:auto;">
+                                        <!-- JS render -->
+                                    </div>
+                                </div>
+
                             </div><!-- /fc-grid -->
                         </form>
                     </div><!-- /fc-body -->

@@ -9,6 +9,9 @@ const FC_API = '/api/admin';
 const IMG_MAX_SIZE = 5 * 1024 * 1024; // 5MB
 
 let _fcCategories = [];
+let _fcIngredients = [];
+// Công thức món hiện tại: [{ ingredient_id, name, unit, quantity_required }]
+let _fcRecipe = [];
 
 function fcToast(message, type = 'success') {
     const icons = {
@@ -98,6 +101,29 @@ async function fcLoadCategoriesSelect() {
     } catch (err) {
         sel.innerHTML = '<option value="">Lỗi tải danh mục</option>';
         fcToast('Không thể tải danh sách danh mục: ' + err.message, 'error');
+    }
+}
+
+async function fcLoadIngredients() {
+    const sel = document.getElementById('rcIngredient');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">-- Đang tải nguyên liệu... --</option>';
+
+    try {
+        const ingredients = await fcApiFetch('/ingredients');
+        _fcIngredients = Array.isArray(ingredients) ? ingredients : [];
+
+        sel.innerHTML = '<option value="">-- Chọn nguyên liệu --</option>';
+        _fcIngredients.forEach(ing => {
+            const opt = document.createElement('option');
+            opt.value = ing.id;
+            const unit = ing.unit ? ` (${ing.unit})` : '';
+            opt.textContent = `${ing.name}${unit}`;
+            sel.appendChild(opt);
+        });
+    } catch (err) {
+        sel.innerHTML = '<option value="">Lỗi tải nguyên liệu</option>';
+        fcToast('Không thể tải danh sách nguyên liệu: ' + err.message, 'error');
     }
 }
 
@@ -213,7 +239,23 @@ async function fcSave() {
             formData.append('imageFile', fileInput.files[0]);
         }
 
-        await fcApiFetch('/foods', { method: 'POST', body: formData });
+        // 1. Tạo món ăn
+        const created = await fcApiFetch('/foods', { method: 'POST', body: formData });
+        const foodId = created && created.id;
+
+        // 2. Nếu có công thức thì lưu các nguyên liệu
+        if (foodId && _fcRecipe.length > 0) {
+            for (const item of _fcRecipe) {
+                await fcApiFetch(`/foods/${foodId}/recipe`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        ingredient_id: item.ingredient_id,
+                        quantity_required: item.quantity_required,
+                    }),
+                });
+            }
+        }
+
         fcToast('Thêm món ăn thành công!', 'success');
 
         // Sau khi lưu thành công: quay lại danh sách
@@ -231,9 +273,87 @@ async function fcSave() {
     }
 }
 
+function fcRenderRecipeList() {
+    const listEl = document.getElementById('rcList');
+    if (!listEl) return;
+
+    if (_fcRecipe.length === 0) {
+        listEl.innerHTML = `
+            <div style="padding:10px 12px;font-size:.8rem;color:#9CA3AF;">
+                Chưa có nguyên liệu nào. Bạn vẫn có thể lưu món, nhưng hệ thống không thể tự trừ kho.
+            </div>
+        `;
+        return;
+    }
+
+    listEl.innerHTML = _fcRecipe.map(item => {
+        const qtyStr = item.quantity_required.toString();
+        const unit = item.unit || '';
+        return `
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-bottom:1px solid #F3F4F6;">
+                <div style="flex:1;min-width:0;">
+                    <div style="font-size:.82rem;font-weight:600;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                        ${fcEsc(item.name)}
+                    </div>
+                    <div style="font-size:.72rem;color:#9CA3AF;margin-top:2px;">
+                        Định lượng: <strong>${fcEsc(qtyStr)}</strong> ${fcEsc(unit)}
+                    </div>
+                </div>
+                <button type="button"
+                        data-id="${item.ingredient_id}"
+                        class="fc-prev-rm rc-remove"
+                        title="Xoá nguyên liệu">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `;
+    }).join('');
+}
+
+function fcAddIngredientToRecipe() {
+    const sel = document.getElementById('rcIngredient');
+    const qtyInput = document.getElementById('rcQuantity');
+    const err = document.getElementById('rcError');
+    if (!sel || !qtyInput) return;
+
+    const ingId = Number(sel.value);
+    const qty = Number(qtyInput.value);
+
+    if (!ingId || !qty || qty <= 0) {
+        if (err) err.style.display = 'flex';
+        return;
+    }
+    if (err) err.style.display = 'none';
+
+    const ing = _fcIngredients.find(i => i.id === ingId);
+    if (!ing) return;
+
+    // Nếu đã có trong recipe thì cập nhật lại định lượng
+    const existing = _fcRecipe.find(r => r.ingredient_id === ingId);
+    if (existing) {
+        existing.quantity_required = qty;
+    } else {
+        _fcRecipe.push({
+            ingredient_id: ing.id,
+            name: ing.name,
+            unit: ing.unit,
+            quantity_required: qty,
+        });
+    }
+
+    fcRenderRecipeList();
+}
+
+function fcRemoveIngredientFromRecipe(ingredientId) {
+    _fcRecipe = _fcRecipe.filter(item => item.ingredient_id !== ingredientId);
+    fcRenderRecipeList();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // Load categories
     fcLoadCategoriesSelect();
+    // Load ingredients cho phần công thức
+    fcLoadIngredients();
 
     // Price live format
     document.getElementById('fPrice')?.addEventListener('input', e => {
@@ -273,6 +393,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btnRemoveImg?.addEventListener('click', () => {
         fcResetImage();
+    });
+
+    // Recipe: thêm nguyên liệu
+    document.getElementById('btnAddIngredient')?.addEventListener('click', () => {
+        fcAddIngredientToRecipe();
+    });
+
+    // Recipe: xoá nguyên liệu (event delegation)
+    document.getElementById('rcList')?.addEventListener('click', e => {
+        const btn = e.target.closest('.rc-remove');
+        if (!btn) return;
+        const ingId = Number(btn.getAttribute('data-id'));
+        if (!ingId) return;
+        fcRemoveIngredientFromRecipe(ingId);
     });
 
     // Save / cancel buttons

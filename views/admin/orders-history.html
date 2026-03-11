@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lịch sử đơn hàng — Smart Restaurant</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <link rel="stylesheet" href="/public/css/common.css">
+    <link rel="stylesheet" href="/public/css/admin/layout.css">
+    <link rel="stylesheet" href="/public/css/admin/components.css">
+    <link rel="stylesheet" href="/public/css/admin/pages.css">
+
+    <style>
+        .history-toolbar {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            flex-wrap: wrap;
+            background: var(--color-white);
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--color-gray-100);
+            box-shadow: var(--shadow-card);
+            padding: var(--space-3) var(--space-5);
+        }
+        .ht-search {
+            flex: 1;
+            min-width: 200px;
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: 0.45rem var(--space-3);
+            background: var(--color-gray-50);
+            border: 1.5px solid var(--color-gray-200);
+            border-radius: var(--radius-md);
+        }
+        .ht-search input {
+            border: none;
+            outline: none;
+            flex: 1;
+            background: transparent;
+            font-family: var(--font-primary);
+            font-size: var(--text-sm);
+        }
+        .ht-date {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+        .ht-date input {
+            padding: 0.45rem var(--space-3);
+            background: var(--color-gray-50);
+            border: 1.5px solid var(--color-gray-200);
+            border-radius: var(--radius-md);
+            font-family: var(--font-primary);
+            font-size: var(--text-sm);
+            color: var(--color-gray-700);
+            outline: none;
+        }
+        .history-pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-3) var(--space-4);
+            font-size: var(--text-xs);
+            color: var(--color-gray-500);
+        }
+        .history-pagination button {
+            border: 1px solid var(--color-gray-200);
+            background: var(--color-white);
+            border-radius: var(--radius-md);
+            padding: 4px 10px;
+            font-size: var(--text-xs);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .history-pagination button:disabled {
+            opacity: .4;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+<div class="admin-app" id="adminApp">
+
+    <div id="admin-sidebar-container"></div>
+
+    <main class="admin-main" id="adminMain">
+
+        <header class="admin-topbar">
+            <div class="topbar-left">
+                <div class="topbar-title">Lịch sử đơn hàng</div>
+                <nav class="topbar-breadcrumb">
+                    <a href="/views/admin/index.html">Dashboard</a>
+                    <span class="separator">/</span>
+                    <a href="/views/admin/orders.html">Đơn hàng</a>
+                    <span class="separator">/</span>
+                    <span class="current">Lịch sử hoàn thành</span>
+                </nav>
+            </div>
+
+            <div class="topbar-actions">
+                <button class="topbar-action-btn" id="btnBackOrders" title="Quay về màn hình xử lý đơn">
+                    <i class="fas fa-table-columns"></i>
+                </button>
+            </div>
+        </header>
+
+        <div class="admin-content">
+
+            <div class="page-header">
+                <div class="page-header-left">
+                    <h1 class="page-heading">Toàn bộ đơn hàng đã hoàn thành</h1>
+                    <p class="page-desc">
+                        Xem lại lịch sử thanh toán, lọc theo ngày và tìm kiếm theo bàn, khách hàng hoặc mã đơn.
+                    </p>
+                </div>
+            </div>
+
+            <div class="history-toolbar">
+                <div class="ht-search">
+                    <i class="fas fa-search" style="color:var(--color-gray-400);font-size:0.85rem"></i>
+                    <input type="text" id="histSearch" placeholder="Tìm theo mã đơn, bàn, tên khách, SĐT...">
+                </div>
+                <div class="ht-date">
+                    <input type="date" id="histDateFrom" title="Từ ngày">
+                    <span style="font-size:0.75rem;color:var(--color-gray-400)">đến</span>
+                    <input type="date" id="histDateTo" title="Đến ngày">
+                </div>
+                <button class="btn btn-secondary btn-sm" id="histClearFilter" style="display:none">
+                    <i class="fas fa-xmark"></i> Xoá lọc
+                </button>
+            </div>
+
+            <div class="card" style="margin-top:var(--space-4);overflow:hidden">
+                <div class="table-wrapper">
+                    <table class="table" id="histTable">
+                        <thead>
+                        <tr>
+                            <th style="width:80px">Mã đơn</th>
+                            <th style="width:80px">Bàn</th>
+                            <th>Khách hàng</th>
+                            <th style="width:90px">Số món</th>
+                            <th style="width:110px">Tạm tính</th>
+                            <th style="width:110px">Giảm giá</th>
+                            <th style="width:120px">Tổng thanh toán</th>
+                            <th style="width:150px">Hoàn thành lúc</th>
+                        </tr>
+                        </thead>
+                        <tbody id="histTableBody">
+                        <!-- JS render -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="history-pagination" id="histPagination">
+                    <span id="histPageInfo">Trang 1</span>
+                    <div>
+                        <button id="histPrev"><i class="fas fa-chevron-left"></i> Trước</button>
+                        <button id="histNext">Sau <i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<div id="toastContainer"
+     style="position:fixed;top:var(--space-6);right:var(--space-6);z-index:9999;display:flex;flex-direction:column;gap:var(--space-3);pointer-events:none">
+</div>
+
+<script src="/public/js/common.js"></script>
+<script src="/public/js/admin/layout.js"></script>
+<script src="/public/js/admin/orders-history.js"></script>
+
+</body>
+</html>
+

@@ -669,6 +669,18 @@ function openPayRelease(id) {
     setText2('payReleaseTable',   order.table_number ? `Bàn ${order.table_number}` : 'Không có bàn');
     setText2('payReleaseAmount',  fmt(order.total_amount));
 
+    // Reset & hiển thị phương thức thanh toán giả lập + tên thu ngân
+    try {
+        const sel = document.getElementById('payMethodSelect');
+        if (sel) sel.value = 'cash';
+        const cashierEl = document.getElementById('payCashierName');
+        if (cashierEl) {
+            // Lấy tên admin từ layout (nếu đã inject) hoặc fallback
+            const nameFromCard = document.getElementById('adminUserName')?.textContent || '';
+            cashierEl.textContent = nameFromCard || 'Admin hiện tại';
+        }
+    } catch (_) {}
+
     closeModal('orderDetailModal');
     openModal('payReleaseModal');
 }
@@ -679,8 +691,18 @@ async function confirmPayRelease() {
     const btn = document.getElementById('btnPayReleaseConfirm');
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...'; }
 
+    // Đọc phương thức thanh toán giả lập từ select
+    let paymentMethod = 'cash';
     try {
-        await apiFetch(`/orders/${_payReleaseId}/complete-and-release`, { method: 'PUT' });
+        const sel = document.getElementById('payMethodSelect');
+        if (sel && sel.value) paymentMethod = sel.value;
+    } catch (_) {}
+
+    try {
+        await apiFetch(`/orders/${_payReleaseId}/complete-and-release`, {
+            method: 'PUT',
+            body: JSON.stringify({ payment_method: paymentMethod }),
+        });
 
         toast(`🎉 Đơn #${_payReleaseId} đã thanh toán & trả bàn thành công!`, 'success');
         closeModal('payReleaseModal');
