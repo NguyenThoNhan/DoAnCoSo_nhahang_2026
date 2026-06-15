@@ -1,0 +1,8 @@
+node_modules/
+coverage/
+.nyc_output/
+tests/e2e/screenshots/
+tests/random/results.json
+uploads/*
+!uploads/.gitkeep
+.env

@@ -73,22 +73,26 @@ app.use((req, res, next) => {
     res.status(404).send("Lỗi 404: Không tìm thấy tài nguyên yêu cầu.");
 });
 
-
 // =======================================================
-// KẾT NỐI DATABASE VÀ KHỞI ĐỘNG SERVER
+// KHỞI ĐỘNG SERVER (CHỈ KHI CHẠY TRỰC TIẾP)
 // =======================================================
-checkDatabaseConnection()
-    .then(() => {
-        app.listen(PORT, () => {
-            console.log(`--------------------------------------------------`);
-            console.log(`🚀 SERVER ĐANG CHẠY TẠI: http://localhost:${PORT}`);
-            console.log(`📂 Trang chủ: http://localhost:${PORT}`);
-            console.log(`📂 Admin: http://localhost:${PORT}/views/admin/index.html`);
-            console.log(`--------------------------------------------------`);
+if (require.main === module) {
+    checkDatabaseConnection()
+        .then(() => {
+            app.listen(PORT, () => {
+                console.log(`--------------------------------------------------`);
+                console.log(`🚀 SERVER ĐANG CHẠY TẠI: http://localhost:${PORT}`);
+                console.log(`📂 Trang chủ: http://localhost:${PORT}`);
+                console.log(`📂 Admin: http://localhost:${PORT}/views/admin/index.html`);
+                console.log(`--------------------------------------------------`);
+            });
+        })
+        .catch(err => {
+            console.error("❌ KHÔNG THỂ KHỞI ĐỘNG SERVER DO LỖI KẾT NỐI DATABASE!");
+            console.error(err);
+            process.exit(1);
         });
-    })
-    .catch(err => {
-        console.error("❌ KHÔNG THỂ KHỞI ĐỘNG SERVER DO LỖI KẾT NỐI DATABASE!");
-        console.error(err);
-        process.exit(1);
-    });
+}
+
+// Export app cho Jest/Supertest
+module.exports = app;

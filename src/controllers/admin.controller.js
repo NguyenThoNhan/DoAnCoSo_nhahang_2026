@@ -55,7 +55,7 @@ const addMemberPoints = async (connection, userId, totalAmount) => {
         'SELECT id FROM customers WHERE user_id = ?',
         [userId]
     );
-    if (customerRows.length === 0) return;
+    if (customerRows.length === 0 || !customerRows[0] || customerRows[0].id == null) return;
     const customerId   = customerRows[0].id;
     const earnedPoints = Math.floor(totalAmount / 1000);
     if (earnedPoints <= 0) return;

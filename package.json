@@ -3,10 +3,14 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon server.js",
     "migrate": "node src/migrations/migrate.js",
     "seed": "node src/migrations/seed.js",
+    "test": "jest --runInBand",
+    "test:coverage": "jest --runInBand --coverage --coverageReporters=text --coverageReporters=text-summary --coverageReporters=html --coverageReporters=lcov",
+    "test:coverage:nyc": "nyc --reporter=text --reporter=html --reporter=lcov npm run test",
+    "test:e2e": "jest --config jest.e2e.config.js --runInBand",
+    "test:random": "node tests/random/runRandomTests.js",
     "start": "node server.js"
   },
   "keywords": [],
@@ -23,6 +27,57 @@
     "qrcode": "^1.5.4"
   },
   "devDependencies": {
-    "nodemon": "^3.1.11"
+    "jest": "^30.4.2",
+    "nodemon": "^3.1.11",
+    "nyc": "^18.0.0",
+    "selenium-webdriver": "^4.44.0",
+    "supertest": "^7.2.2"
+  },
+  "nyc": {
+    "include": [
+      "src/controllers/**/*.js",
+      "src/models/**/*.js"
+    ],
+    "exclude": [
+      "tests/**",
+      "coverage/**",
+      "node_modules/**"
+    ],
+    "reporter": [
+      "text",
+      "text-summary",
+      "html",
+      "lcov"
+    ],
+    "report-dir": "coverage",
+    "all": true,
+    "cache": false
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "setupFiles": [
+      "<rootDir>/tests/setup.js"
+    ],
+    "testMatch": [
+      "**/tests/unit/**/*.test.js",
+      "**/tests/api/**/*.test.js"
+    ],
+    "coverageDirectory": "coverage",
+    "coverageProvider": "v8",
+    "collectCoverageFrom": [
+      "src/controllers/*.js",
+      "src/models/*.js"
+    ],
+    "coveragePathIgnorePatterns": [
+      "/node_modules/",
+      "/tests/"
+    ],
+    "coverageReporters": [
+      "text",
+      "text-summary",
+      "html",
+      "lcov"
+    ],
+    "verbose": true
   }
 }
